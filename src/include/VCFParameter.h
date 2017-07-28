@@ -23,7 +23,18 @@ static constexpr std::size_t kDefaultVCFTableSpace = 1024;
 static constexpr bool kDefaultVCFTableLockFree = false;
 
 //! @brief デフォルトでは置換表でInterruption ExceptionをCatchしない
-static constexpr bool kDefaultVCTTableNoInterruptionException = false;
+static constexpr bool kDefaultVCFTableNoInterruptionException = false;
+
+// VLM Analyzer用(黒)の空点情報の更新
+static constexpr uint64_t kUpdateFlagVCFAnalyzerBlack = 
+  kUpdateFlagFourBlack;   // OR node(黒)での四生成
+  
+// VLM Analyzer用(白)の空点情報の更新
+static constexpr uint64_t kUpdateFlagVCFAnalyzerWhite = 
+  kUpdateFlagFourWhite;   // OR node(白)での四生成
+
+constexpr UpdateOpenStateFlag kUpdateVCFAnalyzerBlack(kUpdateFlagVCFAnalyzerBlack);
+constexpr UpdateOpenStateFlag kUpdateVCFAnalyzerWhite(kUpdateFlagVCFAnalyzerWhite);
 
 }   // namespace realcore
 

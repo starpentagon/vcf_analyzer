@@ -37,7 +37,7 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/../realcore/src/BitBoard.cc
     ${CMAKE_SOURCE_DIR}/../realcore/src/Board.cc
     ../../src/VCFTranspositionTable.cc
-#    ../../src/VLMAnalyzer.cc
+    ../../src/VCFAnalyzer.cc
     ../VCFAnalyzerTest.cc
 )
 
