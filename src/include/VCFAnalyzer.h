@@ -36,12 +36,12 @@ constexpr bool IsVCFWeakDisproved(const VCFSearchDepth value);
 constexpr VCFSearchDepth GetVCFDepth(const VCFSearchDepth value);
 
 //! @brief 終端局面までの手数から探索結果値を返す
-constexpr VLMSearchValue GetVLMProvedSearchValue(const VLMSearchDepth depth);
+constexpr VCFSearchValue GetVCFProvedSearchValue(const VCFSearchDepth depth);
 
 //! @brief 弱意の不詰の探索結果値を返す
-constexpr VLMSearchValue GetVLMWeakDisprovedSearchValue(const VLMSearchDepth depth);
-
-
+constexpr VCFSearchValue GetVCFWeakDisprovedSearchValue(const VCFSearchDepth depth);
 }   // namespace realcore
+
+#include "VCFAnalyzer-inl.h"
 
 #endif  // VCF_ANALYZER_H
