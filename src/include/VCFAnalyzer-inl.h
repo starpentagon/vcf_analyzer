@@ -75,17 +75,21 @@ VCFSearchValue VCFAnalyzer::SolveOR(const VCFSearch &vcf_search, VCFResult * con
     }
   }
 
+  // 候補手生成
+  std::vector<MovePair> candidate_move;
+  GetCandidateMoveOR<P>(vcf_search, &candidate_move);
+
   if(!is_registered){
     // 初回訪問時のみ終端チェックを行う
-    MovePosition terminating_move;
-    const bool is_terminate = TerminateCheck(&terminating_move);
+    for(auto &move_pair : candidate_move){
+      if(IsTerminateMove(move_pair)){
+        // 終端
+        constexpr VCFSearchDepth depth = 1;
+        constexpr VCFSearchValue search_value = GetVCFProvedSearchValue(depth);
+        vcf_table_->Upsert(hash_value, bit_board_, search_value);
 
-    if(is_terminate){
-      // 終端
-      constexpr VCFSearchDepth depth = 1;
-      constexpr VCFSearchValue search_value = GetVCFProvedSearchValue(depth);
-      vcf_table_->Upsert(hash_value, bit_board_, search_value);
-      return search_value;
+        return search_value;
+      }
     }
   }
 
@@ -97,43 +101,39 @@ VCFSearchValue VCFAnalyzer::SolveOR(const VCFSearch &vcf_search, VCFResult * con
     return search_value;
   }
 
-  // 候補手生成
-  MoveList candidate_move;
-  GetCandidateMoveOR<P>(vcf_search, &candidate_move);
-
   // 展開
   VCFSearch child_vcf_search = vcf_search;
-  constexpr PlayerTurn Q = GetOpponentTurn(P);
+  child_vcf_search.remain_depth -= 2;
+
   VCFSearchValue or_node_value = kVCFStrongDisproved;
   bool is_search_all_candidate = vcf_search.detect_dual_solution;   // 余詰探索用に全候補手を展開するかのフラグ
 
-  // 多重反復深化
-  const VCFSearchDepth max_child_depth = vcf_search.remain_depth - 1;
-  const VCFSearchDepth min_child_depth = is_registered ? max_child_depth : 2;
+  for(const auto move_pair : candidate_move){
+    const auto four_move = move_pair.first;
+    const auto guard_move = move_pair.second;
 
-  for(VCFSearchDepth child_depth=min_child_depth; child_depth<=max_child_depth; child_depth+=2){
-    child_vcf_search.remain_depth = child_depth;
+    if(bit_board_.IsForbiddenMove<P>(four_move)){
+      continue;
+    }
 
-    for(const auto move : candidate_move){
-      MakeMove(move);
-      VCFSearchValue and_node_value = SolveAND<Q>(child_vcf_search, vcf_result);
+    MakeMove(four_move);
+
+    VCFSearchValue and_node_value = kVCFProvedUB;
+
+    if(IsTerminateMove(guard_move)){
+      and_node_value = kVCFStrongDisproved;     // AND nodeが終端 -> 強意の不詰
+    }else{
+      MakeMove(guard_move);
+      and_node_value = SolveOR<P>(child_vcf_search, vcf_result);
       UndoMove();
+    }
+  
+    UndoMove();
 
-      or_node_value = std::max(or_node_value, and_node_value);
-      
-      if(is_search_all_candidate && !IsRootNode() && IsVCFProved(or_node_value)){
-        const auto vcf_depth = GetVCFDepth(or_node_value);
-
-        if(vcf_depth < max_child_depth){
-          // 残り深さ未満で解が見つかった -> 親ノードは弱防のため余詰探索を行わない
-          is_search_all_candidate = false;
-        }
-      }
-      
-      if(!is_search_all_candidate && IsVCFProved(or_node_value)){
-        child_depth += max_child_depth;   // child_depthのloopを抜けるため最大深さを超える値を設定する
-        break;
-      }
+    or_node_value = std::max(or_node_value, and_node_value);
+    
+    if(!is_search_all_candidate && IsVCFProved(or_node_value)){
+      break;
     }
   }
 
@@ -142,6 +142,56 @@ VCFSearchValue VCFAnalyzer::SolveOR(const VCFSearch &vcf_search, VCFResult * con
   return search_value;
 }
 
+template<PlayerTurn P>
+void VCFAnalyzer::GetCandidateMoveOR(const VCFSearch &vlm_search, std::vector<MovePair> * const candidate_move) const
+{
+  assert(candidate_move != nullptr);
+  assert(candidate_move->empty());
+
+  MovePosition guard_move;
+  
+  if(IsOpponentFour(&guard_move)){
+    // 相手に四がある
+    MovePosition opponent_guard_move;
+
+    if(bit_board_.IsFourMove<P>(guard_move, &opponent_guard_move)){
+      candidate_move->emplace_back(guard_move, opponent_guard_move);
+    }
+
+    return;
+  }
+
+  // 四を生成する
+  EnumerateFourMoves<P>(candidate_move);
+
+  // todo move ordering
+}
+
+template<PlayerTurn P>
+const bool VCFAnalyzer::DetectDualSolutionOR(MoveTree * const proof_tree, MoveList * const best_response, MoveTree * const dual_solution_tree)
+{
+  return false;
+}
+
+inline const VCFSearchValue VCFAnalyzer::GetSearchValue(const VCFSearchValue child_search_value) const
+{
+  if(IsVCFDisproved(child_search_value)){
+    return kVCFStrongDisproved;
+  }
+
+  return child_search_value - 1;
+}
+
+template<PlayerTurn P>
+const bool VCFAnalyzer::GetProofTreeOR(MoveTree * const proof_tree, const bool generate_full_tree)
+{
+  return false;
+}
+
+inline const bool VCFAnalyzer::IsRootNode() const
+{
+  return search_sequence_.empty();
+}
 
 }   // namespace realcore
 

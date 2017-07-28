@@ -133,7 +133,7 @@ private:
 
   //! @brief OR nodeの指し手生成
   template<PlayerTurn P>
-  void GetCandidateMoveOR(const VCFSearch &vcf_search, MoveList * const candidate_move) const;
+  void GetCandidateMoveOR(const VCFSearch &vcf_search, std::vector<MovePair> * const candidate_move) const;
 
   //! @brief OR nodeのMoveOrdering
   //! @pre 相手に四ノビが生じていない
