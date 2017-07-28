@@ -1,6 +1,3 @@
-# Prerequisites
-*.d
-
 # Compiled Object files
 *.slo
 *.lo
@@ -30,3 +27,24 @@
 *.exe
 *.out
 *.app
+
+# build directory
+build
+
+# Database
+database/*.csv
+
+# Mac system files
+.DS_Store
+
+# Visual Studio Code setting files
+.vscode
+
+# Callgrind output
+callgrind.out.*
+
+# log files
+*.log
+
+# problem files
+*.csv
