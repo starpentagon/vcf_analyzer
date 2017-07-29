@@ -24,7 +24,7 @@ void VCFAnalyzer::Solve(const VCFSearch &vcf_search, VCFResult * const vcf_resul
   VCFSearch vcf_search_iterative = vcf_search;
   VCFSearchValue search_value = kVCFStrongDisproved;
 
-  for(VCFSearchDepth depth=1; depth<=vcf_search.remain_depth; depth+=2){
+  for(VCFSearchDepth depth=1; depth<=vcf_search.remain_depth; depth++){
     vcf_search_iterative.remain_depth = depth;
 
     search_value = SolveOR(is_black_turn, vcf_search_iterative, vcf_result);
@@ -44,7 +44,7 @@ void VCFAnalyzer::Solve(const VCFSearch &vcf_search, VCFResult * const vcf_resul
   vcf_result->search_depth = vcf_search_iterative.remain_depth;
 
   if(search_manager_.IsTerminate() && vcf_result->search_depth >= 3){
-    vcf_result->search_depth -= 2;
+    vcf_result->search_depth--;
   }
 
   if(vcf_result->solved){

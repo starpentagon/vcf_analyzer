@@ -88,6 +88,8 @@ VCFSearchValue VCFAnalyzer::SolveOR(const VCFSearch &vcf_search, VCFResult * con
         constexpr VCFSearchValue search_value = GetVCFProvedSearchValue(depth);
         vcf_table_->Upsert(hash_value, bit_board_, search_value);
 
+        vcf_result->best_response = move_pair.first;
+
         return search_value;
       }
     }
@@ -103,7 +105,7 @@ VCFSearchValue VCFAnalyzer::SolveOR(const VCFSearch &vcf_search, VCFResult * con
 
   // 展開
   VCFSearch child_vcf_search = vcf_search;
-  child_vcf_search.remain_depth -= 2;
+  child_vcf_search.remain_depth--;
 
   VCFSearchValue or_node_value = kVCFStrongDisproved;
   bool is_search_all_candidate = vcf_search.detect_dual_solution;   // 余詰探索用に全候補手を展開するかのフラグ
@@ -118,6 +120,7 @@ VCFSearchValue VCFAnalyzer::SolveOR(const VCFSearch &vcf_search, VCFResult * con
 
     MakeMove(four_move);
 
+    search_manager_.AddNode();
     VCFSearchValue and_node_value = kVCFProvedUB;
 
     if(IsTerminateMove(guard_move)){
@@ -133,6 +136,13 @@ VCFSearchValue VCFAnalyzer::SolveOR(const VCFSearch &vcf_search, VCFResult * con
     or_node_value = std::max(or_node_value, and_node_value);
     
     if(!is_search_all_candidate && IsVCFProved(or_node_value)){
+      MoveList best_response;
+
+      best_response += four_move;
+      best_response += guard_move;
+      best_response += vcf_result->best_response;
+      vcf_result->best_response = best_response;
+
       break;
     }
   }
@@ -173,6 +183,12 @@ const bool VCFAnalyzer::DetectDualSolutionOR(MoveTree * const proof_tree, MoveLi
   return false;
 }
 
+template<PlayerTurn P>
+const bool VCFAnalyzer::GetProofTreeOR(MoveTree * const proof_tree, const bool generate_full_tree)
+{
+  return false;
+}
+
 inline const VCFSearchValue VCFAnalyzer::GetSearchValue(const VCFSearchValue child_search_value) const
 {
   if(IsVCFDisproved(child_search_value)){
@@ -182,10 +198,9 @@ inline const VCFSearchValue VCFAnalyzer::GetSearchValue(const VCFSearchValue chi
   return child_search_value - 1;
 }
 
-template<PlayerTurn P>
-const bool VCFAnalyzer::GetProofTreeOR(MoveTree * const proof_tree, const bool generate_full_tree)
+inline const SearchManager& VCFAnalyzer::GetSearchManager() const
 {
-  return false;
+  return search_manager_;
 }
 
 inline const bool VCFAnalyzer::IsRootNode() const
