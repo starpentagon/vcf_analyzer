@@ -98,6 +98,7 @@ public:
   const bool GetProofTree(MoveTree * const proof_tree);
 
   //! @brief 探索制御オブジェクトを返す
+  SearchManager& GetSearchManager();
   const SearchManager& GetSearchManager() const;
 
   //! @brief パラメタ設定情報を返す

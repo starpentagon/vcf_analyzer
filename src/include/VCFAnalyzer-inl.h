@@ -198,6 +198,11 @@ inline const VCFSearchValue VCFAnalyzer::GetSearchValue(const VCFSearchValue chi
   return child_search_value - 1;
 }
 
+inline SearchManager& VCFAnalyzer::GetSearchManager()
+{
+  return search_manager_;
+}
+
 inline const SearchManager& VCFAnalyzer::GetSearchManager() const
 {
   return search_manager_;

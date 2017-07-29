@@ -43,7 +43,7 @@ void VCFAnalyzer::Solve(const VCFSearch &vcf_search, VCFResult * const vcf_resul
   vcf_result->disproved = IsVCFDisproved(search_value);
   vcf_result->search_depth = vcf_search_iterative.remain_depth;
 
-  if(search_manager_.IsTerminate() && vcf_result->search_depth >= 3){
+  if(search_manager_.IsTerminate() && vcf_result->search_depth >= 1){
     vcf_result->search_depth--;
   }
 
