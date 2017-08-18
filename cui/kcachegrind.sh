@@ -7,7 +7,7 @@ rm -rf build
 date=`date +%y%m%d`
 log_name=kcache_${date}_$$.log
 
-valgrind --tool=callgrind --log-file=${log_name} ./build/vlm_analyzer -s hhigfggjfhefehfeeijkheddkidikkfllfcgchckhcme
+valgrind --tool=callgrind --log-file=${log_name} ./build/vcf_analyzer -s hhggckihhcjhimfkjmhlmcgmmhkmmmmjbcbbbmhnbnkbdblbmbmnnbnfncalngamnihanjlaabmoacnaahnoakoaanobcaoccoofdaogeooigoolkoonomoo
 
 
 callgrind_pid=`head -n 1 ${log_name} | sed -e "s/^==//g" | sed -e "s/==.*//g"`

@@ -82,7 +82,7 @@ VCFSearchValue VCFAnalyzer::SolveOR(const VCFSearch &vcf_search, VCFResult * con
   if(!is_registered){
     // 初回訪問時のみ終端チェックを行う
     for(auto &move_pair : candidate_move){
-      if(IsTerminateMove(move_pair)){
+      if(IsTerminateMove(move_pair) && !bit_board_.IsForbiddenMove<P>(move_pair.first)){
         // 終端
         constexpr VCFSearchDepth depth = 1;
         constexpr VCFSearchValue search_value = GetVCFProvedSearchValue(depth);

@@ -128,10 +128,6 @@ void ParallelVCFAnalyzer::OutputHeader()
   cout << "ProofTree,";
   cout << "SearchedDepth,";
   cout << "DualSolution,";
-  cout << "GetProofTreeCount,";
-  cout << "GetProofTreeSuccessCount,";
-  cout << "SimulationCount,";
-  cout << "SimulationSuccessCount,";
   cout << "Time(sec),";
   cout << "Nodes,";
   cout << "NPS";
@@ -163,15 +159,11 @@ void ParallelVCFAnalyzer::Output(const size_t problem_id, const realcore::VCFAna
   ss << ",";
 
   // FirstMove
-  const string first_move_str = vcf_result.solved ? MoveString(vcf_result.proof_tree.GetTopNodeMove()) : "";
+  const string first_move_str = vcf_result.solved ? MoveString(vcf_result.best_response[0]) : "";
   ss << first_move_str << ",";
 
   // BestResponse
-  if(vcf_search.detect_dual_solution){
-    ss << vcf_result.best_response.str() << ",";
-  }else{
-    ss << "Unknown,";
-  }
+  ss << vcf_result.best_response.str() << ",";
 
   // ProofTree
   const string proof_tree_str = vcf_result.solved ? vcf_result.proof_tree.str() : "";
@@ -192,20 +184,6 @@ void ParallelVCFAnalyzer::Output(const size_t problem_id, const realcore::VCFAna
   }
 
   const auto& search_manager = vcf_analyzer.GetSearchManager();
-
-  // GetProofTree
-  const auto proof_tree_count = search_manager.GetProofTreeCount();
-  const auto proof_tree_success_count = search_manager.GetProofTreeSuccessCount();
-
-  ss << proof_tree_count << ",";
-  ss << proof_tree_success_count << ",";
-  
-  // Simulation
-  const auto simulation_count = search_manager.GetSimulationCount();
-  const auto simulation_success_count = search_manager.GetSimulationSuccessCount();
-
-  ss << simulation_count << ",";
-  ss << simulation_success_count << ",";
 
   // Time(sec)
   const auto search_time = search_manager.GetSearchTime() / 1000.0;

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 
 # プロジェクト名
-set(project_name vcf_analyzer_test)
+set(project_name four_space_search_test)
 project(${project_name} CXX)
 
 # Build Type(Release or Debug)
@@ -18,8 +18,8 @@ endif(CCACHE_FOUND)
 add_definitions("-Wall -std=c++14")
 
 # インクルードパス
-include_directories(${CMAKE_SOURCE_DIR}/../src/include)
-include_directories(${CMAKE_SOURCE_DIR}/../realcore/src/include)
+include_directories(${CMAKE_SOURCE_DIR}/../../src/include)
+include_directories(${CMAKE_SOURCE_DIR}/../../realcore/src/include)
 include_directories($ENV{GTEST_DIR}/googletest/include)
 
 # ライブラリパス
@@ -28,17 +28,15 @@ link_directories($ENV{GTEST_DIR}/googlemock/gtest)
 # ソースファイル
 add_executable(
     ${project_name}
-    ${CMAKE_SOURCE_DIR}/../realcore/src/SearchManager.cc
-    ${CMAKE_SOURCE_DIR}/../realcore/src/Move.cc
-    ${CMAKE_SOURCE_DIR}/../realcore/src/MoveList.cc
-    ${CMAKE_SOURCE_DIR}/../realcore/src/LineNeighborhood.cc
-    ${CMAKE_SOURCE_DIR}/../realcore/src/OpenState.cc
-    ${CMAKE_SOURCE_DIR}/../realcore/src/BoardOpenState.cc
-    ${CMAKE_SOURCE_DIR}/../realcore/src/BitBoard.cc
-    ${CMAKE_SOURCE_DIR}/../realcore/src/Board.cc
-    ../../src/VCFTranspositionTable.cc
-    ../../src/VCFAnalyzer.cc
-    ../VCFAnalyzerTest.cc
+    ${CMAKE_SOURCE_DIR}/../../realcore/src/Move.cc
+    ${CMAKE_SOURCE_DIR}/../../realcore/src/MoveList.cc
+    ${CMAKE_SOURCE_DIR}/../../realcore/src/LineNeighborhood.cc
+    ${CMAKE_SOURCE_DIR}/../../realcore/src/OpenState.cc
+    ${CMAKE_SOURCE_DIR}/../../realcore/src/BoardOpenState.cc
+    ${CMAKE_SOURCE_DIR}/../../realcore/src/BitBoard.cc
+    ../../../src/RelaxedFour.cc
+    ../../../src/FourSpaceSearch.cc
+    ../FourSpaceSearchTest.cc
 )
 
 # ライブラリ
