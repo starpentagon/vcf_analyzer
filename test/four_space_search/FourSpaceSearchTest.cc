@@ -209,7 +209,7 @@ public:
     // N | . . . . . . . . . . . . . | N 
     // O o ------------o ------------o O 
     //   A B C D E F G H I J K L M N O 
-    MoveList move_list("hhiibbjjblkfbmdidbhdlblfnblhnlcjnnfmaakmacbeadcnakgnamhnaoncbonhcankeaaieoajkadokofologomahaoahooeocokodomofooog");
+    MoveList move_list("hhaahihkhjoanbfafbcafcoofdhomckaldao");
     BitBoard bit_board(move_list);
 
     FourSpaceSearch four_space_search(bit_board);
