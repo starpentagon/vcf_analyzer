@@ -132,4 +132,19 @@ const bool FourSpaceSearch::IsConflict(const MoveBitSet &gain_bit_1, const MoveB
   return false;
 }
 
+const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
+{
+  size_t max_length = 0;
+
+  for(size_t i=1, size=relaxed_four_list_.size(); i<size; i++){
+    MoveBitSet gain_bit, cost_bit;
+    
+    GetReachableBit(i, &gain_bit, &cost_bit);
+    const size_t length = gain_bit.count();
+    max_length = max(max_length, length);
+  }
+
+   return max_length;
+}
+
 }

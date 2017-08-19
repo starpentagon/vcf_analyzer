@@ -151,6 +151,15 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
       MoveBitSet rest_gain_bit = (rest_max_gain | rest_min_gain) & ~(*gain_bit);
       MoveBitSet rest_cost_bit = (rest_max_cost | rest_min_cost) & ~(*cost_bit);
 
+      // 到達路と子の獲得路／損失路が競合していないかチェック
+      if(rest_gain_bit[next_gain] || rest_gain_bit[next_cost]){
+        continue;
+      }
+
+      if(rest_cost_bit[next_gain] || rest_cost_bit[next_cost]){
+        continue;
+      }
+
       MoveList gain_move_list, cost_move_list;
       GetMoveList(rest_gain_bit, &gain_move_list);
       GetMoveList(rest_cost_bit, &cost_move_list);
@@ -286,6 +295,10 @@ void FourSpaceSearch::GetRelaxedFourFromThreeGainPosition(const MovePosition gai
       SetState<kOpenPosition>(additional_gain);
     }
   }  
+}
+
+inline const size_t FourSpaceSearch::GetRelaxedFourCount() const{
+  return relaxed_four_list_.size() - 1;
 }
 
 }   // namespace realcore

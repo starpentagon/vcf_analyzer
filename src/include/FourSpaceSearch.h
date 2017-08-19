@@ -51,6 +51,13 @@ public:
   void ExpandFourSpace(const std::vector<MovePair> &four_list);
   void ExpandFourSpace(const bool is_black_turn, const std::vector<MovePair> &four_list);
 
+  //! 緩和四ノビの数
+  const size_t GetRelaxedFourCount() const;
+
+  //! 緩和四ノビの最長回数
+  //! @note 解禁や四ノリを防ぐためにVCF手数は緩和四ノビ最長回数を上回る可能性あり
+  const size_t GetMaxRelaxedFourLength() const;
+
 private:
   //! Relaxed Fourのデータを追加する
   const RelaxedFourID AddRelaxedFour(const RelaxedFour &relaxed_four);
