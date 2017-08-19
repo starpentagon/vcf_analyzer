@@ -8,6 +8,7 @@
 #include <tuple>
 #include <array>
 #include <vector>
+#include <set>
 
 #include "RelaxedFour.h"
 #include "BitBoard.h"
@@ -92,8 +93,14 @@ private:
   //! Relaxed FourIDの到達路bitsetを求める
   void GetReachableBit(const RelaxedFourID relaxed_four_id, MoveBitSet * const gain_bit, MoveBitSet * const cost_bit) const;
 
+  //! Relaxed FourIDの到達路を求める
+  void GetReachSequence(const RelaxedFourID relaxed_four_id, std::set<RelaxedFourID> * const reached_relaxed_four, MoveList * const move_list) const;
+
   //! 競合しているかチェックする
   const bool IsConflict(const MoveBitSet &gain_bit_1, const MoveBitSet &cost_bit_1, const MoveBitSet &gain_bit_2, const MoveBitSet &cost_bit_2);
+
+  //! 末端ノード(どの緩和四ノビの残路になっていない緩和四ノビ)を列挙する
+  void EnumerateLeaf(std::vector<RelaxedFourID> * const leaf_id_list) const;
 
   std::vector<RelaxedFour> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
   

@@ -468,6 +468,66 @@ public:
     EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
   }
 
+  void UpdateMultiReachPathBlack()
+  {
+    //   A B C D E F G H I J K L M N O 
+    // A + --------------------------o A 
+    // B | . . . . . . . . . . . . o | B 
+    // C x . . . . . . . . . . . . . | C 
+    // D | . . * . . . . . . . * . . | D 
+    // E | . x . . . . . . . . . . . | E 
+    // F | . . x o . . . . . . . . . | F 
+    // G | . . o . . . . . . . . . . | G 
+    // H | . . . . . . x . x . . . . | H 
+    // I | . . . . . . . . . . . . . | I 
+    // J | . . x o . . . . . . . . . | J 
+    // K | . x . . . . . . . . . . . | K 
+    // L | . . * . . . . . . . * . . | L 
+    // M x . . . . . . . . . . . . . | M 
+    // N | . . . . . . . . . . . . o o N 
+    // O + --------------------------o O 
+    //   A B C D E F G H I J K L M N O 
+    MoveList move_list("hhooacnnamoacenbckondfefdjejjhdg");
+    BitBoard bit_board(move_list);
+
+    FourSpaceSearch four_space_search(bit_board);
+    four_space_search.ExpandFourSpace<kBlackTurn>();
+
+    const auto &reach_region = four_space_search.reach_region_;
+    const auto &put_region = four_space_search.put_region_;
+
+    const MovePosition expect_list[] = {
+      kMoveBD, kMoveEG, kMoveFH, kMoveGI, 
+      kMoveBL, kMoveEI, kMoveFH, kMoveGG,
+      kMoveDH, kMoveEH, kMoveGH, 
+      kMoveIH, kMoveKH, kMoveLH, 
+    };
+
+    MoveBitSet expect_bit;
+
+    for(const auto move : expect_list){
+      expect_bit.set(move);
+    }
+
+    for(const auto move : GetAllInBoardMove()){
+      if(expect_bit[move] == reach_region[move].empty()){
+        cerr << MoveString(move) << endl;
+      }
+
+      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+    }
+
+/*  todo delete
+    set<RelaxedFourID> id_set;
+    MoveList debug;
+    four_space_search.GetReachSequence(reach_region[kMoveEE][0], &id_set, &debug);
+    cerr << debug.str() << endl;
+*/
+    EXPECT_EQ(8 + 6 * 2, four_space_search.GetRelaxedFourCount());
+    EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());    
+  }
+
   void UpdateDiffcultTenYearFever()
   {
     // 十年フィーバー
@@ -478,7 +538,7 @@ public:
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
     cerr << "R-four count: " << four_space_search.GetRelaxedFourCount() << endl;
-    cerr << "R-four length: " << four_space_search.GetMaxRelaxedFourLength() << endl;
+    //cerr << "R-four length: " << four_space_search.GetMaxRelaxedFourLength() << endl;
     EXPECT_TRUE(four_space_search.GetMaxRelaxedFourLength() >= 73);
   }
 };
@@ -528,9 +588,14 @@ TEST_F(FourSpaceSearchTest, UpdateMultiExpandableFourBlack3Test)
   UpdateMultiExpandableFourBlack3();
 }
 
+TEST_F(FourSpaceSearchTest, UpdateMultiReachPathBlackTest)
+{
+  UpdateMultiReachPathBlack();
+}
+
 TEST_F(FourSpaceSearchTest, UpdateDiffcultTenYearFeverTest)
 {
-  UpdateDiffcultTenYearFever();
+  //UpdateDiffcultTenYearFever();
 }
 
 }

@@ -151,7 +151,7 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
       MoveBitSet rest_gain_bit = (rest_max_gain | rest_min_gain) & ~(*gain_bit);
       MoveBitSet rest_cost_bit = (rest_max_cost | rest_min_cost) & ~(*cost_bit);
 
-      // 到達路と子の獲得路／損失路が競合していないかチェック
+      //子の獲得路／損失路と到達路が競合していないかチェック
       if(rest_gain_bit[next_gain] || rest_gain_bit[next_cost]){
         continue;
       }
