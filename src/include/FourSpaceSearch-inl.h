@@ -17,7 +17,6 @@ void FourSpaceSearch::ExpandFourSpace(const std::vector<MovePair> &four_list)
   for(const auto &four : four_list){
     const auto four_attack = four.first;
     const auto four_guard = four.second;
-    std::cerr << MoveString(four_attack) << std::endl;
 
     const RelaxedFourID relaxed_four_id = AddRelaxedFour(four_attack, four_guard, null_rest_list);
     UpdateReachPutRegion<P>(relaxed_four_id, &gain_bit, &cost_bit);
@@ -62,19 +61,6 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
   assert(gain_bit != nullptr);
   assert(cost_bit != nullptr);
 
-  static size_t count = 0;
-
-  if(++count % 10000 == 0){
-    MoveList gain_list, cost_list;
-    GetMoveList(*gain_bit, &gain_list);
-    GetMoveList(*cost_bit, &cost_list);
-    std::cerr << "gain: " << gain_list.str() << " , " << cost_list.str() << std::endl;
-
-    if(gain_list.str() == "dafajanaebgbkbmbccdcecfchcjclcmccdddfdgdmdaefejekejfjggi"){
-      int a = 1;
-    }
-  }
-
   const RelaxedFour &relaxed_four = relaxed_four_list_[relaxed_four_id];
 
   const MovePosition gain_position = relaxed_four.GetGainPosition();
@@ -86,9 +72,11 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
   static constexpr PositionState S = GetPlayerStone(P);
   static constexpr PositionState T = GetPlayerStone(GetOpponentTurn(P));
   
+  assert(GetState(gain_position) == kOpenPosition);
   SetState<S>(gain_position);
   gain_bit->set(gain_position);
 
+  assert(GetState(cost_position) == kOpenPosition);
   SetState<T>(cost_position);
   cost_bit->set(cost_position);
 
@@ -117,7 +105,7 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
   std::sort(next_four_info_list.begin(), next_four_info_list.end());
   next_four_info_list.erase(std::unique(next_four_info_list.begin(), next_four_info_list.end()), next_four_info_list.end());
 
-  std::vector<RelaxedFourID> null_rest_list;
+  std::vector<RelaxedFourID> child_rest_list{relaxed_four_id};
 
   for(const auto next_four_info : next_four_info_list){
     const MovePosition next_gain = std::get<0>(next_four_info);
@@ -125,11 +113,10 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
     const MovePosition rest_max = std::get<2>(next_four_info);
     const MovePosition rest_min = std::get<3>(next_four_info);
     
-
     if(rest_max == kNullMove && rest_min == kNullMove){
       // 到達路 + 自石2つのため別の到達路を展開する必要はない
       MoveBitSet child_gain_bit = *gain_bit, child_cost_bit = *cost_bit;
-      const RelaxedFourID relaxed_four_id = AddRelaxedFour(next_gain, next_cost, null_rest_list);
+      const RelaxedFourID relaxed_four_id = AddRelaxedFour(next_gain, next_cost, child_rest_list);
   
       UpdateReachPutRegion<P>(relaxed_four_id, &child_gain_bit, &child_cost_bit);
       continue;
@@ -137,9 +124,6 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
 
     std::vector<RestGainFourID> rest_gain_id_list;
     GetRestRelaxedFourID(next_four_info, &rest_gain_id_list);
-
-    if(rest_gain_id_list.size() > 100)
-      std::cerr << "rest_gain_id_list: " << rest_gain_id_list.size() << std::endl;
 
     for(const auto &rest_gain_id : rest_gain_id_list){
       const RelaxedFourID rest_max_id = rest_gain_id.first;
@@ -183,9 +167,20 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
       }
 
       MoveBitSet child_gain_bit = *gain_bit | rest_gain_bit, child_cost_bit = *cost_bit | rest_cost_bit;
+      std::vector<RelaxedFourID> rest_id_list;
 
-      const RelaxedFourID relaxed_four_id = AddRelaxedFour(next_gain, next_cost, null_rest_list);
-      UpdateReachPutRegion<P>(relaxed_four_id, &child_gain_bit, &child_cost_bit);
+      rest_id_list.emplace_back(relaxed_four_id);
+
+      if(rest_max_id != kInvalidFourID){
+        rest_id_list.emplace_back(rest_max_id);
+      }
+
+      if(rest_min_id != kInvalidFourID){
+        rest_id_list.emplace_back(rest_min_id);
+      }
+
+      const RelaxedFourID child_relaxed_four_id = AddRelaxedFour(next_gain, next_cost, rest_id_list);
+      UpdateReachPutRegion<P>(child_relaxed_four_id, &child_gain_bit, &child_cost_bit);
 
       // 到達手順を元に戻す
       for(const auto gain_move : gain_move_list){
