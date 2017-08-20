@@ -497,18 +497,12 @@ public:
     
     for(const auto four_id : reach_point){
       MoveList reach_sequence;
-      set<RelaxedFourID> id_set;
 
-      cerr << four_id << endl;
-      four_space_search.GetReachSequence(four_id, &id_set, &reach_sequence);
+      four_space_search.GetReachSequence(four_id, &reach_sequence);
 
       set<MovePosition> same_check_set;
 
       for(const auto move : reach_sequence){
-        if(same_check_set.find(move) != same_check_set.end()){
-          cerr << reach_sequence.str() << endl;
-        }
-
         ASSERT_TRUE(same_check_set.find(move) == same_check_set.end());
         same_check_set.insert(move);
       }
@@ -518,23 +512,23 @@ public:
   void UpdateMultiReachPathBlack()
   {
     //   A B C D E F G H I J K L M N O 
-    // A + --------------------------o A 
-    // B | . . . . . . . . . . . . o | B 
+    // A + --------------------------+ A 
+    // B | . . . . . . . . . . . . . | B 
     // C x . . . . . . . . . . . . . | C 
     // D | . . * . . . . . . . * . . | D 
     // E | . x . . . . . . . . . . . | E 
-    // F | . . x o . . . . . . . . . | F 
+    // F | . . x o . . o . . . . . . | F 
     // G | . . o . . . . . . . . . . | G 
-    // H | . . . . . . x . x . . . . | H 
-    // I | . . . . . . . . . . . . . | I 
-    // J | . . x o . . . . . . . . . | J 
+    // H o . . . . . . x . x . . . . o H 
+    // I | . . o . . . . . . . . . . | I 
+    // J | . . x o . . o . . . . . . | J 
     // K | . x . . . . . . . . . . . | K 
     // L | . . * . . . . . . . * . . | L 
     // M x . . . . . . . . . . . . . | M 
-    // N | . . . . . . . . . . . . o o N 
-    // O + --------------------------o O 
+    // N | . . . . . . . . . . . . . | N 
+    // O + --------------------------+ O 
     //   A B C D E F G H I J K L M N O 
-    MoveList move_list("hhooacnnamoacenbckondfefdjejjhdg");
+    MoveList move_list("hhhfachjamefceejckdgdfdidjohjhah");
     BitBoard bit_board(move_list);
 
     FourSpaceSearch four_space_search(bit_board);
@@ -565,14 +559,15 @@ public:
       EXPECT_EQ(expect_bit[move], !put_region[move].empty());
     }
 
-/*  todo delete
-    set<RelaxedFourID> id_set;
-    MoveList debug;
-    four_space_search.GetReachSequence(reach_region[kMoveEE][0], &id_set, &debug);
-    cerr << debug.str() << endl;
-*/
-    EXPECT_EQ(8 + 6 * 2, four_space_search.GetRelaxedFourCount());
-    EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());    
+    EXPECT_EQ(8 + 6 * 2 + 4, four_space_search.GetRelaxedFourCount());
+    EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
+
+    // kMoveFHの到達路が２つあることをチェック
+    NextRelaxedFourInfo next_four_info(kMoveGH, kMoveIH, kMoveFH, kNullMove);
+    vector<RestGainFourID> rest_gain_four_id;
+    four_space_search.GetRestRelaxedFourID(next_four_info, &rest_gain_four_id);
+
+    EXPECT_EQ(2, rest_gain_four_id.size());
   }
 
   void UpdateDiffcultTenYearFever()

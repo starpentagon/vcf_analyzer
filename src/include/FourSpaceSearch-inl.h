@@ -12,14 +12,13 @@ template<PlayerTurn P>
 void FourSpaceSearch::ExpandFourSpace(const std::vector<MovePair> &four_list)
 {
   std::vector<RelaxedFourID> null_rest_list;
-  MoveBitSet gain_bit, cost_bit;
 
   for(const auto &four : four_list){
     const auto four_attack = four.first;
     const auto four_guard = four.second;
 
     const RelaxedFourID relaxed_four_id = AddRelaxedFour(four_attack, four_guard, null_rest_list);
-    UpdateReachPutRegion<P>(relaxed_four_id, &gain_bit, &cost_bit);
+    UpdateReachPutRegion<P>(relaxed_four_id);
   }
 }
 
@@ -55,11 +54,9 @@ inline void FourSpaceSearch::ExpandFourSpace(const bool is_black_turn, const std
 }
 
 template<PlayerTurn P>
-void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, MoveBitSet * const gain_bit, MoveBitSet * const cost_bit)
+void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
 {
   assert(relaxed_four_id < relaxed_four_list_.size());
-  assert(gain_bit != nullptr);
-  assert(cost_bit != nullptr);
 
   const RelaxedFour &relaxed_four = relaxed_four_list_[relaxed_four_id];
 
@@ -74,11 +71,9 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
   
   assert(GetState(gain_position) == kOpenPosition);
   SetState<S>(gain_position);
-  gain_bit->set(gain_position);
 
   assert(GetState(cost_position) == kOpenPosition);
   SetState<T>(cost_position);
-  cost_bit->set(cost_position);
 
   // 新たに四ノビを作れるかチェックする
   LineNeighborhood line_neighborhood(gain_position, kOpenStateNeighborhoodSize, *this);
@@ -115,10 +110,9 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
     
     if(rest_max == kNullMove && rest_min == kNullMove){
       // 到達路 + 自石2つのため別の到達路を展開する必要はない
-      MoveBitSet child_gain_bit = *gain_bit, child_cost_bit = *cost_bit;
-      const RelaxedFourID relaxed_four_id = AddRelaxedFour(next_gain, next_cost, child_rest_list);
-  
-      UpdateReachPutRegion<P>(relaxed_four_id, &child_gain_bit, &child_cost_bit);
+      const RelaxedFourID child_relaxed_four_id = AddRelaxedFour(next_gain, next_cost, child_rest_list);
+
+      UpdateReachPutRegion<P>(child_relaxed_four_id);
       continue;
     }
 
@@ -128,54 +122,57 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
     for(const auto &rest_gain_id : rest_gain_id_list){
       const RelaxedFourID rest_max_id = rest_gain_id.first;
       const RelaxedFourID rest_min_id = rest_gain_id.second;
+
+      std::set<RelaxedFourID> appeared_four_id;
+      std::vector<RelaxedFourID> current_four_id_list, rest_max_four_id_list, rest_min_four_id_list;
+
+      GetReachIDSequence(relaxed_four_id, &appeared_four_id, &current_four_id_list);
+      GetReachIDSequence(rest_max_id, &appeared_four_id, &rest_max_four_id_list);
+      GetReachIDSequence(rest_min_id, &appeared_four_id, &rest_min_four_id_list);
+
+      std::vector<RelaxedFourID> total_four_id_list;
+      total_four_id_list.reserve(
+        current_four_id_list.size() + rest_max_four_id_list.size() + rest_min_four_id_list.size()
+      );
+
+      total_four_id_list.insert(total_four_id_list.end(), current_four_id_list.begin(), current_four_id_list.end());
+      total_four_id_list.insert(total_four_id_list.end(), rest_max_four_id_list.begin(), rest_max_four_id_list.end());
+      total_four_id_list.insert(total_four_id_list.end(), rest_min_four_id_list.begin(), rest_min_four_id_list.end());
+
+      MoveList total_sequence;
+      const bool is_expandable = GetReachSequence(total_four_id_list, &total_sequence);
+
+      if(!is_expandable){
+        continue;
+      }
+
+      MoveList rest_sequence, rest_min_sequence;
       
-      MoveBitSet rest_max_gain, rest_max_cost, rest_min_gain, rest_min_cost;
+      GetReachSequence(rest_max_four_id_list, &rest_sequence);
+      GetReachSequence(rest_min_four_id_list, &rest_min_sequence);
 
-      GetReachableBit(rest_max_id, &rest_max_gain, &rest_max_cost);
-      GetReachableBit(rest_min_id, &rest_min_gain, &rest_min_cost);
-
-      // 競合判定
-      if(IsConflict(*gain_bit, *cost_bit, rest_max_gain, rest_max_cost)){
-        continue;
-      }
-
-      if(IsConflict(*gain_bit, *cost_bit, rest_min_gain, rest_min_cost)){
-        continue;
-      }
+      rest_sequence += rest_min_sequence;
       
-      if(IsConflict(rest_max_gain, rest_max_cost, rest_min_gain, rest_min_cost)){
-        continue;
-      }
-
-      // 到達手順を設定
-      MoveBitSet rest_gain_bit = (rest_max_gain | rest_min_gain) & ~(*gain_bit);
-      MoveBitSet rest_cost_bit = (rest_max_cost | rest_min_cost) & ~(*cost_bit);
-
       //子の獲得路／損失路と到達路が競合していないかチェック
-      if(rest_gain_bit[next_gain] || rest_gain_bit[next_cost]){
+      if(find(rest_sequence.begin(), rest_sequence.end(), next_gain) != rest_sequence.end()){
+        continue;
+      }
+      
+      if(find(rest_sequence.begin(), rest_sequence.end(), next_cost) != rest_sequence.end()){
         continue;
       }
 
-      if(rest_cost_bit[next_gain] || rest_cost_bit[next_cost]){
-        continue;
-      }
+      for(size_t i=0, size=rest_sequence.size(); i<size; i+=2){
+        const auto gain_move = rest_sequence[i];
+        const auto cost_move = rest_sequence[i + 1];
 
-      MoveList gain_move_list, cost_move_list;
-      GetMoveList(rest_gain_bit, &gain_move_list);
-      GetMoveList(rest_cost_bit, &cost_move_list);
-
-      assert(!gain_move_list.empty());
-      assert(!cost_move_list.empty());
-
-      for(const auto gain_move : gain_move_list){
+        assert(GetState(gain_move) == kOpenPosition);
+        assert(GetState(cost_move) == kOpenPosition);
+        
         SetState<S>(gain_move);
-      }
-
-      for(const auto cost_move : cost_move_list){
         SetState<T>(cost_move);
       }
 
-      MoveBitSet child_gain_bit = *gain_bit | rest_gain_bit, child_cost_bit = *cost_bit | rest_cost_bit;
       std::vector<RelaxedFourID> rest_id_list;
 
       rest_id_list.emplace_back(relaxed_four_id);
@@ -189,23 +186,17 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, 
       }
 
       const RelaxedFourID child_relaxed_four_id = AddRelaxedFour(next_gain, next_cost, rest_id_list);
-      UpdateReachPutRegion<P>(child_relaxed_four_id, &child_gain_bit, &child_cost_bit);
+      UpdateReachPutRegion<P>(child_relaxed_four_id);
 
       // 到達手順を元に戻す
-      for(const auto gain_move : gain_move_list){
-        SetState<kOpenPosition>(gain_move);
-      }
-
-      for(const auto cost_move : cost_move_list){
-        SetState<kOpenPosition>(cost_move);
+      for(const auto move : rest_sequence){
+        SetState<kOpenPosition>(move);
       }
     }
   }
 
   SetState<kOpenPosition>(gain_position);
-  gain_bit->reset(gain_position);
   SetState<kOpenPosition>(cost_position);
-  cost_bit->reset(cost_position);
 }
 
 template<PlayerTurn P>
@@ -220,7 +211,7 @@ void FourSpaceSearch::GetRelaxedFourFromOneGainPosition(const BoardOpenState &bo
     const auto next_cost = GetBoardMove(pattern.GetCheckPosition());
 
     next_four_info_list->emplace_back(
-      NextRelaxedFourInfo(next_gain, next_cost, kNullMove, kNullMove)
+      next_gain, next_cost, kNullMove, kNullMove
     );
   }
 }
@@ -249,7 +240,7 @@ void FourSpaceSearch::GetRelaxedFourFromTwoGainPosition(const BoardOpenState &bo
       const auto rest_min = std::min(open_rest, additional_gain);
 
       next_four_info_list->emplace_back(
-        NextRelaxedFourInfo(next_gain, next_cost, rest_max, rest_min)
+        next_gain, next_cost, rest_max, rest_min
       );
     }
     {
@@ -259,7 +250,7 @@ void FourSpaceSearch::GetRelaxedFourFromTwoGainPosition(const BoardOpenState &bo
       const auto rest_min = std::min(open_rest, additional_gain);
 
       next_four_info_list->emplace_back(
-        NextRelaxedFourInfo(next_gain, next_cost, rest_max, rest_min)
+        next_gain, next_cost, rest_max, rest_min
       );
     }
   }
@@ -269,30 +260,41 @@ template<PlayerTurn P>
 void FourSpaceSearch::GetRelaxedFourFromThreeGainPosition(const MovePosition gain_position, std::vector<NextRelaxedFourInfo> * const next_four_info_list)
 {
   static constexpr PositionState S = GetPlayerStone(P);
+  static constexpr PositionState T = GetPlayerStone(GetOpponentTurn(P));
   static constexpr uint64_t kUpdateFlagPointOfSword = P == kBlackTurn ? kUpdateFlagPointOfSwordBlack : kUpdateFlagPointOfSwordWhite;
 
   for(const auto direction : GetBoardDirection()){
     // gainを中心にdirection方向の別の到達路を着手し「到達路2つ + 自石１」で生じる四ノビを求める
-    std::vector<MovePosition> additional_gain_list;
-    GetRestableGainPositionList(gain_position, direction, &additional_gain_list);
+    std::vector<RelaxedFourID> additional_four_id_list;
+    const size_t open_rest_count = GetRestableRelaxedFourIDList(gain_position, direction, &additional_four_id_list);
     
-    if(additional_gain_list.size() < 2){
+    if(open_rest_count < 2){
       // direction方向にgainを除いて到達路が0 or 1個
       continue;
     }
 
-    for(const auto additional_gain : additional_gain_list){
+    for(const auto additional_four_id : additional_four_id_list){
+      const auto &relaxed_four = relaxed_four_list_[additional_four_id];
+      const auto additional_gain = relaxed_four.GetGainPosition();
+      const auto additional_cost = relaxed_four.GetCostPosition();
+
+      if(GetState(additional_gain) != kOpenPosition || GetState(additional_cost) != kOpenPosition){
+        continue;
+      }
+
       SetState<S>(additional_gain);
+      SetState<T>(additional_cost);
 
       LineNeighborhood line_neighborhood(gain_position, kOpenStateNeighborhoodSize, *this);
 
       BoardOpenState board_open_state;
-      line_neighborhood.AddOpenState<P>(kUpdateFlagPointOfSword, &board_open_state);
+      line_neighborhood.AddOpenState<P>(kUpdateFlagPointOfSword, direction, &board_open_state);
 
       // 到達路2つ + 自石１つ(着手した到達路)で四ノビ新生
       GetRelaxedFourFromTwoGainPosition<P>(board_open_state, additional_gain, next_four_info_list);
 
       SetState<kOpenPosition>(additional_gain);
+      SetState<kOpenPosition>(additional_cost);
     }
   }  
 }

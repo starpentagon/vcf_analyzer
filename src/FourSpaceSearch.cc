@@ -12,14 +12,14 @@ FourSpaceSearch::FourSpaceSearch(const BitBoard &bit_board)
   
   // kInvalidFourID用にダミーデータを設定する
   relaxed_four_list_.emplace_back(
-    RelaxedFour(kNullMove, kNullMove, null_rest_list)
+    kNullMove, kNullMove, null_rest_list
   );
 }
 
 const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const MovePosition gain_position, const MovePosition cost_position, const std::vector<RelaxedFourID> &rest_list)
 {
   relaxed_four_list_.emplace_back(
-    RelaxedFour(gain_position, cost_position, rest_list)
+    gain_position, cost_position, rest_list
   );
 
   return relaxed_four_list_.size() - 1;
@@ -32,10 +32,11 @@ const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const RelaxedFour &relaxed_f
   return relaxed_four_list_.size() - 1;
 }
 
-void FourSpaceSearch::GetRestableGainPositionList(const MovePosition gain_position, const BoardDirection direction, std::vector<MovePosition> * const restable_gain_list) const
+size_t FourSpaceSearch::GetRestableRelaxedFourIDList(const MovePosition gain_position, const BoardDirection direction, std::vector<RelaxedFourID> * const restable_four_id_list) const
 {
-  assert(restable_gain_list != nullptr);
+  assert(restable_four_id_list != nullptr);
   const BoardPosition gain_board_position = GetBoardPosition(gain_position, direction);
+  size_t open_rest_count = 0;
 
   for(size_t i=1; i<5; i++){
     const auto check_position = gain_board_position + i;
@@ -49,9 +50,11 @@ void FourSpaceSearch::GetRestableGainPositionList(const MovePosition gain_positi
     }
 
     const auto check_move = GetBoardMove(check_position);
+    const auto &reach_id_list = reach_region_[check_move];
 
-    if(!reach_region_[check_move].empty()){
-      restable_gain_list->emplace_back(check_move);
+    if(!reach_id_list.empty()){
+      restable_four_id_list->insert(restable_four_id_list->end(), reach_id_list.begin(), reach_id_list.end());
+      open_rest_count++;
     }
   }
 
@@ -67,11 +70,15 @@ void FourSpaceSearch::GetRestableGainPositionList(const MovePosition gain_positi
     }
 
     const auto check_move = GetBoardMove(check_position);
+    const auto &reach_id_list = reach_region_[check_move];
 
-    if(!reach_region_[check_move].empty()){
-      restable_gain_list->emplace_back(check_move);
+    if(!reach_id_list.empty()){
+      restable_four_id_list->insert(restable_four_id_list->end(), reach_id_list.begin(), reach_id_list.end());
+      open_rest_count++;
     }
-  }  
+  }
+
+  return open_rest_count;
 }
 
 void FourSpaceSearch::GetRestRelaxedFourID(const NextRelaxedFourInfo &next_four_info, vector<RestGainFourID> * const rest_gain_id_list) const
@@ -90,40 +97,29 @@ void FourSpaceSearch::GetRestRelaxedFourID(const NextRelaxedFourInfo &next_four_
     }
 
     for(const auto rest_min_id : reach_region_[rest_min]){
-      rest_gain_id_list->emplace_back(RestGainFourID(rest_max_id, rest_min_id));
+      rest_gain_id_list->emplace_back(rest_max_id, rest_min_id);
     }
   }
 }
 
-void FourSpaceSearch::GetReachableBit(const RelaxedFourID relaxed_four_id, MoveBitSet * const gain_bit, MoveBitSet * const cost_bit) const
+void FourSpaceSearch::GetReachIDSequence(const RelaxedFourID relaxed_four_id, vector<RelaxedFourID> * const id_list) const
 {
-  assert(gain_bit != nullptr);
-  assert(cost_bit != nullptr);
-  
+  set<RelaxedFourID> id_set;
+  GetReachIDSequence(relaxed_four_id, &id_set, id_list);
+}
+
+void FourSpaceSearch::GetReachIDSequence(const RelaxedFourID relaxed_four_id, set<RelaxedFourID> * const appeared_id_set, vector<RelaxedFourID> * const id_list) const
+{
   if(relaxed_four_id == kInvalidFourID){
     return;
   }
 
-  const RelaxedFour &relaxed_four = relaxed_four_list_[relaxed_four_id];
+  assert(appeared_id_set != nullptr);
+  assert(id_list != nullptr);
 
-  gain_bit->set(relaxed_four.GetGainPosition());
-  cost_bit->set(relaxed_four.GetCostPosition());
+  const auto find_it = appeared_id_set->find(relaxed_four_id);
 
-  const auto &rest_four_id_list = relaxed_four.GetRestPositionList();
-
-  for(const auto rest_four_id : rest_four_id_list){
-    GetReachableBit(rest_four_id, gain_bit, cost_bit);
-  }
-}
-
-void FourSpaceSearch::GetReachSequence(const RelaxedFourID relaxed_four_id, std::set<RelaxedFourID> * const reached_relaxed_four, MoveList * const move_list) const
-{
-  assert(reached_relaxed_four != nullptr);
-  assert(move_list != nullptr && move_list->empty());
-
-  const auto find_it = reached_relaxed_four->find(relaxed_four_id);
-
-  if(find_it != reached_relaxed_four->end()){
+  if(find_it != appeared_id_set->end()){
     return;
   }
 
@@ -131,33 +127,50 @@ void FourSpaceSearch::GetReachSequence(const RelaxedFourID relaxed_four_id, std:
   const auto &rest_four_id_list = relaxed_four.GetRestPositionList();
 
   for(const auto rest_four_id : rest_four_id_list){
-    MoveList rest_sequence;
-    GetReachSequence(rest_four_id, reached_relaxed_four, &rest_sequence);
+    vector<RelaxedFourID> rest_id_list;
+    GetReachIDSequence(rest_four_id, appeared_id_set, &rest_id_list);
 
-    *move_list += rest_sequence;
+    id_list->insert(id_list->end(), rest_id_list.begin(), rest_id_list.end());
   }
 
-  *move_list += relaxed_four.GetGainPosition();
-  *move_list += relaxed_four.GetCostPosition();
-  
-  reached_relaxed_four->insert(relaxed_four_id);
+  id_list->emplace_back(relaxed_four_id);
+  appeared_id_set->insert(relaxed_four_id);
 }
 
-const bool FourSpaceSearch::IsConflict(const MoveBitSet &gain_bit_1, const MoveBitSet &cost_bit_1, const MoveBitSet &gain_bit_2, const MoveBitSet &cost_bit_2)
+bool FourSpaceSearch::GetReachSequence(const RelaxedFourID relaxed_four_id, MoveList * const move_list) const
 {
-  if((gain_bit_1 & cost_bit_2).any()){
-    return true;
+  vector<RelaxedFourID> four_id_list;
+  GetReachIDSequence(relaxed_four_id, &four_id_list);
+  return GetReachSequence(four_id_list, move_list);
+}
+
+bool FourSpaceSearch::GetReachSequence(const vector<RelaxedFourID> &four_id_list, MoveList * const move_list) const{
+  assert(move_list != nullptr && move_list->empty());
+
+  array<RelaxedFourID, kMoveNum> put_four_id{{kInvalidFourID}};
+
+  for(const auto four_id : four_id_list){
+    const auto relaxed_four = relaxed_four_list_[four_id];
+    
+    const auto gain = relaxed_four.GetGainPosition();
+    const auto cost = relaxed_four.GetCostPosition();
+
+    if(put_four_id[gain] != kInvalidFourID && put_four_id[gain] != four_id){
+      return false;
+    }
+
+    if(put_four_id[cost] != kInvalidFourID && put_four_id[cost] != four_id){
+      return false;
+    }
+
+    put_four_id[gain] = four_id;
+    put_four_id[cost] = four_id;
+
+    *move_list += gain;
+    *move_list += cost;
   }
 
-  if((cost_bit_1 & gain_bit_2).any()){
-    return true;
-  }
-
-  if((cost_bit_1 & cost_bit_2).any()){
-    return true;
-  }
-
-  return false;
+  return true;
 }
 
 const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
@@ -165,25 +178,24 @@ const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
   size_t max_length = 0;
 
   for(size_t i=1, size=relaxed_four_list_.size(); i<size; i++){
-    MoveBitSet gain_bit, cost_bit;
-    
-    GetReachableBit(i, &gain_bit, &cost_bit);
-    const size_t length = gain_bit.count();
+    vector<RelaxedFourID> four_id_list;
+    GetReachIDSequence(i, &four_id_list);
+    const size_t length = four_id_list.size();
 
     max_length = max(max_length, length);
   }
 
   // todo delete
+/*
   vector<RelaxedFourID> leaf_id_list;
   EnumerateLeaf(&leaf_id_list);
 
   for(const auto leaf_id : leaf_id_list){
-    MoveBitSet gain_bit, cost_bit;
+    vector<RelaxedFourID> four_id_list;
+    GetReachIDSequence(leaf_id, &four_id_list);
     
-    GetReachableBit(leaf_id, &gain_bit, &cost_bit);
-    const size_t length = gain_bit.count();
+    const size_t length = four_id_list.size();
     
-//    if(length >= 1 && gain_bit[kMoveCD] && gain_bit[kMoveLA] && gain_bit[kMoveND]){
     if(length >= 30 && gain_bit[kMoveND] && gain_bit[kMoveLD] && gain_bit[kMoveOD] && gain_bit[kMoveMD] && gain_bit[kMoveAL]){
       MoveList debug;
       set<RelaxedFourID> empty;
@@ -204,7 +216,7 @@ const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
       cerr << ss.str() << endl << endl;
     }
   }
-
+*/
    return max_length;
 }
 

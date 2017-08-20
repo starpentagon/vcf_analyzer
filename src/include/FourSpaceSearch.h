@@ -69,7 +69,7 @@ private:
   //! @param gain_bit 着手済みの獲得路
   //! @param cost_bit 着手済みの損失路
   template<PlayerTurn P>
-  void UpdateReachPutRegion(const RelaxedFourID relaxed_four_id, MoveBitSet * const gain_bit, MoveBitSet * const cost_bit);
+  void UpdateReachPutRegion(const RelaxedFourID relaxed_four_id);
 
   //! 到達路1つ + 自石2つでRelaxed Fourを作る手を列挙する
   template<PlayerTurn P>
@@ -84,20 +84,24 @@ private:
   template<PlayerTurn P>
   void GetRelaxedFourFromThreeGainPosition(const MovePosition gain_position, std::vector<NextRelaxedFourInfo> * const next_four_info_list);
 
-  //! 開残路になりうる獲得路を求める
-  void GetRestableGainPositionList(const MovePosition gain_position, const BoardDirection direction, std::vector<MovePosition> * const restable_gain_list) const;
+  //! 指定位置の特定方向の近傍(開残路位置)に存在する獲得路を求める
+  //! @param gain_position 指定位置
+  //! @param direction 方向
+  //! @param restable_four_id_list 開残路位置にあるRelaxed FourID
+  //! @retval 開残路位置の数
+  size_t GetRestableRelaxedFourIDList(const MovePosition gain_position, const BoardDirection direction, std::vector<RelaxedFourID> * const restable_four_id_list) const;
 
   //! 開残路へ到達可能な獲得路ペアのリストを取得する
   void GetRestRelaxedFourID(const NextRelaxedFourInfo &next_four_info, std::vector<RestGainFourID> * const rest_gain_id_list) const;
 
-  //! Relaxed FourIDの到達路bitsetを求める
-  void GetReachableBit(const RelaxedFourID relaxed_four_id, MoveBitSet * const gain_bit, MoveBitSet * const cost_bit) const;
-
   //! Relaxed FourIDの到達路を求める
-  void GetReachSequence(const RelaxedFourID relaxed_four_id, std::set<RelaxedFourID> * const reached_relaxed_four, MoveList * const move_list) const;
+  //! @retval true 到達路を実現可能, false 競合しており実現不可能
+  bool GetReachSequence(const RelaxedFourID relaxed_four_id, MoveList * const move_list) const;
+  bool GetReachSequence(const std::vector<RelaxedFourID> &four_id_list, MoveList * const move_list) const;
 
-  //! 競合しているかチェックする
-  const bool IsConflict(const MoveBitSet &gain_bit_1, const MoveBitSet &cost_bit_1, const MoveBitSet &gain_bit_2, const MoveBitSet &cost_bit_2);
+  //! Relaxed FourIDの到達路(Relaxed FourIDリスト)を求める
+  void GetReachIDSequence(const RelaxedFourID relaxed_four_id, std::vector<RelaxedFourID> * const id_list) const;
+  void GetReachIDSequence(const RelaxedFourID relaxed_four_id, std::set<RelaxedFourID> * const appeared_id_set, std::vector<RelaxedFourID> * const id_list) const;
 
   //! 末端ノード(どの緩和四ノビの残路になっていない緩和四ノビ)を列挙する
   void EnumerateLeaf(std::vector<RelaxedFourID> * const leaf_id_list) const;

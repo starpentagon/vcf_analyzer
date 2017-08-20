@@ -35,6 +35,7 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/../../realcore/src/OpenState.cc
     ${CMAKE_SOURCE_DIR}/../../realcore/src/BoardOpenState.cc
     ${CMAKE_SOURCE_DIR}/../../realcore/src/BitBoard.cc
+    ${CMAKE_SOURCE_DIR}/../../realcore/src/BitSearch.cc
     ${CMAKE_SOURCE_DIR}/../../realcore/src/Board.cc
     ../../../src/VCFTranspositionTable.cc
     ../../../src/VCFAnalyzer.cc
