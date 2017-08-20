@@ -468,6 +468,53 @@ public:
     EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
   }
 
+  void GetReachSequenceTest(){
+    //   A B C D E F G H I J K L M N O 
+    // A + --------------------------o A 
+    // B | . . . . . . . . . . . . o | B 
+    // C x . . . . . . . . . . . . . | C 
+    // D | . . * . . . . . . . * . . | D 
+    // E | . x . . . . . . . . . . . | E 
+    // F | . . x o . . . . . . . . . | F 
+    // G | . . o . . . . . . . . . . | G 
+    // H | . . . . . . x . x . . . . | H 
+    // I | . . . . . . . . . . . . . | I 
+    // J | . . x o . . . . . . . . . | J 
+    // K | . x . . . . . . . . . . . | K 
+    // L | . . * . . . . . . . * . . | L 
+    // M x . . . . . . . . . . . . . | M 
+    // N | . . . . . . . . . . . . o o N 
+    // O + --------------------------o O 
+    //   A B C D E F G H I J K L M N O 
+    MoveList move_list("hhooacnnamoacenbckondfefdjejjhdg");
+    BitBoard bit_board(move_list);
+
+    FourSpaceSearch four_space_search(bit_board);
+    four_space_search.ExpandFourSpace<kBlackTurn>();
+
+    const auto &reach_point = four_space_search.reach_region_[kMoveEH];
+    ASSERT_FALSE(reach_point.empty());
+    
+    for(const auto four_id : reach_point){
+      MoveList reach_sequence;
+      set<RelaxedFourID> id_set;
+
+      cerr << four_id << endl;
+      four_space_search.GetReachSequence(four_id, &id_set, &reach_sequence);
+
+      set<MovePosition> same_check_set;
+
+      for(const auto move : reach_sequence){
+        if(same_check_set.find(move) != same_check_set.end()){
+          cerr << reach_sequence.str() << endl;
+        }
+
+        ASSERT_TRUE(same_check_set.find(move) == same_check_set.end());
+        same_check_set.insert(move);
+      }
+    }
+  }
+
   void UpdateMultiReachPathBlack()
   {
     //   A B C D E F G H I J K L M N O 
@@ -591,6 +638,11 @@ TEST_F(FourSpaceSearchTest, UpdateMultiExpandableFourBlack3Test)
 TEST_F(FourSpaceSearchTest, UpdateMultiReachPathBlackTest)
 {
   UpdateMultiReachPathBlack();
+}
+
+TEST_F(FourSpaceSearchTest, GetReachSequenceTest)
+{
+  GetReachSequenceTest();
 }
 
 TEST_F(FourSpaceSearchTest, UpdateDiffcultTenYearFeverTest)
