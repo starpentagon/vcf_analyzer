@@ -75,6 +75,14 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
   assert(GetState(cost_position) == kOpenPosition);
   SetState<T>(cost_position);
 
+  static size_t count = 0;
+
+  if(++count % 10 == 0){
+    std::cerr << count << std::endl;
+    std::cerr << "\tR-four count: " << GetRelaxedFourCount() << std::endl;
+    std::cerr << "\tR-four length: " << GetMaxRelaxedFourLength() << std::endl;
+  }
+
   // 新たに四ノビを作れるかチェックする
   LineNeighborhood line_neighborhood(gain_position, kOpenStateNeighborhoodSize, *this);
 

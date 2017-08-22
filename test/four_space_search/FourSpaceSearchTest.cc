@@ -642,7 +642,7 @@ TEST_F(FourSpaceSearchTest, GetReachSequenceTest)
 
 TEST_F(FourSpaceSearchTest, UpdateDiffcultTenYearFeverTest)
 {
-  //UpdateDiffcultTenYearFever();
+  UpdateDiffcultTenYearFever();
 }
 
 }
