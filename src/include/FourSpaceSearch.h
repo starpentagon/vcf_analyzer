@@ -9,6 +9,7 @@
 #include <array>
 #include <vector>
 #include <set>
+#include <stack>
 
 #include "RelaxedFour.h"
 #include "BitBoard.h"
@@ -106,10 +107,18 @@ private:
   //! 末端ノード(どの緩和四ノビの残路になっていない緩和四ノビ)を列挙する
   void EnumerateLeaf(std::vector<RelaxedFourID> * const leaf_id_list) const;
 
+  template<PositionState>
+  void SetState(const MovePosition move);
+
   std::vector<RelaxedFour> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
   
   ReachRegion reach_region_;    //! 到達領域
   PutRegion put_region_;        //! 設置領域
+
+  PlayerTurn attack_player_;     //! 詰め方(黒 or 白)
+
+  std::stack<ReachRegion> reach_region_stack_;
+  std::stack<PutRegion> put_region_stack_;
 };
 
 }   // namespace realcore

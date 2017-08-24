@@ -11,6 +11,7 @@ namespace realcore
 template<PlayerTurn P>
 void FourSpaceSearch::ExpandFourSpace(const std::vector<MovePair> &four_list)
 {
+  attack_player_ = P;
   std::vector<RelaxedFourID> null_rest_list;
 
   for(const auto &four : four_list){
@@ -127,6 +128,9 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
     std::vector<RestGainFourID> rest_gain_id_list;
     GetRestRelaxedFourID(next_four_info, &rest_gain_id_list);
 
+    // todo delete
+    size_t non_conflict_count = 0;
+
     for(const auto &rest_gain_id : rest_gain_id_list){
       const RelaxedFourID rest_max_id = rest_gain_id.first;
       const RelaxedFourID rest_min_id = rest_gain_id.second;
@@ -193,6 +197,8 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
         rest_id_list.emplace_back(rest_min_id);
       }
 
+      non_conflict_count++;
+
       const RelaxedFourID child_relaxed_four_id = AddRelaxedFour(next_gain, next_cost, rest_id_list);
       UpdateReachPutRegion<P>(child_relaxed_four_id);
 
@@ -200,6 +206,16 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
       for(const auto move : rest_sequence){
         SetState<kOpenPosition>(move);
       }
+    }
+
+    static size_t total_non_conflict = 0, total_count = 0;
+
+    total_non_conflict += non_conflict_count;
+    total_count += rest_gain_id_list.size();
+
+    if(count % 10 == 0){
+      std::cerr << 1.0 * total_non_conflict / total_count << " = " << total_non_conflict << " / " << total_count;
+      std::cerr << " spot: " << non_conflict_count << " / " << rest_gain_id_list.size() << std::endl;
     }
   }
 
@@ -310,6 +326,79 @@ void FourSpaceSearch::GetRelaxedFourFromThreeGainPosition(const MovePosition gai
 inline const size_t FourSpaceSearch::GetRelaxedFourCount() const{
   return relaxed_four_list_.size() - 1;
 }
+
+template<PositionState S>
+inline void FourSpaceSearch::SetState(const MovePosition move)
+{
+  if(S == kOpenPosition){
+    reach_region_stack_.pop();
+    reach_region_ = reach_region_stack_.top();
+
+    put_region_stack_.pop();
+    put_region_ = put_region_stack_.top();
+  }else{
+    reach_region_stack_.push(reach_region_);
+    put_region_stack_.push(put_region_);
+/*
+    for(auto &reach_id_list : reach_region_){
+      std::vector<RelaxedFourID> non_conflict_id_list;
+
+      for(const auto four_id : reach_id_list){
+        RelaxedFour &relaxed_four = relaxed_four_list_[four_id];
+
+        if(S == GetPlayerStone(attack_player_) && relaxed_four.GetGainPosition() == move){
+          non_conflict_id_list.emplace_back(four_id);
+          continue;
+        }else if(S == GetPlayerStone(GetOpponentTurn(attack_player_)) && relaxed_four.GetCostPosition() == move){
+          non_conflict_id_list.emplace_back(four_id);
+          continue;
+        }
+
+        MoveList reach_sequence;
+        const bool is_reachable = GetReachSequence(four_id, &reach_sequence);
+
+        if(!is_reachable){
+          //continue;
+        }
+
+        if(find(reach_sequence.begin(), reach_sequence.end(), move) != reach_sequence.end()){
+          //continue;
+        }
+
+        non_conflict_id_list.emplace_back(four_id);
+      }
+
+      assert(reach_id_list == non_conflict_id_list);
+      reach_id_list = non_conflict_id_list;
+    }
+
+    for(auto &put_id_list : put_region_){
+      std::vector<RelaxedFourID> non_conflict_id_list;
+
+      for(const auto four_id : put_id_list){
+        MoveList reach_sequence;
+        const bool is_reachable = GetReachSequence(four_id, &reach_sequence);
+
+        if(!is_reachable){
+          //continue;
+        }
+
+        if(find(reach_sequence.begin(), reach_sequence.end(), move) != reach_sequence.end()){
+          //continue;
+        }
+
+        non_conflict_id_list.emplace_back(four_id);
+      }
+
+      assert(put_id_list == non_conflict_id_list);
+      put_id_list = non_conflict_id_list;
+    }
+*/
+  }
+
+  BitBoard::SetState<S>(move);
+}
+
 
 }   // namespace realcore
 

@@ -6,7 +6,7 @@ using namespace std;
 namespace realcore{
 
 FourSpaceSearch::FourSpaceSearch(const BitBoard &bit_board)
-: BitBoard(bit_board)
+: BitBoard(bit_board), attack_player_(kBlackTurn)
 {
   vector<RelaxedFourID> null_rest_list;
   
@@ -14,6 +14,9 @@ FourSpaceSearch::FourSpaceSearch(const BitBoard &bit_board)
   relaxed_four_list_.emplace_back(
     kNullMove, kNullMove, null_rest_list
   );
+
+  reach_region_stack_.push(reach_region_);
+  put_region_stack_.push(put_region_);
 }
 
 const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const MovePosition gain_position, const MovePosition cost_position, const std::vector<RelaxedFourID> &rest_list)
