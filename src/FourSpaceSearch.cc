@@ -15,8 +15,7 @@ FourSpaceSearch::FourSpaceSearch(const BitBoard &bit_board)
     kNullMove, kNullMove, null_rest_list
   );
 
-  reach_region_stack_.push(reach_region_);
-  put_region_stack_.push(put_region_);
+  relaxed_four_conflict_flag_.push_back(0);
 }
 
 const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const MovePosition gain_position, const MovePosition cost_position, const std::vector<RelaxedFourID> &rest_list)
@@ -25,13 +24,16 @@ const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const MovePosition gain_posi
     gain_position, cost_position, rest_list
   );
 
+  relaxed_four_conflict_flag_.push_back(0);
+
   return relaxed_four_list_.size() - 1;
 }
 
 const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const RelaxedFour &relaxed_four)
 {
   relaxed_four_list_.emplace_back(relaxed_four);
-
+  relaxed_four_conflict_flag_.push_back(0);
+  
   return relaxed_four_list_.size() - 1;
 }
 
@@ -94,12 +96,20 @@ void FourSpaceSearch::GetRestRelaxedFourID(const NextRelaxedFourInfo &next_four_
   assert(rest_max != kNullMove);
 
   for(const auto rest_max_id : reach_region_[rest_max]){
+    if(relaxed_four_conflict_flag_[rest_max_id] == 1){
+      continue;
+    }
+
     if(rest_min == kNullMove){
       rest_gain_id_list->emplace_back(RestGainFourID(rest_max_id, kInvalidFourID));
       continue;
     }
 
     for(const auto rest_min_id : reach_region_[rest_min]){
+      if(relaxed_four_conflict_flag_[rest_min_id] == 1){
+        continue;
+      }
+
       rest_gain_id_list->emplace_back(rest_max_id, rest_min_id);
     }
   }
@@ -189,7 +199,6 @@ const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
   }
 
   // todo delete
-/*
   vector<RelaxedFourID> leaf_id_list;
   EnumerateLeaf(&leaf_id_list);
 
@@ -199,10 +208,9 @@ const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
     
     const size_t length = four_id_list.size();
     
-    if(length >= 30 && gain_bit[kMoveND] && gain_bit[kMoveLD] && gain_bit[kMoveOD] && gain_bit[kMoveMD] && gain_bit[kMoveAL]){
+    if(length >= 39){
       MoveList debug;
-      set<RelaxedFourID> empty;
-      GetReachSequence(leaf_id, &empty, &debug);
+      GetReachSequence(leaf_id, &debug);
 
       MoveList board("hhgigjfgjjfjeeifhkijlijhllefcjejhmdgmcdjmkjdbblkbefmblgmdnimibjcnbjmaemhaibgambnbocncahbcojndokbeankganljoabkaacmaadoafoochaoeonokoo");
       MoveTree proof;
@@ -219,8 +227,8 @@ const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
       cerr << ss.str() << endl << endl;
     }
   }
-*/
-   return max_length;
+
+  return max_length;
 }
 
 void FourSpaceSearch::EnumerateLeaf(vector<RelaxedFourID> * const leaf_id_list) const

@@ -111,14 +111,13 @@ private:
   void SetState(const MovePosition move);
 
   std::vector<RelaxedFour> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
+  std::vector<std::uint8_t> relaxed_four_conflict_flag_;  //! relaxed_four_conflict_flag_[RelaxedFourID] : 1 -> 現局面でconflict
+  std::stack< std::vector<std::uint8_t> > relaxed_four_conflict_flag_stack_;
   
   ReachRegion reach_region_;    //! 到達領域
   PutRegion put_region_;        //! 設置領域
 
   PlayerTurn attack_player_;     //! 詰め方(黒 or 白)
-
-  std::stack<ReachRegion> reach_region_stack_;
-  std::stack<PutRegion> put_region_stack_;
 };
 
 }   // namespace realcore

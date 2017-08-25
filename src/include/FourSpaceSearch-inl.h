@@ -331,69 +331,33 @@ template<PositionState S>
 inline void FourSpaceSearch::SetState(const MovePosition move)
 {
   if(S == kOpenPosition){
-    reach_region_stack_.pop();
-    reach_region_ = reach_region_stack_.top();
+    const auto &previous_conflict_flag = relaxed_four_conflict_flag_stack_.top();
 
-    put_region_stack_.pop();
-    put_region_ = put_region_stack_.top();
+    for(size_t i=0, size=previous_conflict_flag.size(); i<size; i++){
+      relaxed_four_conflict_flag_[i] = previous_conflict_flag[i];
+    }
+
+    relaxed_four_conflict_flag_stack_.pop();
   }else{
-    reach_region_stack_.push(reach_region_);
-    put_region_stack_.push(put_region_);
-/*
-    for(auto &reach_id_list : reach_region_){
-      std::vector<RelaxedFourID> non_conflict_id_list;
+    relaxed_four_conflict_flag_stack_.push(relaxed_four_conflict_flag_);
 
-      for(const auto four_id : reach_id_list){
-        RelaxedFour &relaxed_four = relaxed_four_list_[four_id];
+    for(size_t four_id=1, size=relaxed_four_list_.size(); four_id<size; four_id++){
+      const auto relaxed_four = relaxed_four_list_[four_id];
 
-        if(S == GetPlayerStone(attack_player_) && relaxed_four.GetGainPosition() == move){
-          non_conflict_id_list.emplace_back(four_id);
-          continue;
-        }else if(S == GetPlayerStone(GetOpponentTurn(attack_player_)) && relaxed_four.GetCostPosition() == move){
-          non_conflict_id_list.emplace_back(four_id);
-          continue;
-        }
-
-        MoveList reach_sequence;
-        const bool is_reachable = GetReachSequence(four_id, &reach_sequence);
-
-        if(!is_reachable){
-          //continue;
-        }
-
-        if(find(reach_sequence.begin(), reach_sequence.end(), move) != reach_sequence.end()){
-          //continue;
-        }
-
-        non_conflict_id_list.emplace_back(four_id);
+      if(relaxed_four.GetGainPosition() == move || relaxed_four.GetCostPosition() == move){
+        relaxed_four_conflict_flag_[four_id] = 1;
+        continue;
       }
 
-      assert(reach_id_list == non_conflict_id_list);
-      reach_id_list = non_conflict_id_list;
-    }
+      const auto &rest_four_id_list = relaxed_four.GetRestPositionList();
 
-    for(auto &put_id_list : put_region_){
-      std::vector<RelaxedFourID> non_conflict_id_list;
-
-      for(const auto four_id : put_id_list){
-        MoveList reach_sequence;
-        const bool is_reachable = GetReachSequence(four_id, &reach_sequence);
-
-        if(!is_reachable){
-          //continue;
+      for(const auto rest_four_id : rest_four_id_list){
+        if(relaxed_four_conflict_flag_[rest_four_id] == 1){
+          relaxed_four_conflict_flag_[four_id] = 1;
+          break;
         }
-
-        if(find(reach_sequence.begin(), reach_sequence.end(), move) != reach_sequence.end()){
-          //continue;
-        }
-
-        non_conflict_id_list.emplace_back(four_id);
       }
-
-      assert(put_id_list == non_conflict_id_list);
-      put_id_list = non_conflict_id_list;
     }
-*/
   }
 
   BitBoard::SetState<S>(move);
