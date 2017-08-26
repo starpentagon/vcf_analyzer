@@ -76,12 +76,32 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
   assert(GetState(cost_position) == kOpenPosition);
   SetState<T>(cost_position);
 
+  const HashValue hash_value = CalcHashValue(search_sequence_);
+  const auto find_it = transposition_set_.find(hash_value);
+
+  if(find_it != transposition_set_.end()){
+    SetState<kOpenPosition>(gain_position);
+    SetState<kOpenPosition>(cost_position);
+    return;
+  }
+
   static size_t count = 0;
 
   if(++count % 10 == 0){
     std::cerr << count << std::endl;
     std::cerr << "\tR-four count: " << GetRelaxedFourCount() << std::endl;
     std::cerr << "\tR-four length: " << GetMaxRelaxedFourLength() << std::endl;
+
+    for(const auto move : GetAllInBoardMove()){
+      Cordinate x, y;
+      GetMoveCordinate(move, &x, &y);
+
+      std::cerr << reach_region_[move].size() << ",";
+
+      if(x == 15){
+        std::cerr << std::endl;
+      }
+    }
   }
 
   // 新たに四ノビを作れるかチェックする
@@ -214,10 +234,12 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
     total_count += rest_gain_id_list.size();
 
     if(count % 10 == 0){
-      std::cerr << 1.0 * total_non_conflict / total_count << " = " << total_non_conflict << " / " << total_count;
-      std::cerr << " spot: " << non_conflict_count << " / " << rest_gain_id_list.size() << std::endl;
+      //std::cerr << 1.0 * total_non_conflict / total_count << " = " << total_non_conflict << " / " << total_count;
+      //std::cerr << " spot: " << non_conflict_count << " / " << rest_gain_id_list.size() << std::endl;
     }
   }
+
+  transposition_set_.insert(hash_value);
 
   SetState<kOpenPosition>(gain_position);
   SetState<kOpenPosition>(cost_position);
@@ -338,6 +360,8 @@ inline void FourSpaceSearch::SetState(const MovePosition move)
     }
 
     relaxed_four_conflict_flag_stack_.pop();
+
+    --search_sequence_;
   }else{
     relaxed_four_conflict_flag_stack_.push(relaxed_four_conflict_flag_);
 
@@ -358,6 +382,8 @@ inline void FourSpaceSearch::SetState(const MovePosition move)
         }
       }
     }
+
+    search_sequence_ += move;
   }
 
   BitBoard::SetState<S>(move);

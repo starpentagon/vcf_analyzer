@@ -13,6 +13,7 @@
 
 #include "RelaxedFour.h"
 #include "BitBoard.h"
+#include "HashTable.h"
 
 namespace realcore{
 
@@ -118,6 +119,8 @@ private:
   PutRegion put_region_;        //! 設置領域
 
   PlayerTurn attack_player_;     //! 詰め方(黒 or 白)
+  MoveList search_sequence_;    //! 探索手順
+  std::set<HashValue> transposition_set_;   //! 置換表
 };
 
 }   // namespace realcore

@@ -1,4 +1,7 @@
+#include <set>  // todo delete
+
 #include "MoveTree.h"   // todo delete
+#include "HashTable.h"   // todo delete
 #include "FourSpaceSearch.h"
 
 using namespace std;
@@ -26,6 +29,33 @@ const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const MovePosition gain_posi
 
   relaxed_four_conflict_flag_.push_back(0);
 
+  // todo delete
+  vector<HashValue> hash_value_list;
+  static size_t count = 0;
+
+  for(size_t four_id=1, size=relaxed_four_list_.size(); four_id<size; four_id++){
+    MoveList move_list;
+    GetReachSequence(four_id, &move_list);
+
+    const auto hash_value = CalcHashValue(move_list);
+
+    if(four_id == size - 1){
+      const auto find_it = find(hash_value_list.begin(), hash_value_list.end(), hash_value);
+
+      if(find_it != hash_value_list.end()){
+        const auto index = distance(hash_value_list.begin(), find_it) + 1;
+        cerr << "same hash value: " << ++count << " size: " << size - 1 << endl;
+        cerr << "\t" << move_list.str() << endl;
+
+        MoveList same_list;
+        GetReachSequence(index, &same_list);
+        cerr << "\t" << same_list.str() << endl;
+      }
+    }
+
+    hash_value_list.push_back(hash_value);
+  }
+
   return relaxed_four_list_.size() - 1;
 }
 
@@ -34,7 +64,23 @@ const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const RelaxedFour &relaxed_f
   relaxed_four_list_.emplace_back(relaxed_four);
   relaxed_four_conflict_flag_.push_back(0);
   
-  return relaxed_four_list_.size() - 1;
+  // todo delete
+  set<HashValue> hash_value_set;
+  
+    for(size_t four_id=1, size=relaxed_four_list_.size(); four_id<size; four_id++){
+      MoveList move_list;
+      GetReachSequence(four_id, &move_list);
+  
+      const auto hash_value = CalcHashValue(move_list);
+  
+      if(four_id == size - 1 && hash_value_set.find(hash_value) != hash_value_set.end()){
+          cerr << "same hash value" << endl;
+      }
+  
+      hash_value_set.insert(hash_value);
+    }
+
+    return relaxed_four_list_.size() - 1;
 }
 
 size_t FourSpaceSearch::GetRestableRelaxedFourIDList(const MovePosition gain_position, const BoardDirection direction, std::vector<RelaxedFourID> * const restable_four_id_list) const
@@ -208,7 +254,7 @@ const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
     
     const size_t length = four_id_list.size();
     
-    if(length >= 39){
+    if(length >= 80){
       MoveList debug;
       GetReachSequence(leaf_id, &debug);
 
