@@ -85,6 +85,7 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
     return;
   }
 
+  // todo delete
   static size_t count = 0;
 
   if(++count % 10 == 0){
@@ -102,6 +103,14 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
         std::cerr << std::endl;
       }
     }
+  }
+
+  // todo delete
+  if(count >= 1 * 1000){
+    std::cerr << "--- Terminated!!! ---" << std::endl;
+    SetState<kOpenPosition>(gain_position);
+    SetState<kOpenPosition>(cost_position);
+    return;
   }
 
   // 新たに四ノビを作れるかチェックする
@@ -136,7 +145,7 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
     const MovePosition next_cost = std::get<1>(next_four_info);
     const MovePosition rest_max = std::get<2>(next_four_info);
     const MovePosition rest_min = std::get<3>(next_four_info);
-    
+
     if(rest_max == kNullMove && rest_min == kNullMove){
       // 到達路 + 自石2つのため別の到達路を展開する必要はない
       const RelaxedFourID child_relaxed_four_id = AddRelaxedFour(next_gain, next_cost, child_rest_list);
@@ -234,8 +243,8 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
     total_count += rest_gain_id_list.size();
 
     if(count % 10 == 0){
-      //std::cerr << 1.0 * total_non_conflict / total_count << " = " << total_non_conflict << " / " << total_count;
-      //std::cerr << " spot: " << non_conflict_count << " / " << rest_gain_id_list.size() << std::endl;
+      std::cerr << 1.0 * total_non_conflict / total_count << " = " << total_non_conflict << " / " << total_count;
+      std::cerr << " spot: " << non_conflict_count << " / " << rest_gain_id_list.size() << std::endl;
     }
   }
 
@@ -368,9 +377,16 @@ inline void FourSpaceSearch::SetState(const MovePosition move)
     for(size_t four_id=1, size=relaxed_four_list_.size(); four_id<size; four_id++){
       const auto relaxed_four = relaxed_four_list_[four_id];
 
-      if(relaxed_four.GetGainPosition() == move || relaxed_four.GetCostPosition() == move){
-        relaxed_four_conflict_flag_[four_id] = 1;
-        continue;
+      if(S == GetPlayerStone(attack_player_)){
+        if(relaxed_four.GetCostPosition() == move){
+          relaxed_four_conflict_flag_[four_id] = 1;
+          continue;
+        }
+      }else{
+        if(relaxed_four.GetGainPosition() == move){
+          relaxed_four_conflict_flag_[four_id] = 1;
+          continue;
+        }
       }
 
       const auto &rest_four_id_list = relaxed_four.GetRestPositionList();

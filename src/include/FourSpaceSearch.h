@@ -9,6 +9,7 @@
 #include <array>
 #include <vector>
 #include <set>
+#include <map>
 #include <stack>
 
 #include "RelaxedFour.h"
@@ -112,6 +113,8 @@ private:
   void SetState(const MovePosition move);
 
   std::vector<RelaxedFour> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
+  std::map<HashValue, RelaxedFourID> relaxed_four_transposition_map_;    //! relaxed_fourの置換表
+
   std::vector<std::uint8_t> relaxed_four_conflict_flag_;  //! relaxed_four_conflict_flag_[RelaxedFourID] : 1 -> 現局面でconflict
   std::stack< std::vector<std::uint8_t> > relaxed_four_conflict_flag_stack_;
   

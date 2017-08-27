@@ -582,6 +582,24 @@ public:
     cerr << "R-four count: " << four_space_search.GetRelaxedFourCount() << endl;
     //cerr << "R-four length: " << four_space_search.GetMaxRelaxedFourLength() << endl;
     EXPECT_TRUE(four_space_search.GetMaxRelaxedFourLength() >= 73);
+
+    vector<MovePosition> answer{
+      kMoveND, kMoveLD, kMoveOD, kMoveMD, kMoveME, kMoveMF, kMoveLF, kMoveOG, kMoveNF, kMoveKF,
+      kMoveEO, kMoveAK, kMoveAL, kMoveDA, kMoveBA, kMoveBD, kMoveCC, kMoveDD, kMoveCE, kMoveCD,
+      kMoveCG, kMoveDF, kMoveGC, kMoveEC, kMoveAG, kMoveAH, kMoveFC, kMoveEB, kMoveGD, kMoveGE,
+      kMoveHC, kMoveFE, kMoveNE, kMoveLG, kMoveLA, kMoveLE, kMoveJE, kMoveGF, kMoveIH, kMoveHG,
+      kMoveHI, kMoveEL, kMoveBI, kMoveFH, kMoveEH, kMoveDI, kMoveCI, kMoveCK, kMoveDL, kMoveFI,
+      kMoveEM, kMoveFN, kMoveEN, kMoveHN, kMoveGK, kMoveKK, kMoveIK, kMoveHL, kMoveNH, kMoveMI,
+      kMoveKI, kMoveOI, kMoveOJ, kMoveOM, kMoveMM, kMoveKM, kMoveNM, kMoveKL, kMoveML, kMoveMO,
+      kMoveLN, kMoveKO, kMoveLO
+    };
+
+    for(const auto move : answer){
+      if(four_space_search.reach_region_[move].empty()){
+        cerr << MoveString(move) << endl;
+        //EXPECT_TRUE(!four_space_search.reach_region_[move].empty());
+      }
+    }
   }
 };
 
