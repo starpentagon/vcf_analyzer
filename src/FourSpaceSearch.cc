@@ -30,7 +30,10 @@ const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const MovePosition gain_posi
   relaxed_four_conflict_flag_.push_back(0);
 
   const RelaxedFourID four_id = relaxed_four_list_.size() - 1;
-  
+
+  // todo 要 同一性の定義
+  return four_id;
+    
   MoveList move_list;
   GetReachSequence(four_id, &move_list);
   const auto hash_value = CalcHashValue(move_list);
@@ -54,9 +57,12 @@ const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const RelaxedFour &relaxed_f
 {
   relaxed_four_list_.emplace_back(relaxed_four);
   relaxed_four_conflict_flag_.push_back(0);
-  
+
   const RelaxedFourID four_id = relaxed_four_list_.size() - 1;
   
+  // todo 要 同一性の定義
+  return four_id;
+
   MoveList move_list;
   GetReachSequence(four_id, &move_list);
   const auto hash_value = CalcHashValue(move_list);

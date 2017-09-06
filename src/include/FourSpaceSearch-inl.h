@@ -106,7 +106,7 @@ void FourSpaceSearch::UpdateReachPutRegion(const RelaxedFourID relaxed_four_id)
   }
 
   // todo delete
-  if(count >= 1 * 1000){
+  if(count >= 15 * 1000){
     std::cerr << "--- Terminated!!! ---" << std::endl;
     SetState<kOpenPosition>(gain_position);
     SetState<kOpenPosition>(cost_position);
