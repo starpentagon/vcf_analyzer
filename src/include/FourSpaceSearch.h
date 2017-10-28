@@ -65,7 +65,7 @@ public:
 private:
   //! Relaxed Fourのデータを追加する
   const RelaxedFourID AddRelaxedFour(const RelaxedFour &relaxed_four);
-  const RelaxedFourID AddRelaxedFour(const MovePosition gain_position, const MovePosition cost_position, const std::vector<RelaxedFourID> &rest_list);
+  const RelaxedFourID AddRelaxedFour(const MovePosition gain_position, const MovePosition cost_position, const std::vector<MovePosition> &rest_list);
 
   //! 到達領域、設置領域を更新する
   //! @param relaxed_four_id ID
@@ -112,16 +112,26 @@ private:
   template<PositionState>
   void SetState(const MovePosition move);
 
-  std::vector<RelaxedFour> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
-  std::map<HashValue, RelaxedFourID> relaxed_four_transposition_map_;    //! relaxed_fourの置換表
+  //! 獲得路の実現に必要な依存路の着手(獲得路/損失路)を求める
+  //! @note 依存路の探索は深さ１に限定
+  void GetDependentReachMove(const RelaxedFourID relaxed_four_id, std::vector<std::vector<MovePair>> * const move_pair_vector) const;
 
-  std::vector<std::uint8_t> relaxed_four_conflict_flag_;  //! relaxed_four_conflict_flag_[RelaxedFourID] : 1 -> 現局面でconflict
-  std::stack< std::vector<std::uint8_t> > relaxed_four_conflict_flag_stack_;
+  //! 獲得路に対応する損失路のリストを返す
+  //! @param gain_move 獲得路
+  //! @param const_move_list 損失路のリスト
+  void GetCostMoveList(const MovePosition gain_move, MoveList * const cost_move_list) const;
+
+  //! 展開済みの変化かチェックする
+  const bool IsExpanded(const RelaxedFourID relaxed_four_id) const;
+
+  std::vector<RelaxedFour> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
+  std::map<std::uint64_t, RelaxedFourID> relaxed_four_transposition_map_;    //! relaxed_fourの置換表
+  std::array< std::set<std::uint64_t>, kMoveNum> expanded_relaxed_four_;    //! 獲得路ごとのすでに展開済みのパターン(獲得路、損失路、依存路の獲得路/損失路)
   
   ReachRegion reach_region_;    //! 到達領域
   PutRegion put_region_;        //! 設置領域
 
-  PlayerTurn attack_player_;     //! 詰め方(黒 or 白)
+  PlayerTurn attack_player_;    //! 詰め方(黒 or 白)
   MoveList search_sequence_;    //! 探索手順
   std::set<HashValue> transposition_set_;   //! 置換表
 };

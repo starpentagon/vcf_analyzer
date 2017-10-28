@@ -22,7 +22,7 @@ public:
   //! @param gain 獲得路
   //! @param cost 損失路
   //! @param rest 開残路に着手する緩和四ノビのID
-  RelaxedFour(const MovePosition gain, const MovePosition cost, const std::vector<RelaxedFourID> &rest_list);
+  RelaxedFour(const MovePosition gain, const MovePosition cost, const std::vector<MovePosition> &rest_list);
 
   //! コピーコンストラクタ
   RelaxedFour(const RelaxedFour &relaxed_four);
@@ -44,15 +44,18 @@ public:
     return cost_;
   }
 
-  //! 開残路の緩和四ノビIDを取得する
-  const std::vector<RelaxedFourID>& GetRestPositionList() const{
+  //! 開残路の位置を取得する
+  const std::vector<MovePosition>& GetRestPositionList() const{
     return rest_list_;
   }
+
+  //! Relaxed Fourのキーを返す
+  const std::uint64_t GetKey() const;
 
 private:
   MovePosition gain_;            //!< 獲得路
   MovePosition cost_;            //!< 損失路
-  std::vector<RelaxedFourID> rest_list_;  //!< 開残路リスト
+  std::vector<MovePosition> rest_list_;  //!< 開残路リスト
 };
 
 }   // namespace realcore

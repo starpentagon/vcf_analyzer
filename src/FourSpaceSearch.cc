@@ -11,73 +11,34 @@ namespace realcore{
 FourSpaceSearch::FourSpaceSearch(const BitBoard &bit_board)
 : BitBoard(bit_board), attack_player_(kBlackTurn)
 {
-  vector<RelaxedFourID> null_rest_list;
+  vector<MovePosition> null_rest_list;
   
   // kInvalidFourID用にダミーデータを設定する
   relaxed_four_list_.emplace_back(
     kNullMove, kNullMove, null_rest_list
   );
-
-  relaxed_four_conflict_flag_.push_back(0);
 }
 
-const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const MovePosition gain_position, const MovePosition cost_position, const std::vector<RelaxedFourID> &rest_list)
+const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const MovePosition gain_position, const MovePosition cost_position, const vector<MovePosition> &rest_list)
 {
-  relaxed_four_list_.emplace_back(
-    gain_position, cost_position, rest_list
-  );
-
-  relaxed_four_conflict_flag_.push_back(0);
-
-  const RelaxedFourID four_id = relaxed_four_list_.size() - 1;
-
-  // todo 要 同一性の定義
-  return four_id;
-    
-  MoveList move_list;
-  GetReachSequence(four_id, &move_list);
-  const auto hash_value = CalcHashValue(move_list);
-
-  const auto find_it = relaxed_four_transposition_map_.find(hash_value);
-
-  if(find_it != relaxed_four_transposition_map_.end()){
-    // 登録済みの場合
-    relaxed_four_list_.pop_back();
-    relaxed_four_conflict_flag_.pop_back();
-
-    return find_it->second;
-  }
-
-  relaxed_four_transposition_map_.insert(pair<HashValue, RelaxedFourID>(hash_value, four_id));
-
-  return four_id;
+  RelaxedFour relaxed_four(gain_position, cost_position, rest_list);
+  return AddRelaxedFour(relaxed_four);
 }
 
 const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const RelaxedFour &relaxed_four)
 {
-  relaxed_four_list_.emplace_back(relaxed_four);
-  relaxed_four_conflict_flag_.push_back(0);
-
-  const RelaxedFourID four_id = relaxed_four_list_.size() - 1;
-  
-  // todo 要 同一性の定義
-  return four_id;
-
-  MoveList move_list;
-  GetReachSequence(four_id, &move_list);
-  const auto hash_value = CalcHashValue(move_list);
-
-  const auto find_it = relaxed_four_transposition_map_.find(hash_value);
+  const auto key = relaxed_four.GetKey();
+  const auto find_it = relaxed_four_transposition_map_.find(key);
 
   if(find_it != relaxed_four_transposition_map_.end()){
     // 登録済みの場合
-    relaxed_four_list_.pop_back();
-    relaxed_four_conflict_flag_.pop_back();
-
     return find_it->second;
   }
 
-  relaxed_four_transposition_map_.insert(pair<HashValue, RelaxedFourID>(hash_value, four_id));
+  relaxed_four_list_.emplace_back(relaxed_four);
+
+  const RelaxedFourID four_id = relaxed_four_list_.size() - 1;
+  relaxed_four_transposition_map_.insert(pair<uint64_t, RelaxedFourID>(key, four_id));
 
   return four_id;
 }
@@ -131,43 +92,20 @@ size_t FourSpaceSearch::GetRestableRelaxedFourIDList(const MovePosition gain_pos
   return open_rest_count;
 }
 
-void FourSpaceSearch::GetRestRelaxedFourID(const NextRelaxedFourInfo &next_four_info, vector<RestGainFourID> * const rest_gain_id_list) const
-{
-  assert(rest_gain_id_list != nullptr);
-
-  const MovePosition rest_max = get<2>(next_four_info);
-  const MovePosition rest_min = get<3>(next_four_info);
-  
-  assert(rest_max != kNullMove);
-
-  for(const auto rest_max_id : reach_region_[rest_max]){
-    if(relaxed_four_conflict_flag_[rest_max_id] == 1){
-      continue;
-    }
-
-    if(rest_min == kNullMove){
-      rest_gain_id_list->emplace_back(RestGainFourID(rest_max_id, kInvalidFourID));
-      continue;
-    }
-
-    for(const auto rest_min_id : reach_region_[rest_min]){
-      if(relaxed_four_conflict_flag_[rest_min_id] == 1){
-        continue;
-      }
-
-      rest_gain_id_list->emplace_back(rest_max_id, rest_min_id);
-    }
-  }
-}
-
 void FourSpaceSearch::GetReachIDSequence(const RelaxedFourID relaxed_four_id, vector<RelaxedFourID> * const id_list) const
 {
+  // todo implement
+  return;
+
   set<RelaxedFourID> id_set;
   GetReachIDSequence(relaxed_four_id, &id_set, id_list);
 }
 
 void FourSpaceSearch::GetReachIDSequence(const RelaxedFourID relaxed_four_id, set<RelaxedFourID> * const appeared_id_set, vector<RelaxedFourID> * const id_list) const
 {
+  // todo implement
+  return;
+
   if(relaxed_four_id == kInvalidFourID){
     return;
   }
@@ -197,12 +135,18 @@ void FourSpaceSearch::GetReachIDSequence(const RelaxedFourID relaxed_four_id, se
 
 bool FourSpaceSearch::GetReachSequence(const RelaxedFourID relaxed_four_id, MoveList * const move_list) const
 {
+  // todo implement
+  return false;
+
   vector<RelaxedFourID> four_id_list;
   GetReachIDSequence(relaxed_four_id, &four_id_list);
   return GetReachSequence(four_id_list, move_list);
 }
 
 bool FourSpaceSearch::GetReachSequence(const vector<RelaxedFourID> &four_id_list, MoveList * const move_list) const{
+  // todo implement
+  return false;
+
   assert(move_list != nullptr && move_list->empty());
 
   array<RelaxedFourID, kMoveNum> put_four_id{{kInvalidFourID}};
@@ -233,6 +177,9 @@ bool FourSpaceSearch::GetReachSequence(const vector<RelaxedFourID> &four_id_list
 
 const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
 {
+  // todo implement
+  return 0;
+
   size_t max_length = 0;
 
   for(size_t i=1, size=relaxed_four_list_.size(); i<size; i++){
@@ -278,6 +225,9 @@ const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
 
 void FourSpaceSearch::EnumerateLeaf(vector<RelaxedFourID> * const leaf_id_list) const
 {
+  // todo implement
+  return;
+
   assert(leaf_id_list != nullptr);
   set<RelaxedFourID> dependent_node;
 
@@ -294,6 +244,163 @@ void FourSpaceSearch::EnumerateLeaf(vector<RelaxedFourID> * const leaf_id_list) 
     if(dependent_node.find(i) == dependent_node.end()){
       leaf_id_list->emplace_back(i);
     }
+  }
+}
+
+const bool FourSpaceSearch::IsExpanded(const RelaxedFourID relaxed_four_id) const
+{
+  const auto &relaxed_four = relaxed_four_list_[relaxed_four_id];
+  const auto gain_position = relaxed_four.GetGainPosition();
+
+  const auto &reachable_four_list = reach_region_[gain_position];
+  const auto find_it = find(reachable_four_list.begin(), reachable_four_list.end(), relaxed_four_id);
+
+  return find_it != reachable_four_list.end();
+}
+
+void FourSpaceSearch::GetDependentReachMove(const RelaxedFourID relaxed_four_id, vector<vector<MovePair>> * const move_pair_vector) const
+{
+  assert(move_pair_vector != nullptr);
+
+  const auto &relaxed_four = relaxed_four_list_[relaxed_four_id];
+  const auto &rest_move_list = relaxed_four.GetRestPositionList();
+  MoveList cost_move_list[3];
+  const auto size = rest_move_list.size();
+
+  for(size_t i=0; i<size; i++){
+    const auto rest_move = rest_move_list[i];
+    GetCostMoveList(rest_move, &(cost_move_list[i]));
+  }
+
+  MoveBitSet conflict_bit;
+
+  const auto gain_move = relaxed_four.GetGainPosition();
+  const auto cost_move = relaxed_four.GetCostPosition();
+  MovePair four_pair(gain_move, cost_move);
+  
+  conflict_bit.set(gain_move);
+  conflict_bit.set(cost_move);
+
+  if(size == 0){
+    const vector<MovePair> move_pair_list{four_pair};
+    move_pair_vector->emplace_back(move_pair_list);
+  }else if(size == 1){
+    const auto rest_move_0 = rest_move_list[0];
+
+    if(!conflict_bit[rest_move_0]){
+      for(const auto rest_cost_move_0 : cost_move_list[0]){
+        if(conflict_bit[rest_cost_move_0]){
+          continue;
+        }
+
+        MovePair rest_move_pair_0(rest_move_0, rest_cost_move_0);
+        const vector<MovePair> move_pair_list{rest_move_pair_0, four_pair};
+
+        move_pair_vector->emplace_back(move_pair_list);
+      }
+    }
+  }else if(size == 2){
+    const auto rest_move_0 = rest_move_list[0];
+
+    if(!conflict_bit[rest_move_0]){
+      for(const auto rest_cost_move_0 : cost_move_list[0]){
+        if(conflict_bit[rest_cost_move_0]){
+          continue;
+        }
+
+        conflict_bit.set(rest_move_0);
+        conflict_bit.set(rest_cost_move_0);
+        
+        const auto rest_move_1 = rest_move_list[1];
+
+        if(!conflict_bit[rest_move_1]){
+          for(const auto rest_cost_move_1 : cost_move_list[1]){
+            if(conflict_bit[rest_cost_move_1]){
+              continue;
+            }
+
+            MovePair rest_move_pair_0(rest_move_0, rest_cost_move_0);
+            MovePair rest_move_pair_1(rest_move_1, rest_cost_move_1);
+            const vector<MovePair> move_pair_list{rest_move_pair_0, rest_move_pair_1, four_pair};
+    
+            move_pair_vector->emplace_back(move_pair_list);
+          }
+        }
+    
+        conflict_bit.reset(rest_move_0);
+        conflict_bit.reset(rest_cost_move_0);
+      }
+    }
+  }else if(size == 3){
+    const auto rest_move_0 = rest_move_list[0];
+    
+    if(!conflict_bit[rest_move_0]){
+      for(const auto rest_cost_move_0 : cost_move_list[0]){
+        if(conflict_bit[rest_cost_move_0]){
+          continue;
+        }
+
+        conflict_bit.set(rest_move_0);
+        conflict_bit.set(rest_cost_move_0);
+        
+        const auto rest_move_1 = rest_move_list[1];
+
+        if(!conflict_bit[rest_move_1]){
+          for(const auto rest_cost_move_1 : cost_move_list[1]){
+            if(conflict_bit[rest_cost_move_1]){
+              continue;
+            }
+
+            conflict_bit.set(rest_move_1);
+            conflict_bit.set(rest_cost_move_1);
+            
+            const auto rest_move_2 = rest_move_list[2];
+    
+            if(!conflict_bit[rest_move_2]){
+              for(const auto rest_cost_move_2 : cost_move_list[2]){
+                if(conflict_bit[rest_cost_move_2]){
+                  continue;
+                }
+    
+
+                MovePair rest_move_pair_0(rest_move_0, rest_cost_move_0);
+                MovePair rest_move_pair_1(rest_move_1, rest_cost_move_1);
+                MovePair rest_move_pair_2(rest_move_2, rest_cost_move_2);
+                const vector<MovePair> move_pair_list{rest_move_pair_0, rest_move_pair_1, rest_move_pair_2, four_pair};
+        
+                move_pair_vector->emplace_back(move_pair_list);
+              }
+            }
+
+            conflict_bit.reset(rest_move_1);
+            conflict_bit.reset(rest_cost_move_1);
+          }
+        }
+    
+        conflict_bit.reset(rest_move_0);
+        conflict_bit.reset(rest_cost_move_0);
+      }
+    }
+  }
+}
+
+void FourSpaceSearch::GetCostMoveList(const MovePosition gain_move, MoveList * const cost_move_list) const
+{
+  assert(cost_move_list != nullptr);
+
+  const auto relaxed_four_id_list = reach_region_[gain_move];
+  MoveBitSet cost_move_bit;
+
+  for(const auto relaxed_four_id : relaxed_four_id_list){
+    const auto &relaxed_four = relaxed_four_list_[relaxed_four_id];
+    const MovePosition cost_move = relaxed_four.GetCostPosition();
+
+    if(cost_move_bit[cost_move]){
+      continue;
+    }
+
+    cost_move_bit.set(cost_move);
+    *cost_move_list += cost_move;
   }
 }
 

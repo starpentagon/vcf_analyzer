@@ -5,7 +5,7 @@ set(project_name four_space_search_test)
 project(${project_name} CXX)
 
 # Build Type(Release or Debug)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 # ccache
 find_program(CCACHE_FOUND ccache)
@@ -37,7 +37,9 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/../../realcore/src/BitSearch.cc
     ../../../src/RelaxedFour.cc
     ../../../src/FourSpaceSearch.cc
+    ../../../src/RealizeSequence.cc
     ../FourSpaceSearchTest.cc
+    ../RealizeSequenceTest.cc
 )
 
 # ライブラリ
