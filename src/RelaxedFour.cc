@@ -1,3 +1,5 @@
+#include <functional>
+
 #include "RelaxedFour.h"
 
 using namespace std;

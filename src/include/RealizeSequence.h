@@ -13,15 +13,10 @@ namespace realcore
 {
 class RealizeSequence;
 
-//! @brief 2つの実現手順を比較する
-//! @retval true 2つの空点状態が同一の内容を保持
-bool IsEqual(const RealizeSequence &lhs, const RealizeSequence &rhs);
-
 //! 実現手順のデータ
 class RealizeSequence
 {
   friend class RealizeSequenceTest;
-  friend bool IsEqual(const RealizeSequence &lhs, const RealizeSequence &rhs);
 
 public:
   RealizeSequence();

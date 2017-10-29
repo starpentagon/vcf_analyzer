@@ -97,5 +97,38 @@ const std::map<MovePosition, MovePosition>& RealizeSequence::GetGainCostMap() co
   return gain_cost_map_;
 }
 
+const RealizeSequence& RealizeSequence::operator=(const RealizeSequence &realize_sequence)
+{
+  if(this != &realize_sequence){
+    gain_bit_ = realize_sequence.GetGainBit();
+    cost_bit_ = realize_sequence.GetCostBit();
+    gain_cost_map_ = realize_sequence.GetGainCostMap();
+  }
+
+  return *this;
+}
+
+const bool RealizeSequence::operator==(const RealizeSequence &realize_sequence) const
+{
+  if(gain_bit_ != realize_sequence.GetGainBit()){
+    return false;
+  }
+
+  if(cost_bit_ != realize_sequence.GetCostBit()){
+    return false;
+  }
+
+  if(gain_cost_map_ != realize_sequence.GetGainCostMap()){
+    return false;
+  }
+
+  return true;
+}
+
+const bool RealizeSequence::operator!=(const RealizeSequence &realize_sequence) const
+{
+  return !(*this == realize_sequence);
+}
+
 }
 
