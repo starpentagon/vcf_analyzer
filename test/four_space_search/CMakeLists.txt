@@ -38,8 +38,10 @@ add_executable(
     ../../../src/RelaxedFour.cc
     ../../../src/FourSpaceSearch.cc
     ../../../src/RealizeSequence.cc
+    ../../../src/RelaxedFour.cc
     ../FourSpaceSearchTest.cc
     ../RealizeSequenceTest.cc
+    ../RelaxedFourTest.cc
 )
 
 # ライブラリ

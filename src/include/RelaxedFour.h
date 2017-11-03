@@ -7,7 +7,9 @@
 #define RELAXED_FOUR_H
 
 #include <cstdint>
+
 #include "Move.h"
+#include "RealizeSequence.h"
 
 namespace realcore
 {
@@ -17,6 +19,8 @@ static constexpr RelaxedFourID kInvalidFourID = 0;    // 無効なRelaxed Four I
 //! Relaxed Fourのデータ
 class RelaxedFour
 {
+  friend class RelaxedFourTest;
+
 public:
   //! コンストラクタ
   //! @param gain 獲得路
@@ -49,6 +53,11 @@ public:
     return rest_list_;
   }
 
+  //! 実現手順のリストを取得する
+  const std::vector<RealizeSequence> GetRealizeSequenceList() const{
+    return realize_sequence_list_;
+  }
+
   //! Relaxed Fourのキーを返す
   const std::uint64_t GetKey() const;
 
@@ -56,6 +65,8 @@ private:
   MovePosition gain_;            //!< 獲得路
   MovePosition cost_;            //!< 損失路
   std::vector<MovePosition> rest_list_;  //!< 開残路リスト
+
+  std::vector<RealizeSequence> realize_sequence_list_;    // 実現手順のリスト
 };
 
 }   // namespace realcore
