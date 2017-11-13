@@ -6,7 +6,7 @@ using namespace std;
 
 namespace realcore{
 
-RelaxedFour::RelaxedFour(const MovePosition gain, const MovePosition cost, const std::vector<MovePosition> &rest_list)
+RelaxedFour::RelaxedFour(const MovePosition gain, const MovePosition cost, const vector<MovePosition> &rest_list)
 : gain_(gain), cost_(cost), rest_list_(rest_list)
 {
   sort(rest_list_.begin(), rest_list_.end(), greater<MovePosition>());

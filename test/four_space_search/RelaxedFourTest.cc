@@ -20,7 +20,6 @@ TEST_F(RelaxedFourTest, ConstructorTest)
   ASSERT_EQ(kMoveAA, relaxed_four.GetGainPosition());
   ASSERT_EQ(kMoveAB, relaxed_four.GetCostPosition());
   ASSERT_EQ(rest_list, relaxed_four.GetRestPositionList());
-  ASSERT_TRUE(relaxed_four.GetRealizeSequenceList().empty());
 }
 
 TEST_F(RelaxedFourTest, CompareOperTest)
@@ -63,6 +62,7 @@ TEST_F(RelaxedFourTest, CompareOperTest)
 TEST_F(RelaxedFourTest, AssignOperTest)
 {
   vector<MovePosition> rest_list_1{{kMoveAD, kMoveAC}};
+
   RelaxedFour relaxed_four_1(kMoveAA, kMoveAB, rest_list_1);
 
   vector<MovePosition> rest_list_2{{kMoveAE, kMoveAC}};

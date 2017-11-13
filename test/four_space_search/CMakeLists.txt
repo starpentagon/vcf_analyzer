@@ -6,6 +6,7 @@ project(${project_name} CXX)
 
 # Build Type(Release or Debug)
 set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Release)
 
 # ccache
 find_program(CCACHE_FOUND ccache)
@@ -37,10 +38,10 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/../../realcore/src/BitSearch.cc
     ../../../src/RelaxedFour.cc
     ../../../src/FourSpaceSearch.cc
-    ../../../src/RealizeSequence.cc
+    ../../../src/FourSpace.cc
     ../../../src/RelaxedFour.cc
     ../FourSpaceSearchTest.cc
-    ../RealizeSequenceTest.cc
+    ../FourSpaceTest.cc
     ../RelaxedFourTest.cc
 )
 

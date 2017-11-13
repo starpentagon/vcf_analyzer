@@ -12,6 +12,7 @@ FourSpaceSearch::FourSpaceSearch(const BitBoard &bit_board)
 : BitBoard(bit_board), attack_player_(kBlackTurn)
 {
   vector<MovePosition> null_rest_list;
+  vector<FourSpace> null_four_space_list;
   
   // kInvalidFourID用にダミーデータを設定する
   relaxed_four_list_.emplace_back(
@@ -28,17 +29,28 @@ const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const MovePosition gain_posi
 const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const RelaxedFour &relaxed_four)
 {
   const auto key = relaxed_four.GetKey();
-  const auto find_it = relaxed_four_transposition_map_.find(key);
+  const auto find_it = transposition_table_.find(key);
 
-  if(find_it != relaxed_four_transposition_map_.end()){
-    // 登録済みの場合
+  if(find_it != transposition_table_.end()){
     return find_it->second;
   }
 
   relaxed_four_list_.emplace_back(relaxed_four);
 
   const RelaxedFourID four_id = relaxed_four_list_.size() - 1;
-  relaxed_four_transposition_map_.insert(pair<uint64_t, RelaxedFourID>(key, four_id));
+  
+  const auto gain_position = relaxed_four.GetGainPosition();
+  const auto cost_position = relaxed_four.GetCostPosition();
+  const auto &rest_position_list = relaxed_four.GetRestPositionList();
+
+  move_gain_list_[gain_position].emplace_back(four_id);
+  move_cost_list_[cost_position].emplace_back(four_id);
+
+  for(const auto rest_position : rest_position_list){
+    move_open_rest_list_[rest_position].emplace_back(four_id);
+  }
+
+  transposition_table_.insert(make_pair(key, four_id));
 
   return four_id;
 }
@@ -61,10 +73,10 @@ size_t FourSpaceSearch::GetRestableRelaxedFourIDList(const MovePosition gain_pos
     }
 
     const auto check_move = GetBoardMove(check_position);
-    const auto &reach_id_list = reach_region_[check_move];
+    const auto &gain_four_id_list = move_gain_list_[check_move];
 
-    if(!reach_id_list.empty()){
-      restable_four_id_list->insert(restable_four_id_list->end(), reach_id_list.begin(), reach_id_list.end());
+    if(!gain_four_id_list.empty()){
+      restable_four_id_list->insert(restable_four_id_list->end(), gain_four_id_list.begin(), gain_four_id_list.end());
       open_rest_count++;
     }
   }
@@ -81,10 +93,10 @@ size_t FourSpaceSearch::GetRestableRelaxedFourIDList(const MovePosition gain_pos
     }
 
     const auto check_move = GetBoardMove(check_position);
-    const auto &reach_id_list = reach_region_[check_move];
-
-    if(!reach_id_list.empty()){
-      restable_four_id_list->insert(restable_four_id_list->end(), reach_id_list.begin(), reach_id_list.end());
+    const auto &gain_four_id_list = move_gain_list_[check_move];
+    
+    if(!gain_four_id_list.empty()){
+      restable_four_id_list->insert(restable_four_id_list->end(), gain_four_id_list.begin(), gain_four_id_list.end());
       open_rest_count++;
     }
   }
@@ -119,7 +131,7 @@ void FourSpaceSearch::GetReachIDSequence(const RelaxedFourID relaxed_four_id, se
     return;
   }
 
-  const RelaxedFour &relaxed_four = relaxed_four_list_[relaxed_four_id];
+  const RelaxedFour &relaxed_four = GetRelaxedFour(relaxed_four_id);
   const auto &rest_four_id_list = relaxed_four.GetRestPositionList();
 
   for(const auto rest_four_id : rest_four_id_list){
@@ -152,7 +164,7 @@ bool FourSpaceSearch::GetReachSequence(const vector<RelaxedFourID> &four_id_list
   array<RelaxedFourID, kMoveNum> put_four_id{{kInvalidFourID}};
 
   for(const auto four_id : four_id_list){
-    const auto relaxed_four = relaxed_four_list_[four_id];
+    const auto &relaxed_four = GetRelaxedFour(four_id);
     
     const auto gain = relaxed_four.GetGainPosition();
     const auto cost = relaxed_four.GetCostPosition();
@@ -190,36 +202,6 @@ const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
     max_length = max(max_length, length);
   }
 
-  // todo delete
-  vector<RelaxedFourID> leaf_id_list;
-  EnumerateLeaf(&leaf_id_list);
-
-  for(const auto leaf_id : leaf_id_list){
-    vector<RelaxedFourID> four_id_list;
-    GetReachIDSequence(leaf_id, &four_id_list);
-    
-    const size_t length = four_id_list.size();
-    
-    if(length >= 80){
-      MoveList debug;
-      GetReachSequence(leaf_id, &debug);
-
-      MoveList board("hhgigjfgjjfjeeifhkijlijhllefcjejhmdgmcdjmkjdbblkbefmblgmdnimibjcnbjmaemhaibgambnbocncahbcojndokbeankganljoabkaacmaadoafoochaoeonokoo");
-      MoveTree proof;
-      proof.AddChild(debug);
-
-      stringstream ss;
-
-      ss << "(;GM[4]FF[4]SZ[15]";
-      ss << board.GetSGFPositionText();
-      ss << (board.IsBlackTurn() ? "PL[B]" : "PL[W]");
-      ss << proof.GetSGFLabeledText(board.IsBlackTurn());
-      ss << ")";
-
-      cerr << ss.str() << endl << endl;
-    }
-  }
-
   return max_length;
 }
 
@@ -232,7 +214,7 @@ void FourSpaceSearch::EnumerateLeaf(vector<RelaxedFourID> * const leaf_id_list) 
   set<RelaxedFourID> dependent_node;
 
   for(size_t i=1, size=relaxed_four_list_.size(); i<size; i++){
-    const auto relaxed_four = relaxed_four_list_[i];
+    const auto &relaxed_four = GetRelaxedFour(i);
     const auto &rest_four_id_list = relaxed_four.GetRestPositionList();
 
     for(const auto rest_four_id : rest_four_id_list){
@@ -249,20 +231,20 @@ void FourSpaceSearch::EnumerateLeaf(vector<RelaxedFourID> * const leaf_id_list) 
 
 const bool FourSpaceSearch::IsExpanded(const RelaxedFourID relaxed_four_id) const
 {
-  const auto &relaxed_four = relaxed_four_list_[relaxed_four_id];
+  const auto &relaxed_four = GetRelaxedFour(relaxed_four_id);
   const auto gain_position = relaxed_four.GetGainPosition();
 
-  const auto &reachable_four_list = reach_region_[gain_position];
-  const auto find_it = find(reachable_four_list.begin(), reachable_four_list.end(), relaxed_four_id);
+  const auto &gain_four_id_list = move_gain_list_[gain_position];
+  const auto find_it = find(gain_four_id_list.begin(), gain_four_id_list.end(), relaxed_four_id);
 
-  return find_it != reachable_four_list.end();
+  return find_it != gain_four_id_list.end();
 }
 
 void FourSpaceSearch::GetDependentReachMove(const RelaxedFourID relaxed_four_id, vector<vector<MovePair>> * const move_pair_vector) const
 {
   assert(move_pair_vector != nullptr);
 
-  const auto &relaxed_four = relaxed_four_list_[relaxed_four_id];
+  const auto &relaxed_four = GetRelaxedFour(relaxed_four_id);
   const auto &rest_move_list = relaxed_four.GetRestPositionList();
   MoveList cost_move_list[3];
   const auto size = rest_move_list.size();
@@ -388,11 +370,11 @@ void FourSpaceSearch::GetCostMoveList(const MovePosition gain_move, MoveList * c
 {
   assert(cost_move_list != nullptr);
 
-  const auto relaxed_four_id_list = reach_region_[gain_move];
+  const auto &gain_four_id_list = move_gain_list_[gain_move];
   MoveBitSet cost_move_bit;
 
-  for(const auto relaxed_four_id : relaxed_four_id_list){
-    const auto &relaxed_four = relaxed_four_list_[relaxed_four_id];
+  for(const auto relaxed_four_id : gain_four_id_list){
+    const auto &relaxed_four = GetRelaxedFour(relaxed_four_id);
     const MovePosition cost_move = relaxed_four.GetCostPosition();
 
     if(cost_move_bit[cost_move]){
@@ -404,4 +386,256 @@ void FourSpaceSearch::GetCostMoveList(const MovePosition gain_move, MoveList * c
   }
 }
 
+const bool FourSpaceSearch::EnumerateFourSpace(const MovePosition gain_position, const MovePosition cost_position, const vector<MovePosition> &rest_list, vector<FourSpace> * const four_space_list)
+{
+  assert(four_space_list != nullptr);
+  
+  const auto rest_size = rest_list.size();
+  assert(rest_size <= 3);
+
+  if(rest_size == 0){
+    return true;
+  }
+
+  if(rest_size == 1){
+    const auto rest_1 = rest_list[0];
+    const auto& four_space_list_1 = GetFourSpaceList(rest_1);
+
+    for(const auto &four_space_1 : four_space_list_1){
+      if(four_space_1.IsConflict(gain_position, cost_position)){
+        continue;
+      }
+
+      // todo 重複チェック
+      four_space_list->emplace_back(four_space_1);
+      four_space_list->back().Add(gain_position, cost_position);
+    }
+  }else if(rest_size == 2){
+    const auto rest_1 = rest_list[0];
+    const auto& four_space_list_1 = GetFourSpaceList(rest_1);
+
+    const auto rest_2 = rest_list[1];
+    const auto& four_space_list_2 = GetFourSpaceList(rest_2);
+
+    for(const auto &four_space_1 : four_space_list_1){
+      for(const auto &four_space_2 : four_space_list_2){
+        if(!four_space_1.IsPuttable(four_space_2)){
+          continue;
+        }
+
+        if(four_space_1.IsConflict(gain_position, cost_position)){
+          continue;
+        }
+
+        if(four_space_2.IsConflict(gain_position, cost_position)){
+          continue;
+        }
+
+        // todo 重複チェック
+        four_space_list->emplace_back(four_space_1);
+        four_space_list->back().Add(four_space_2);
+        four_space_list->back().Add(gain_position, cost_position);
+      }
+    }
+  }else if(rest_size == 3){
+    const auto rest_1 = rest_list[0];
+    const auto& four_space_list_1 = GetFourSpaceList(rest_1);
+
+    const auto rest_2 = rest_list[1];
+    const auto& four_space_list_2 = GetFourSpaceList(rest_2);
+
+    const auto rest_3 = rest_list[2];
+    const auto& four_space_list_3 = GetFourSpaceList(rest_3);
+
+    for(const auto &four_space_1 : four_space_list_1){
+      for(const auto &four_space_2 : four_space_list_2){
+        if(!four_space_1.IsPuttable(four_space_2)){
+          continue;
+        }
+
+        FourSpace four_space(four_space_1);
+        four_space.Add(four_space_2);
+
+        for(const auto &four_space_3 : four_space_list_3){
+          if(!four_space.IsPuttable(four_space_3)){
+            continue;
+          }
+
+          four_space.Add(four_space_3);
+          
+          if(four_space.IsConflict(gain_position, cost_position)){
+            continue;
+          }
+
+          // todo 重複チェック
+          four_space.Add(gain_position, cost_position);
+          four_space_list->emplace_back(four_space);
+        }
+      }
+    }
+  }
+
+  return !four_space_list->empty();
 }
+
+const bool FourSpaceSearch::IsRegisteredFourSpace(const MovePosition move, const FourSpace &four_space) const
+{
+  const auto &four_space_list = GetFourSpaceList(move);
+
+  for(const auto &registered_four_space : four_space_list){
+    if(registered_four_space == four_space){
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void FourSpaceSearch::EnumerateFourSpace(const MovePosition gain_position, const MovePosition cost_position, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const four_space_list) const
+{
+  assert(four_space_list != nullptr);
+  assert(four_space_list->empty());
+  
+  const auto rest_size = rest_list.size();
+  assert(rest_size <= 3);
+
+  if(rest_size == 0){
+    four_space_list->emplace_back(gain_position, cost_position);
+    return;
+  }
+
+  if(rest_size == 1){
+    const auto rest_1 = rest_list[0];
+    const auto& rest_four_space_list_1 = GetFourSpaceList(rest_1);
+
+    GenerateNonConflictFourSpace(gain_position, cost_position, rest_four_space_list_1, four_space_list);
+  }else if(rest_size == 2){
+    const auto rest_1 = rest_list[0];
+    const auto& rest_four_space_list_1 = GetFourSpaceList(rest_1);
+
+    const auto rest_2 = rest_list[1];
+    const auto& rest_four_space_list_2 = GetFourSpaceList(rest_2);
+
+    vector<FourSpace> puttable_four_space_list;
+
+    GeneratePuttableFourSpace(rest_four_space_list_1, rest_four_space_list_2, &puttable_four_space_list);
+    GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
+  }else if(rest_size == 3){
+    const auto rest_1 = rest_list[0];
+    const auto& rest_four_space_list_1 = GetFourSpaceList(rest_1);
+
+    const auto rest_2 = rest_list[1];
+    const auto& rest_four_space_list_2 = GetFourSpaceList(rest_2);
+
+
+    vector<FourSpace> puttable_four_space_list_pre;
+    
+    GeneratePuttableFourSpace(rest_four_space_list_1, rest_four_space_list_2, &puttable_four_space_list_pre);
+
+    const auto rest_3 = rest_list[2];
+    const auto& rest_four_space_list_3 = GetFourSpaceList(rest_3);
+
+    vector<FourSpace> puttable_four_space_list;
+    GeneratePuttableFourSpace(puttable_four_space_list_pre, rest_four_space_list_3, &puttable_four_space_list);
+    GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
+  }
+}
+
+void FourSpaceSearch::EnumerateFourSpace(const MovePosition move, const FourSpace &four_space, const RelaxedFourID relaxed_four_id, vector<FourSpace> * const four_space_list) const
+{
+  assert(four_space_list != nullptr);
+  assert(four_space_list->empty());
+
+  const RelaxedFour &relaxed_four = GetRelaxedFour(relaxed_four_id);
+  const auto gain_position = relaxed_four.GetGainPosition();
+  const auto cost_position = relaxed_four.GetCostPosition();
+  
+  const auto &rest_list = relaxed_four.GetRestPositionList();
+  const auto rest_size = rest_list.size();
+  assert(rest_size >= 1 && rest_size <= 3);
+
+  // 位置move以外の開残路位置を求める
+  vector<MovePosition> check_rest_list;
+  check_rest_list.reserve(rest_size - 1);
+
+  for(const auto rest_position : rest_list){
+    if(move == rest_position){
+      continue;
+    }
+
+    check_rest_list.emplace_back(rest_position);
+  }
+
+  vector<FourSpace> rest_four_space_list_1{four_space};
+
+  if(rest_size == 1){
+    GenerateNonConflictFourSpace(gain_position, cost_position, rest_four_space_list_1, four_space_list);
+  }else if(rest_size == 2){
+    const auto rest_four_space_list_2 = GetFourSpaceList(check_rest_list[0]);
+    vector<FourSpace> puttable_four_space_list;
+
+    GeneratePuttableFourSpace(rest_four_space_list_1, rest_four_space_list_2, &puttable_four_space_list);
+    GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
+  }else if(rest_size == 3){
+    const auto rest_four_space_list_2 = GetFourSpaceList(check_rest_list[0]);
+    vector<FourSpace> puttable_four_space_list_pre;
+    
+    GeneratePuttableFourSpace(rest_four_space_list_1, rest_four_space_list_2, &puttable_four_space_list_pre);
+
+    const auto rest_four_space_list_3 = GetFourSpaceList(check_rest_list[1]);
+    vector<FourSpace> puttable_four_space_list;
+    GeneratePuttableFourSpace(puttable_four_space_list_pre, rest_four_space_list_3, &puttable_four_space_list);
+
+    GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
+  }
+}
+
+void FourSpaceSearch::GeneratePuttableFourSpace(const vector<FourSpace> &four_space_list_1, const vector<FourSpace> &four_space_list_2, vector<FourSpace> * const puttable_four_space_list) const
+{
+  assert(puttable_four_space_list != nullptr);
+  assert(puttable_four_space_list->empty());
+  
+  puttable_four_space_list->reserve(four_space_list_1.size() * four_space_list_2.size());
+
+  for(const auto &four_space_1 : four_space_list_1){
+    for(const auto &four_space_2 : four_space_list_2){
+      if(!four_space_1.IsPuttable(four_space_2)){
+        continue;
+      }
+
+      puttable_four_space_list->emplace_back(four_space_1);
+      puttable_four_space_list->back().Add(four_space_2);
+    }
+  }
+}
+
+void FourSpaceSearch::GenerateNonConflictFourSpace(const MovePosition gain_position, const MovePosition cost_position, const vector<FourSpace> &four_space_list, vector<FourSpace> * const non_conflict_four_space_list) const
+{
+  assert(non_conflict_four_space_list != nullptr);
+  assert(non_conflict_four_space_list->empty());
+  non_conflict_four_space_list->reserve(four_space_list.size());
+
+  for(const auto &four_space : four_space_list){
+    if(four_space.IsConflict(gain_position, cost_position)){
+      continue;
+    }
+
+    non_conflict_four_space_list->emplace_back(four_space);
+    non_conflict_four_space_list->back().Add(gain_position, cost_position);
+  }
+}
+
+const bool FourSpaceSearch::IsRegisteredLocalBitBoard(const MovePosition move, const LocalBitBoard &local_bitboard) const
+{
+  const auto& local_bitboard_list = move_local_bitboard_list_[move];
+
+  for(const auto& registered_bitboard : local_bitboard_list){
+    if(registered_bitboard == local_bitboard){
+      return true;
+    }
+  }
+
+  return false;
+}
+
+}   // namespace realcore

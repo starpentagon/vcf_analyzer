@@ -35,8 +35,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveHF, kMoveHG
@@ -49,8 +49,8 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
 
     EXPECT_EQ(2, four_space_search.GetRelaxedFourCount());
@@ -83,8 +83,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kWhiteTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveJG, kMoveLG
@@ -97,8 +97,8 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
   
     EXPECT_EQ(2, four_space_search.GetRelaxedFourCount());
@@ -132,8 +132,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveHD, kMoveHE, kMoveHG, kMoveHI
@@ -146,15 +146,15 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      if(expect_bit[move] == reach_region[move].empty()){
+      if(expect_bit[move] == move_gain_list[move].empty()){
         cerr << MoveString(move) << endl;
       }
 
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
 
-    EXPECT_GE(4, four_space_search.GetRelaxedFourCount());
+    EXPECT_EQ(4, four_space_search.GetRelaxedFourCount());
     // todo turn off comment
 //    EXPECT_EQ(2, four_space_search.GetMaxRelaxedFourLength());
   }
@@ -184,8 +184,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kWhiteTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveIG, kMoveLG, kMoveMG, kMoveNG
@@ -198,11 +198,11 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
 
-    EXPECT_LE(4, four_space_search.GetRelaxedFourCount());
+    EXPECT_EQ(4, four_space_search.GetRelaxedFourCount());
     // todo turn off comment
 //    EXPECT_EQ(2, four_space_search.GetMaxRelaxedFourLength());
   }
@@ -232,8 +232,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveFE, kMoveFF, kMoveHF, kMoveHG, 
@@ -248,12 +248,12 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      if(expect_bit[move] == reach_region[move].empty()){
+      if(expect_bit[move] == move_gain_list[move].empty()){
         cerr << MoveString(move) << endl;
       }
 
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
 
     EXPECT_EQ(12, four_space_search.GetRelaxedFourCount());
@@ -286,8 +286,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kWhiteTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveKD, kMoveLE, kMoveJG, kMoveLG,
@@ -302,8 +302,8 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
 
     EXPECT_EQ(12, four_space_search.GetRelaxedFourCount());
@@ -336,8 +336,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveDA, kMoveEA, kMoveAD, kMoveAE, 
@@ -352,12 +352,12 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      if(expect_bit[move] == reach_region[move].empty()){
+      if(expect_bit[move] == move_gain_list[move].empty()){
         cerr << MoveString(move) << endl;
       }
 
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
 
     EXPECT_EQ(12, four_space_search.GetRelaxedFourCount());
@@ -391,8 +391,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kWhiteTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveDA, kMoveEA, kMoveAD, kMoveAE, 
@@ -408,12 +408,12 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      if(expect_bit[move] == reach_region[move].empty()){
+      if(expect_bit[move] == move_gain_list[move].empty()){
         cerr << MoveString(move) << endl;
       }
 
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
 
     EXPECT_EQ(16, four_space_search.GetRelaxedFourCount());
@@ -446,8 +446,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveDA, kMoveEA, kMoveAD, kMoveAE, 
@@ -465,12 +465,12 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      if(expect_bit[move] == reach_region[move].empty()){
+      if(expect_bit[move] == move_gain_list[move].empty()){
         cerr << MoveString(move) << endl;
       }
 
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
 
     EXPECT_EQ(25 + 1, four_space_search.GetRelaxedFourCount());  // 達四はダブルカウントされる
@@ -502,7 +502,7 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &reach_point = four_space_search.reach_region_[kMoveEH];
+    const auto &reach_point = four_space_search.move_gain_list_[kMoveEH];
     ASSERT_FALSE(reach_point.empty());
     
     for(const auto four_id : reach_point){
@@ -544,8 +544,8 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &reach_region = four_space_search.reach_region_;
-    const auto &put_region = four_space_search.put_region_;
+    const auto &move_gain_list = four_space_search.move_gain_list_;
+    const auto &move_cost_list = four_space_search.move_cost_list_;
 
     const MovePosition expect_list[] = {
       kMoveBD, kMoveEG, kMoveFH, kMoveGI, 
@@ -561,30 +561,55 @@ public:
     }
 
     for(const auto move : GetAllInBoardMove()){
-      if(expect_bit[move] == reach_region[move].empty()){
+      if(expect_bit[move] == move_gain_list[move].empty()){
         cerr << MoveString(move) << endl;
       }
 
-      EXPECT_EQ(expect_bit[move], !reach_region[move].empty());
-      EXPECT_EQ(expect_bit[move], !put_region[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
+      EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }
 
-    EXPECT_EQ(8 + 6 * 2 + 4, four_space_search.GetRelaxedFourCount());
-    EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
-
-    // kMoveFHの到達路が２つあることをチェック
+    EXPECT_EQ(18, four_space_search.GetRelaxedFourCount());
+    
     // todo turn off comment
-/*
-    NextRelaxedFourInfo next_four_info(kMoveGH, kMoveIH, kMoveFH, kNullMove);
-    vector<RestGainFourID> rest_gain_four_id;
-    four_space_search.GetRestRelaxedFourID(next_four_info, &rest_gain_four_id);
+    //EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
 
-    EXPECT_EQ(2, rest_gain_four_id.size());
-*/
+    // kMoveIHの実現手順が２つあることをチェック
+    for(const auto relaxed_four_id : move_gain_list[kMoveIH]){
+      const auto &relaxed_four = four_space_search.GetRelaxedFour(relaxed_four_id);
+      
+      vector<MovePosition> rest_list{kMoveFH};
+      RelaxedFour check_four(kMoveIH, kMoveGH, rest_list);
+
+      if(relaxed_four.GetKey() != check_four.GetKey()){
+        continue;
+      }
+
+      const auto &four_space_list = four_space_search.GetFourSpaceList(kMoveIH);
+      ASSERT_EQ(2, four_space_list.size());
+
+      FourSpace expect_1, expect_2;
+
+      expect_1.Add(kMoveEG, kMoveBD);
+      expect_1.Add(kMoveFH, kMoveGI);
+      expect_1.Add(kMoveIH, kMoveGH);
+
+      expect_2.Add(kMoveEI, kMoveBL);
+      expect_2.Add(kMoveFH, kMoveGG);
+      expect_2.Add(kMoveIH, kMoveGH);
+
+      vector<FourSpace> expect_list{{expect_1, expect_2}};
+
+      for(const auto& four_space : four_space_list){
+        const auto find_it = find(expect_list.begin(), expect_list.end(), four_space);
+        ASSERT_TRUE(find_it != expect_list.end());
+      }
+    }
   }
 
   void UpdateDiffcultTenYearFever()
   {
+    //ASSERT_TRUE(false);
     // 十年フィーバー
     MoveList move_list("hhgigjfgjjfjeeifhkijlijhllefcjejhmdgmcdjmkjdbblkbefmblgmdnimibjcnbjmaemhaibgambnbocncahbcojndokbeankganljoabkaacmaadoafoochaoeonokoo");
     BitBoard bit_board(move_list);
@@ -608,9 +633,9 @@ public:
     };
 
     for(const auto move : answer){
-      if(four_space_search.reach_region_[move].empty()){
+      if(four_space_search.move_gain_list_[move].empty()){
         cerr << MoveString(move) << endl;
-        //EXPECT_TRUE(!four_space_search.reach_region_[move].empty());
+        //EXPECT_TRUE(!four_space_search.move_gain_list_[move].empty());
       }
     }
   }

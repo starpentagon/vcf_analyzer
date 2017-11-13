@@ -9,7 +9,6 @@
 #include <cstdint>
 
 #include "Move.h"
-#include "RealizeSequence.h"
 
 namespace realcore
 {
@@ -25,7 +24,8 @@ public:
   //! コンストラクタ
   //! @param gain 獲得路
   //! @param cost 損失路
-  //! @param rest 開残路に着手する緩和四ノビのID
+  //! @param rest_list 開残路に着手する緩和四ノビのID
+  //! @param four_space_list 実現手順のリスト
   RelaxedFour(const MovePosition gain, const MovePosition cost, const std::vector<MovePosition> &rest_list);
 
   //! コピーコンストラクタ
@@ -53,11 +53,6 @@ public:
     return rest_list_;
   }
 
-  //! 実現手順のリストを取得する
-  const std::vector<RealizeSequence> GetRealizeSequenceList() const{
-    return realize_sequence_list_;
-  }
-
   //! Relaxed Fourのキーを返す
   const std::uint64_t GetKey() const;
 
@@ -65,8 +60,6 @@ private:
   MovePosition gain_;            //!< 獲得路
   MovePosition cost_;            //!< 損失路
   std::vector<MovePosition> rest_list_;  //!< 開残路リスト
-
-  std::vector<RealizeSequence> realize_sequence_list_;    // 実現手順のリスト
 };
 
 }   // namespace realcore
