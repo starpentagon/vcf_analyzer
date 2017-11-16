@@ -39,6 +39,9 @@ typedef std::tuple<MovePosition, MovePosition, MovePosition, MovePosition, MoveP
 //! 開残路へ到達可能な到達路のRelaxedFourID
 typedef std::pair<RelaxedFourID, RelaxedFourID> RestGainFourID;
 
+//! 開残路リストのkey
+typedef uint64_t RestListKey;
+
 class FourSpaceSearchTest;
 
 class FourSpaceSearch
@@ -70,24 +73,12 @@ public:
 private:
   const RelaxedFour& GetRelaxedFour(const RelaxedFourID relaxed_four_id) const;
 
-  //! @brief 実現手順を列挙する
-  //! @retval true 実現可能な手順が存在
-  //! @retval false 実現不可能
-  const bool EnumerateFourSpace(const MovePosition gain_position, const MovePosition cost_position, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const four_space_list);
-
   //! @brief 獲得/損失空間を列挙する(緩和四ノビ生成版)
   //! @param gain_position 獲得路
   //! @param cost_position 損失路
   //! @param rest_list 残路リスト
   //! @param four_space_list 同時設置可能な獲得/損失空間の格納先
   void EnumerateFourSpace(const MovePosition gain_position, const MovePosition cost_position, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const four_space_list) const;
-
-  //! @brief 獲得/損失空間を列挙する(獲得/損失空間の追加版)
-  //! @param move 獲得/損失空間が追加された位置
-  //! @param four_space 追加した獲得/損失空間
-  //! @param relaxed_four_id 位置moveを開残路に持つ緩和四ノビID
-  //! @param four_space_list 同時設置可能な獲得/損失空間の格納先
-  void EnumerateFourSpace(const MovePosition move, const FourSpace &four_space, const RelaxedFourID relaxed_four_id, std::vector<FourSpace> * const four_space_list) const;
 
   //! @brief 2つの獲得/損失空間のリストから同時設置可能な獲得/損失空間のリストを生成する
   //! @param four_space_list_1 獲得/損失空間のリスト
@@ -178,6 +169,31 @@ private:
   //! @brief 展開済みの変化かチェックする
   const bool IsExpanded(const RelaxedFourID relaxed_four_id) const;
 
+  //! @brief 開残路リストのkeyを取得する
+  const RestListKey GetOpenRestKey(std::vector<MovePosition> &rest_list) const;
+
+  //! @brief 位置moveのmove位置を除く開残路位置を取得する
+  void GetRestPosition(const MovePosition move, RestListKey rest_list_key, std::vector<MovePosition> * const rest_list) const;
+
+  //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間の増分を反映する
+  //! @param move 獲得/損失空間が追加された位置
+  //! @param four_space 追加した獲得/損失空間
+  //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
+  void UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space);
+
+  //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間を列挙する
+  //! @param four_space 追加した獲得/損失空間
+  //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
+  //! @brief 生成した獲得/損失空間がすでに生成済みかどうかのチェックは行わない
+  void EnumeratePuttableFourSpace(const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list) const;
+
+  //! @brief 開残路リストに登録ずみの獲得/損失空間かどうかをチェックする
+  const bool IsRegisteredFourSpace(const RestListKey rest_key, const FourSpace &four_space) const;
+
+  //! @brief MoveBitSetの内容をBitBoardに反映する
+  template<PositionState S>
+  void SetMoveBit(const MoveBitSet &move_bit);
+
   std::vector<RelaxedFour> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
   std::map<uint64_t, RelaxedFourID> transposition_table_;   //! RelaxedFourの置換表(到達路、損失路、残路が等しいRelaxedFourを同一視)
   
@@ -187,6 +203,11 @@ private:
   
   MoveFourSpaceList move_four_space_list_;    //! 位置moveごとの局所獲得/損失空間のリスト
   MoveLocalBitBoardList move_local_bitboard_list_;    //! 位置moveごとの緩和四ノビ生成でチェック済みの直線近傍パターン
+
+  std::map<RestListKey, std::vector<FourSpace>> rest_list_puttable_four_space_;    //! 開残路リストkeyごとに同時設置可能な獲得/損失空間のリスト
+  std::map<MovePosition, std::set<RestListKey>> move_rest_key_list_;   //! 位置moveを含む開残路リストkeyのリスト
+  std::map<RestListKey, std::vector<RelaxedFourID>> rest_list_relaxed_four_list_;  //! 開残路リスト -> 緩和四ノビIDのリスト
+
 
   PlayerTurn attack_player_;    //! 詰め方(黒 or 白)
 };

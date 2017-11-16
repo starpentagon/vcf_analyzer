@@ -41,16 +41,28 @@ const RelaxedFourID FourSpaceSearch::AddRelaxedFour(const RelaxedFour &relaxed_f
   
   const auto gain_position = relaxed_four.GetGainPosition();
   const auto cost_position = relaxed_four.GetCostPosition();
-  const auto &rest_position_list = relaxed_four.GetRestPositionList();
+  auto rest_position_list = relaxed_four.GetRestPositionList();
 
   move_gain_list_[gain_position].emplace_back(four_id);
   move_cost_list_[cost_position].emplace_back(four_id);
 
+  const auto rest_key = GetOpenRestKey(rest_position_list);
+
   for(const auto rest_position : rest_position_list){
     move_open_rest_list_[rest_position].emplace_back(four_id);
+    move_rest_key_list_[rest_position].insert(rest_key);
   }
 
   transposition_table_.insert(make_pair(key, four_id));
+
+  auto rest_find_it = rest_list_relaxed_four_list_.find(rest_key);
+
+  if(rest_find_it == rest_list_relaxed_four_list_.end()){
+    vector<RelaxedFourID> relaxed_four_list{four_id};
+    rest_list_relaxed_four_list_.insert(make_pair(rest_key, relaxed_four_list));
+  }else{
+    rest_find_it->second.emplace_back(four_id);
+  }
 
   return four_id;
 }
@@ -386,98 +398,6 @@ void FourSpaceSearch::GetCostMoveList(const MovePosition gain_move, MoveList * c
   }
 }
 
-const bool FourSpaceSearch::EnumerateFourSpace(const MovePosition gain_position, const MovePosition cost_position, const vector<MovePosition> &rest_list, vector<FourSpace> * const four_space_list)
-{
-  assert(four_space_list != nullptr);
-  
-  const auto rest_size = rest_list.size();
-  assert(rest_size <= 3);
-
-  if(rest_size == 0){
-    return true;
-  }
-
-  if(rest_size == 1){
-    const auto rest_1 = rest_list[0];
-    const auto& four_space_list_1 = GetFourSpaceList(rest_1);
-
-    for(const auto &four_space_1 : four_space_list_1){
-      if(four_space_1.IsConflict(gain_position, cost_position)){
-        continue;
-      }
-
-      // todo 重複チェック
-      four_space_list->emplace_back(four_space_1);
-      four_space_list->back().Add(gain_position, cost_position);
-    }
-  }else if(rest_size == 2){
-    const auto rest_1 = rest_list[0];
-    const auto& four_space_list_1 = GetFourSpaceList(rest_1);
-
-    const auto rest_2 = rest_list[1];
-    const auto& four_space_list_2 = GetFourSpaceList(rest_2);
-
-    for(const auto &four_space_1 : four_space_list_1){
-      for(const auto &four_space_2 : four_space_list_2){
-        if(!four_space_1.IsPuttable(four_space_2)){
-          continue;
-        }
-
-        if(four_space_1.IsConflict(gain_position, cost_position)){
-          continue;
-        }
-
-        if(four_space_2.IsConflict(gain_position, cost_position)){
-          continue;
-        }
-
-        // todo 重複チェック
-        four_space_list->emplace_back(four_space_1);
-        four_space_list->back().Add(four_space_2);
-        four_space_list->back().Add(gain_position, cost_position);
-      }
-    }
-  }else if(rest_size == 3){
-    const auto rest_1 = rest_list[0];
-    const auto& four_space_list_1 = GetFourSpaceList(rest_1);
-
-    const auto rest_2 = rest_list[1];
-    const auto& four_space_list_2 = GetFourSpaceList(rest_2);
-
-    const auto rest_3 = rest_list[2];
-    const auto& four_space_list_3 = GetFourSpaceList(rest_3);
-
-    for(const auto &four_space_1 : four_space_list_1){
-      for(const auto &four_space_2 : four_space_list_2){
-        if(!four_space_1.IsPuttable(four_space_2)){
-          continue;
-        }
-
-        FourSpace four_space(four_space_1);
-        four_space.Add(four_space_2);
-
-        for(const auto &four_space_3 : four_space_list_3){
-          if(!four_space.IsPuttable(four_space_3)){
-            continue;
-          }
-
-          four_space.Add(four_space_3);
-          
-          if(four_space.IsConflict(gain_position, cost_position)){
-            continue;
-          }
-
-          // todo 重複チェック
-          four_space.Add(gain_position, cost_position);
-          four_space_list->emplace_back(four_space);
-        }
-      }
-    }
-  }
-
-  return !four_space_list->empty();
-}
-
 const bool FourSpaceSearch::IsRegisteredFourSpace(const MovePosition move, const FourSpace &four_space) const
 {
   const auto &four_space_list = GetFourSpaceList(move);
@@ -495,6 +415,12 @@ void FourSpaceSearch::EnumerateFourSpace(const MovePosition gain_position, const
 {
   assert(four_space_list != nullptr);
   assert(four_space_list->empty());
+
+  // todo delete
+  static size_t count = 0;
+
+  if(++count % 1000 == 0)
+    cerr << "EnumerateFourSpace New: " << count << endl;
   
   const auto rest_size = rest_list.size();
   assert(rest_size <= 3);
@@ -504,89 +430,121 @@ void FourSpaceSearch::EnumerateFourSpace(const MovePosition gain_position, const
     return;
   }
 
-  if(rest_size == 1){
-    const auto rest_1 = rest_list[0];
-    const auto& rest_four_space_list_1 = GetFourSpaceList(rest_1);
+  auto dummy = rest_list;   // todo modify
+  const auto rest_key = GetOpenRestKey(dummy);
 
-    GenerateNonConflictFourSpace(gain_position, cost_position, rest_four_space_list_1, four_space_list);
-  }else if(rest_size == 2){
-    const auto rest_1 = rest_list[0];
-    const auto& rest_four_space_list_1 = GetFourSpaceList(rest_1);
+  const auto find_it = rest_list_puttable_four_space_.find(rest_key);
 
-    const auto rest_2 = rest_list[1];
-    const auto& rest_four_space_list_2 = GetFourSpaceList(rest_2);
+  if(find_it == rest_list_puttable_four_space_.end()){
+    return;
+  }
+  
+  const auto& puttable_four_space_list = find_it->second;
+  GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
+}
 
+void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space)
+{
+  const auto find_it = move_rest_key_list_.find(move);
+
+  if(find_it == move_rest_key_list_.end()){
+    return;
+  }
+
+  // todo delete
+  static size_t count = 0;
+
+  if(++count % 10000 == 0){
+    cerr << "UpdateAdditionalPuttableFourSpace: " << count << endl;
+  }
+
+  const auto &rest_key_set = find_it->second;
+  auto it = rest_key_set.begin();
+  const auto it_end = rest_key_set.end();
+
+  vector<pair<RestListKey, FourSpace>> addional_four_space_list;
+
+  for(; it!=it_end; ++it){
+    // 位置moveを含む開残路リスト(move, move以外)を取得
+    const auto rest_key = *it;
+    vector<MovePosition> rest_list;
+
+    GetRestPosition(move, rest_key, &rest_list);
+
+    // 獲得/損失空間の追加による新たな同時設置可能な獲得/損失空間を求める
     vector<FourSpace> puttable_four_space_list;
+    EnumeratePuttableFourSpace(four_space, rest_list, &puttable_four_space_list);
 
-    GeneratePuttableFourSpace(rest_four_space_list_1, rest_four_space_list_2, &puttable_four_space_list);
-    GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
-  }else if(rest_size == 3){
-    const auto rest_1 = rest_list[0];
-    const auto& rest_four_space_list_1 = GetFourSpaceList(rest_1);
+    // 登録済みかチェックする
+    for(const auto& puttable_four_space : puttable_four_space_list){
+      if(IsRegisteredFourSpace(rest_key, puttable_four_space)){
+        continue;
+      }
 
-    const auto rest_2 = rest_list[1];
-    const auto& rest_four_space_list_2 = GetFourSpaceList(rest_2);
+      rest_list_puttable_four_space_[rest_key].emplace_back(puttable_four_space);
+      addional_four_space_list.emplace_back(make_pair(rest_key, puttable_four_space));
+    }
+  }
 
+  for(const auto& additional : addional_four_space_list){
+    const auto rest_key = additional.first;
+    const auto &additional_four_space = additional.second;
 
-    vector<FourSpace> puttable_four_space_list_pre;
-    
-    GeneratePuttableFourSpace(rest_four_space_list_1, rest_four_space_list_2, &puttable_four_space_list_pre);
+    // rest_keyと同一の開残路を持つ緩和四ノビIDを取得
+    const auto& relaxed_four_id_list = rest_list_relaxed_four_list_.at(rest_key);
 
-    const auto rest_3 = rest_list[2];
-    const auto& rest_four_space_list_3 = GetFourSpaceList(rest_3);
+    for(const auto relaxed_four_id : relaxed_four_id_list){
+      const auto& relaxed_four = GetRelaxedFour(relaxed_four_id);
+      const auto gain_position = relaxed_four.GetGainPosition();
+      const auto cost_position = relaxed_four.GetCostPosition();
 
-    vector<FourSpace> puttable_four_space_list;
-    GeneratePuttableFourSpace(puttable_four_space_list_pre, rest_four_space_list_3, &puttable_four_space_list);
-    GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
+      if(additional_four_space.IsConflict(gain_position, cost_position)){
+        continue;
+      }
+
+      FourSpace child_four_space(gain_position, cost_position);
+      child_four_space.Add(additional_four_space);
+
+      // todo modify
+      if(attack_player_ == kBlackTurn){
+        AddFourSpace<kBlackTurn>(gain_position, child_four_space);
+      }else{
+        AddFourSpace<kWhiteTurn>(gain_position, child_four_space);
+      }
+    }
   }
 }
 
-void FourSpaceSearch::EnumerateFourSpace(const MovePosition move, const FourSpace &four_space, const RelaxedFourID relaxed_four_id, vector<FourSpace> * const four_space_list) const
+void FourSpaceSearch::EnumeratePuttableFourSpace(const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list) const
 {
-  assert(four_space_list != nullptr);
-  assert(four_space_list->empty());
+  assert(puttable_four_space_list != nullptr);
+  assert(puttable_four_space_list->empty());
 
-  const RelaxedFour &relaxed_four = GetRelaxedFour(relaxed_four_id);
-  const auto gain_position = relaxed_four.GetGainPosition();
-  const auto cost_position = relaxed_four.GetCostPosition();
-  
-  const auto &rest_list = relaxed_four.GetRestPositionList();
   const auto rest_size = rest_list.size();
-  assert(rest_size >= 1 && rest_size <= 3);
+  assert(rest_size <= 2);
 
-  // 位置move以外の開残路位置を求める
-  vector<MovePosition> check_rest_list;
-  check_rest_list.reserve(rest_size - 1);
-
-  for(const auto rest_position : rest_list){
-    if(move == rest_position){
-      continue;
-    }
-
-    check_rest_list.emplace_back(rest_position);
+  if(rest_size == 0){
+    puttable_four_space_list->emplace_back(four_space);
+    return;
   }
 
-  vector<FourSpace> rest_four_space_list_1{four_space};
+  vector<FourSpace> four_space_list{four_space};
 
   if(rest_size == 1){
-    GenerateNonConflictFourSpace(gain_position, cost_position, rest_four_space_list_1, four_space_list);
-  }else if(rest_size == 2){
-    const auto rest_four_space_list_2 = GetFourSpaceList(check_rest_list[0]);
-    vector<FourSpace> puttable_four_space_list;
+    const auto& rest_four_space_list_0 = GetFourSpaceList(rest_list[0]);
 
-    GeneratePuttableFourSpace(rest_four_space_list_1, rest_four_space_list_2, &puttable_four_space_list);
-    GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
-  }else if(rest_size == 3){
-    const auto rest_four_space_list_2 = GetFourSpaceList(check_rest_list[0]);
+    GeneratePuttableFourSpace(four_space_list, rest_four_space_list_0, puttable_four_space_list);
+    //cerr << "EnumeratePuttableFourSpace-1: " << rest_four_space_list_0.size() << " -> " << puttable_four_space_list->size() << endl;
+  }else{
+    const auto& rest_four_space_list_0 = GetFourSpaceList(rest_list[0]);
+
     vector<FourSpace> puttable_four_space_list_pre;
-    
-    GeneratePuttableFourSpace(rest_four_space_list_1, rest_four_space_list_2, &puttable_four_space_list_pre);
+    GeneratePuttableFourSpace(four_space_list, rest_four_space_list_0, &puttable_four_space_list_pre);
+    //cerr << "EnumeratePuttableFourSpace2-1: " << four_space_list.size() * rest_four_space_list_0.size() << " -> " << puttable_four_space_list_pre.size() << endl;
 
-    const auto rest_four_space_list_3 = GetFourSpaceList(check_rest_list[1]);
-    vector<FourSpace> puttable_four_space_list;
-    GeneratePuttableFourSpace(puttable_four_space_list_pre, rest_four_space_list_3, &puttable_four_space_list);
-
-    GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
+    const auto& rest_four_space_list_1 = GetFourSpaceList(rest_list[1]);
+    GeneratePuttableFourSpace(puttable_four_space_list_pre, rest_four_space_list_1, puttable_four_space_list);
+    //cerr << "EnumeratePuttableFourSpace2-2: " << puttable_four_space_list_pre.size() * rest_four_space_list_1.size() << " -> " << puttable_four_space_list->size() << endl;
   }
 }
 
@@ -631,6 +589,62 @@ const bool FourSpaceSearch::IsRegisteredLocalBitBoard(const MovePosition move, c
 
   for(const auto& registered_bitboard : local_bitboard_list){
     if(registered_bitboard == local_bitboard){
+      return true;
+    }
+  }
+
+  return false;
+}
+
+const RestListKey FourSpaceSearch::GetOpenRestKey(vector<MovePosition> &rest_list) const
+{
+  RestListKey rest_key = 0ULL;
+
+  if(rest_list.empty()){
+    return rest_key;
+  }
+
+  sort(rest_list.begin(), rest_list.end(), greater<MovePosition>());
+
+  for(const auto rest_move : rest_list){
+    rest_key = rest_key << 8;
+    rest_key |= rest_move;
+  }
+
+  return rest_key;
+}
+
+void FourSpaceSearch::GetRestPosition(const MovePosition move, RestListKey rest_list_key, vector<MovePosition> * const rest_list) const
+{
+  assert(rest_list != nullptr);
+  assert(rest_list->empty());
+  assert(((move | move << 8 | move << 16) & rest_list_key) != 0);
+  static constexpr RestListKey kMoveMask = 0xFF;
+
+  while(rest_list_key != 0){
+    const auto rest_move = static_cast<MovePosition>(rest_list_key & kMoveMask);
+    rest_list_key = rest_list_key >> 8;
+
+    if(rest_move == move){
+      continue;
+    }
+
+    rest_list->emplace_back(rest_move);
+  }
+}
+
+const bool FourSpaceSearch::IsRegisteredFourSpace(const RestListKey rest_key, const FourSpace &four_space) const
+{
+  const auto find_it = rest_list_puttable_four_space_.find(rest_key);
+
+  if(find_it == rest_list_puttable_four_space_.end()){
+    return false;
+  }
+
+  const auto& four_space_list = find_it->second;
+
+  for(const auto &registered_four_space : four_space_list){
+    if(registered_four_space == four_space){
       return true;
     }
   }

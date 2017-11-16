@@ -570,7 +570,7 @@ public:
     }
 
     EXPECT_EQ(18, four_space_search.GetRelaxedFourCount());
-    
+
     // todo turn off comment
     //EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
 
