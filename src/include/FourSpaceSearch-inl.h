@@ -122,6 +122,10 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
   }
 
   move_four_space_list_[move].emplace_back(four_space);
+  const auto move_rest_key = static_cast<RestListKey>(move);
+
+  rest_list_puttable_four_space_[move_rest_key].emplace_back(four_space);
+  move_rest_key_list_[move].insert(move_rest_key);
 
   // 位置moveを残路に持つ緩和四ノビごとに獲得/損失空間を追加できるかチェックする
   std::map<RestListKey, std::vector<FourSpace>> additional_four_space;
@@ -161,7 +165,7 @@ void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move,
 
     // 獲得/損失空間の追加による新たな同時設置可能な獲得/損失空間を求める
     std::vector<FourSpace> puttable_four_space_list;
-    EnumeratePuttableFourSpace(four_space, rest_list, &puttable_four_space_list);
+    EnumeratePuttableFourSpace(move, four_space, rest_list, &puttable_four_space_list);
 
     // 登録済みかチェックする
     for(const auto& puttable_four_space : puttable_four_space_list){
@@ -299,7 +303,7 @@ void FourSpaceSearch::GenerateRelaxedFour(const MovePosition gain_position, cons
       std::vector<FourSpace> puttable_four_space_list;
       std::vector<MovePosition> brother_rest_list;
       GetRestPosition(gain_position, rest_key, &brother_rest_list);
-      EnumeratePuttableFourSpace(four_space, brother_rest_list, &puttable_four_space_list);
+      EnumeratePuttableFourSpace(gain_position, four_space, brother_rest_list, &puttable_four_space_list);
 
       rest_key_four_space_list[rest_key] = puttable_four_space_list;
       rest_list_puttable_four_space_[rest_key] = puttable_four_space_list;

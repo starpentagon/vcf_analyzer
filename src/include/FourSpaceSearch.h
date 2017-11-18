@@ -127,15 +127,6 @@ private:
   //! @retval 開残路位置の数
   size_t GetRestableRelaxedFourIDList(const MovePosition gain_position, const BoardDirection direction, std::vector<RelaxedFourID> * const restable_four_id_list) const;
 
-  //! @brief Relaxed FourIDの到達路を求める
-  //! @retval true 到達路を実現可能, false 競合しており実現不可能
-  bool GetReachSequence(const RelaxedFourID relaxed_four_id, MoveList * const move_list) const;
-  bool GetReachSequence(const std::vector<RelaxedFourID> &four_id_list, MoveList * const move_list) const;
-
-  //! @brief Relaxed FourIDの到達路(Relaxed FourIDリスト)を求める
-  void GetReachIDSequence(const RelaxedFourID relaxed_four_id, std::vector<RelaxedFourID> * const id_list) const;
-  void GetReachIDSequence(const RelaxedFourID relaxed_four_id, std::set<RelaxedFourID> * const appeared_id_set, std::vector<RelaxedFourID> * const id_list) const;
-
   //! @brief 指定位置の獲得/損失空間のリストを取得する
   const std::vector<FourSpace>& GetFourSpaceList(const MovePosition move) const;
 
@@ -158,23 +149,14 @@ private:
   template<PositionState>
   void SetState(const MovePosition move);
 
-  //! @brief 獲得路の実現に必要な依存路の着手(獲得路/損失路)を求める
-  //! @note 依存路の探索は深さ１に限定
-  void GetDependentReachMove(const RelaxedFourID relaxed_four_id, std::vector<std::vector<MovePair>> * const move_pair_vector) const;
-
-  //! @brief 獲得路に対応する損失路のリストを返す
-  //! @param gain_move 獲得路
-  //! @param const_move_list 損失路のリスト
-  void GetCostMoveList(const MovePosition gain_move, MoveList * const cost_move_list) const;
-
-  //! @brief 展開済みの変化かチェックする
-  const bool IsExpanded(const RelaxedFourID relaxed_four_id) const;
-
   //! @brief 開残路リストのkeyを取得する
   const RestListKey GetOpenRestKey(std::vector<MovePosition> &rest_list) const;
 
   //! @brief 位置moveのmove位置を除く開残路位置を取得する
   void GetRestPosition(const MovePosition move, RestListKey rest_list_key, std::vector<MovePosition> * const rest_list) const;
+
+  //! @brief 開残路位置を取得する
+  void GetRestPosition(RestListKey rest_list_key, std::vector<MovePosition> * const rest_list) const;
 
   //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間の増分を反映する
   //! @param move 獲得/損失空間が追加された位置
@@ -184,10 +166,11 @@ private:
   void UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, std::map<RestListKey, std::vector<FourSpace>> * const additional_four_space);
 
   //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間を列挙する
+  //! @param move 獲得/損失空間が追加された位置
   //! @param four_space 追加した獲得/損失空間
   //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
   //! @brief 生成した獲得/損失空間がすでに生成済みかどうかのチェックは行わない
-  void EnumeratePuttableFourSpace(const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list);
+  void EnumeratePuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list);
 
   //! @brief 開残路リストキーに対応する同時設置可能な獲得/損失空間の一覧を取得する
   //! @note rest_list_puttable_four_space_にrest_keyが未登録の場合は同時設置可能な獲得/損失空間を生成する
