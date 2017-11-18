@@ -469,6 +469,10 @@ public:
         cerr << MoveString(move) << endl;
       }
 
+      if(expect_bit[move] == move_cost_list[move].empty()){
+        cerr << MoveString(move) << endl;
+      }
+
       EXPECT_EQ(expect_bit[move], !move_gain_list[move].empty());
       EXPECT_EQ(expect_bit[move], !move_cost_list[move].empty());
     }

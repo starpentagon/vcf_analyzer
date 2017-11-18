@@ -96,8 +96,9 @@ private:
   //! @brief 位置moveへの獲得/損失空間追加による緩和四ノビを生成する
   //! @param gain_position 獲得/損失空間が追加された位置
   //! @param four_space 追加した獲得/損失空間
+  //! @param additional_four_space gain_positionを含む残路リストの同時設置可能な獲得/損失空間リスト
   template<PlayerTurn P>
-  void GenerateRelaxedFour(const MovePosition gain_position, const FourSpace &four_space);
+  void GenerateRelaxedFour(const MovePosition gain_position, const FourSpace &four_space, const std::map<RestListKey, std::vector<FourSpace>> &additional_four_space);
 
   //! @brief 獲得路が指定位置になるRelaxedFourIDのリストを取得する
   const std::vector<RelaxedFourID>& GetGainRelaxedFourIDList(const MovePosition gain_position) const;
@@ -179,13 +180,18 @@ private:
   //! @param move 獲得/損失空間が追加された位置
   //! @param four_space 追加した獲得/損失空間
   //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
-  void UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space);
+  template<PlayerTurn P>
+  void UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, std::map<RestListKey, std::vector<FourSpace>> * const additional_four_space);
 
   //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間を列挙する
   //! @param four_space 追加した獲得/損失空間
   //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
   //! @brief 生成した獲得/損失空間がすでに生成済みかどうかのチェックは行わない
-  void EnumeratePuttableFourSpace(const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list) const;
+  void EnumeratePuttableFourSpace(const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list);
+
+  //! @brief 開残路リストキーに対応する同時設置可能な獲得/損失空間の一覧を取得する
+  //! @note rest_list_puttable_four_space_にrest_keyが未登録の場合は同時設置可能な獲得/損失空間を生成する
+  void EnumerateRestKeyFourSpaceList(const RestListKey rest_key, std::vector<FourSpace> * const puttable_four_space_list);
 
   //! @brief 開残路リストに登録ずみの獲得/損失空間かどうかをチェックする
   const bool IsRegisteredFourSpace(const RestListKey rest_key, const FourSpace &four_space) const;
