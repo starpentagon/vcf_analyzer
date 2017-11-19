@@ -64,14 +64,6 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
   static size_t count = 0;
   count++;
 
-  size_t four_count = four_space.GetGainBit().count();
-  static size_t max_four_count = 0;
-
-  if(max_four_count < four_count && four_count == 74){
-    max_four_count = four_count;
-    std::cerr << "max four count: " << max_four_count << ", move: " << MoveString(move) << std::endl;
-  }
-
   if(IsRegisteredFourSpace(move, four_space)){
     // すでに登録済みの獲得/損失空間がある場合は終了
     static size_t skipped_add_four_space = 0;
@@ -82,6 +74,11 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
     return;
   }
 
+  move_four_space_list_[move].emplace_back(four_space);
+  const auto move_rest_key = static_cast<RestListKey>(move);
+
+  rest_list_puttable_four_space_[move_rest_key].emplace_back(four_space);
+
   // todo delete
   static size_t check_count = 0;
 
@@ -89,43 +86,14 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
   if(++check_count % 10000 == 0){
     std::cerr << "add four space check / count = " << 1.0 * check_count / count << "\t" << check_count << " / " << count << std::endl;
     std::cerr << "\tR-four count: " << GetRelaxedFourCount() << std::endl;
-    //std::cerr << "\tR-four length: " << GetMaxRelaxedFourLength() << std::endl;
+    std::cerr << "\tR-four length: " << GetMaxRelaxedFourLength() << std::endl;
 
     std::cerr << "\tR-four count on move" << std::endl;
-
-    for(const auto move : GetAllInBoardMove()){
-      Cordinate x, y;
-      GetMoveCordinate(move, &x, &y);
-
-      std::cerr << move_gain_list_[move].size() << ",";
-
-      if(x == 15){
-        std::cerr << std::endl;
-      }
-    }
+    ShowBoardRelaxedFourCount();
 
     std::cerr << "\tFourSpace count on move" << std::endl;
-    
-    for(const auto move : GetAllInBoardMove()){
-      Cordinate x, y;
-      size_t four_space_count = 0;
-      GetMoveCordinate(move, &x, &y);
-
-      four_space_count = GetFourSpaceList(move).size();
-
-      std::cerr << four_space_count << ",";
-
-      if(x == 15){
-        std::cerr << std::endl;
-      }
-    }
+    ShowBoardGainCostSpaceCount();
   }
-
-  move_four_space_list_[move].emplace_back(four_space);
-  const auto move_rest_key = static_cast<RestListKey>(move);
-
-  rest_list_puttable_four_space_[move_rest_key].emplace_back(four_space);
-  move_rest_key_list_[move].insert(move_rest_key);
 
   // 位置moveを残路に持つ緩和四ノビごとに獲得/損失空間を追加できるかチェックする
   std::map<RestListKey, std::vector<FourSpace>> additional_four_space;
@@ -165,17 +133,10 @@ void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move,
 
     // 獲得/損失空間の追加による新たな同時設置可能な獲得/損失空間を求める
     std::vector<FourSpace> puttable_four_space_list;
-    EnumeratePuttableFourSpace(move, four_space, rest_list, &puttable_four_space_list);
+    EnumerateAdditionalPuttableFourSpace(move, four_space, rest_list, &puttable_four_space_list);
 
-    // 登録済みかチェックする
-    for(const auto& puttable_four_space : puttable_four_space_list){
-      if(IsRegisteredFourSpace(rest_key, puttable_four_space)){
-        continue;
-      }
-
-      rest_list_puttable_four_space_[rest_key].emplace_back(puttable_four_space);
-      (*additional_four_space)[rest_key].emplace_back(puttable_four_space);
-    }
+    std::vector<FourSpace> &rest_key_four_space = (*additional_four_space)[rest_key];
+    std::copy(puttable_four_space_list.begin(), puttable_four_space_list.end(), std::back_inserter(rest_key_four_space));
   }
 
   for(const auto& additional : *additional_four_space){
@@ -306,11 +267,6 @@ void FourSpaceSearch::GenerateRelaxedFour(const MovePosition gain_position, cons
       EnumeratePuttableFourSpace(gain_position, four_space, brother_rest_list, &puttable_four_space_list);
 
       rest_key_four_space_list[rest_key] = puttable_four_space_list;
-      rest_list_puttable_four_space_[rest_key] = puttable_four_space_list;
-
-      for(const auto rest_move : rest_list){
-        move_rest_key_list_[rest_move].insert(rest_key);
-      }
     }else{
       // 追加された獲得/損失空間についてのみチェックすればよい
       rest_key_four_space_list[rest_key] = additional_four_space.at(rest_key);

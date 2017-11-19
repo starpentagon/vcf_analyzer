@@ -169,8 +169,15 @@ private:
   //! @param move 獲得/損失空間が追加された位置
   //! @param four_space 追加した獲得/損失空間
   //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
-  //! @brief 生成した獲得/損失空間がすでに生成済みかどうかのチェックは行わない
+  //! @brief 生成した獲得/損失空間がすでに生成済みかどうかのチェックを行わず生成した獲得/損失空間をすべて格納する
   void EnumeratePuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list);
+
+  //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間を列挙する
+  //! @param move 獲得/損失空間が追加された位置
+  //! @param four_space 追加した獲得/損失空間
+  //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
+  //! @brief 生成した獲得/損失空間がすでに生成済みかどうかのチェックを行い未生成のもののみ格納する
+  void EnumerateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list);
 
   //! @brief 開残路リストキーに対応する同時設置可能な獲得/損失空間の一覧を取得する
   //! @note rest_list_puttable_four_space_にrest_keyが未登録の場合は同時設置可能な獲得/損失空間を生成する
@@ -182,6 +189,12 @@ private:
   //! @brief MoveBitSetの内容をBitBoardに反映する
   template<PositionState S>
   void SetMoveBit(const MoveBitSet &move_bit);
+
+  //! @brief 位置moveごとに緩和四ノビ数を出力する
+  void ShowBoardRelaxedFourCount() const;
+
+  //! @brief 位置moveごとに獲得/損失空間数を出力する
+  void ShowBoardGainCostSpaceCount() const;
 
   std::vector<RelaxedFour> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
   std::map<uint64_t, RelaxedFourID> transposition_table_;   //! RelaxedFourの置換表(到達路、損失路、残路が等しいRelaxedFourを同一視)

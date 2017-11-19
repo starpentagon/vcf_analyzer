@@ -206,15 +206,11 @@ void FourSpaceSearch::EnumeratePuttableFourSpace(const MovePosition move, const 
 
   const auto rest_size = rest_list.size();
   assert(rest_size <= 2);
+  vector<FourSpace> four_space_list{four_space};
 
   if(rest_size == 0){
     puttable_four_space_list->emplace_back(four_space);
-    return;
-  }
-
-  vector<FourSpace> four_space_list{four_space};
-
-  if(rest_size == 1){
+  }else if(rest_size == 1){
     const auto& rest_four_space_list_0 = GetFourSpaceList(rest_list[0]);
 
     GeneratePuttableFourSpace(four_space_list, rest_four_space_list_0, puttable_four_space_list);
@@ -249,11 +245,25 @@ void FourSpaceSearch::EnumeratePuttableFourSpace(const MovePosition move, const 
     GeneratePuttableFourSpace(four_space_list, puttable_four_space_list_pre, puttable_four_space_list);
     //cerr << "EnumeratePuttableFourSpace2-1: " << four_space_list.size() * rest_four_space_list_0.size() << " -> " << puttable_four_space_list_pre.size() << endl;
   }
+}
+
+void FourSpaceSearch::EnumerateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list)
+{
+  vector<FourSpace> generated_four_space;
+  EnumeratePuttableFourSpace(move, four_space, rest_list, &generated_four_space);
 
   std::vector<MovePosition> all_rest_list(rest_list);
   all_rest_list.emplace_back(move);
   const auto all_rest_list_key = GetOpenRestKey(all_rest_list);
-  std::copy(puttable_four_space_list->begin(), puttable_four_space_list->end(), std::back_inserter(rest_list_puttable_four_space_[all_rest_list_key]));
+  puttable_four_space_list->reserve(generated_four_space.size());
+
+  for(const auto &additional_four_space : generated_four_space){
+    if(IsRegisteredFourSpace(all_rest_list_key, additional_four_space)){
+      continue;
+    }
+
+    puttable_four_space_list->emplace_back(additional_four_space);
+  }
 
   for(const auto rest_move : all_rest_list){
     move_rest_key_list_[rest_move].insert(all_rest_list_key);
@@ -418,6 +428,37 @@ void FourSpaceSearch::EnumerateRestKeyFourSpaceList(const RestListKey rest_key, 
   for(const auto rest_move : rest_list){
     move_rest_key_list_[rest_move].insert(rest_key);
   }
+}
+
+void FourSpaceSearch::ShowBoardRelaxedFourCount() const
+{
+  for(const auto move : GetAllInBoardMove()){
+    Cordinate x, y;
+    GetMoveCordinate(move, &x, &y);
+
+    cerr << move_gain_list_[move].size() << ",";
+
+    if(x == 15){
+      cerr << endl;
+    }
+  }
+}
+
+void FourSpaceSearch::ShowBoardGainCostSpaceCount() const
+{
+  for(const auto move : GetAllInBoardMove()){
+    Cordinate x, y;
+    size_t four_space_count = 0;
+    GetMoveCordinate(move, &x, &y);
+
+    four_space_count = GetFourSpaceList(move).size();
+
+    cerr << four_space_count << ",";
+
+    if(x == 15){
+      cerr << endl;
+    }
+  }  
 }
 
 }   // namespace realcore
