@@ -70,25 +70,11 @@ public:
 private:
   const RelaxedFour& GetRelaxedFour(const RelaxedFourID relaxed_four_id) const;
 
-  //! @brief 獲得/損失空間を列挙する(緩和四ノビ生成版)
-  //! @param gain_position 獲得路
-  //! @param cost_position 損失路
-  //! @param rest_list 残路リスト
-  //! @param four_space_list 同時設置可能な獲得/損失空間の格納先
-  void EnumerateFourSpace(const MovePosition gain_position, const MovePosition cost_position, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const four_space_list) const;
-
   //! @brief 2つの獲得/損失空間のリストから同時設置可能な獲得/損失空間のリストを生成する
   //! @param four_space_list_1 獲得/損失空間のリスト
   //! @param four_space_list_2 獲得/損失空間のリスト
   //! @param puttable_four_space 同時設置可能な獲得/損失空間のリストの格納先
   void GeneratePuttableFourSpace(const std::vector<FourSpace> &four_space_list_1, const std::vector<FourSpace> &four_space_list_2, std::vector<FourSpace> * const puttable_four_space_list) const;
-
-  //! @brief 獲得路/損失路と獲得/損失空間リストから競合していない獲得/損失空間のリストを生成する
-  //! @param gain_position 獲得路
-  //! @param cost_position 損失路
-  //! @param four_space_list 獲得/損失空間のリスト
-  //! @param non_conflict_four_space_list 競合していない獲得/損失空間のリストの格納先
-  void GenerateNonConflictFourSpace(const MovePosition gain_position, const MovePosition cost_position, const std::vector<FourSpace> &four_space_list, std::vector<FourSpace> * const non_conflict_four_space_list) const;
 
   //! @brief 位置moveへの獲得/損失空間追加による緩和四ノビを生成する
   //! @param gain_position 獲得/損失空間が追加された位置

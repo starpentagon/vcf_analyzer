@@ -109,7 +109,7 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
       path_through_matrix[move]++;
     }    
   }
-  
+/*  
   if(count % 10000 == 0){
     std::cerr << "\tPath through on move" << std::endl;
 
@@ -124,7 +124,7 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
       }
     }
   }
-
+*/
   // todo delete
   bool is_answer = (answer_gain_bit & four_space.GetGainBit()) == four_space.GetGainBit();
   is_answer &= (answer_cost_bit & four_space.GetCostBit()) == four_space.GetCostBit();
@@ -133,12 +133,6 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
     return;
   }
 */
-
-  // todo delete
-  const auto gain_bit = four_space.GetGainBit();
-  if(gain_bit[kMoveNA] || gain_bit[kMoveIA] || gain_bit[kMoveMG]){
-    return;
-  }
 
   if(is_answer){
     std::cerr << "answer: " << MoveString(move) << ", " << four_space.GetGainBit().count() << ", ";
@@ -153,10 +147,6 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
     }
 
     std::cerr << gain_list.str() << ", " << cost_list.str() << ", " << move_list.str() << std::endl;
-
-    if(move == kMoveMO){
-      int a = 1;
-    }
   }
 
   static constexpr PlayerTurn Q = GetOpponentTurn(P);

@@ -165,38 +165,6 @@ const bool FourSpaceSearch::IsRegisteredFourSpace(const MovePosition move, const
   return false;
 }
 
-void FourSpaceSearch::EnumerateFourSpace(const MovePosition gain_position, const MovePosition cost_position, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const four_space_list) const
-{
-  assert(four_space_list != nullptr);
-  assert(four_space_list->empty());
-
-  // todo delete
-  static size_t count = 0;
-
-  if(++count % 1000 == 0)
-    cerr << "EnumerateFourSpace New: " << count << endl;
-  
-  const auto rest_size = rest_list.size();
-  assert(rest_size <= 3);
-
-  if(rest_size == 0){
-    four_space_list->emplace_back(gain_position, cost_position);
-    return;
-  }
-
-  auto dummy = rest_list;   // todo modify
-  const auto rest_key = GetOpenRestKey(dummy);
-
-  const auto find_it = rest_list_puttable_four_space_.find(rest_key);
-
-  if(find_it == rest_list_puttable_four_space_.end()){
-    return;
-  }
-  
-  const auto& puttable_four_space_list = find_it->second;
-  GenerateNonConflictFourSpace(gain_position, cost_position, puttable_four_space_list, four_space_list);
-}
-
 void FourSpaceSearch::EnumeratePuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list)
 {
   assert(puttable_four_space_list != nullptr);
@@ -328,22 +296,6 @@ void FourSpaceSearch::GeneratePuttableFourSpace(const vector<FourSpace> &four_sp
 
       puttable_four_space_list->emplace_back(four_space);
     }
-  }
-}
-
-void FourSpaceSearch::GenerateNonConflictFourSpace(const MovePosition gain_position, const MovePosition cost_position, const vector<FourSpace> &four_space_list, vector<FourSpace> * const non_conflict_four_space_list) const
-{
-  assert(non_conflict_four_space_list != nullptr);
-  assert(non_conflict_four_space_list->empty());
-  non_conflict_four_space_list->reserve(four_space_list.size());
-
-  for(const auto &four_space : four_space_list){
-    if(four_space.IsConflict(gain_position, cost_position)){
-      continue;
-    }
-
-    non_conflict_four_space_list->emplace_back(four_space);
-    non_conflict_four_space_list->back().Add(gain_position, cost_position);
   }
 }
 
@@ -572,6 +524,20 @@ const RestListKey FourSpaceSearch::GetRestList(const NextRelaxedFourInfo &next_f
 
 void FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space)
 {
+  // 五が生じる獲得/損失空間は生成しない
+  // todo kBlackStone -> S, kWhiteStone -> T
+  SetMoveBit<kBlackStone>(four_space.GetGainBit());
+  SetMoveBit<kWhiteStone>(four_space.GetCostBit());
+
+  const bool is_five = IsFiveStones<kBlackTurn>() || IsFiveStones<kWhiteTurn>();
+
+  SetMoveBit<kOpenPosition>(four_space.GetGainBit());
+  SetMoveBit<kOpenPosition>(four_space.GetCostBit());
+
+  if(is_five){
+    return;
+  }
+
   if(IsRegisteredFourSpace(rest_key, four_space)){
     return;
   }

@@ -66,6 +66,11 @@ const bool FourSpace::IsPuttable(const FourSpace &four_space) const
     return false;
   }
 
+  // todo 石数チェックの追加をドキュメント化
+  if((check_gain_bit | gain_bit_).count() != (check_cost_bit | cost_bit_).count()){
+    return false;
+  }
+
   return true;
 }
 
