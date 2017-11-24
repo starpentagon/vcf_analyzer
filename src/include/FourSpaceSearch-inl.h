@@ -64,6 +64,125 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
   static size_t count = 0;
   count++;
 
+  static std::vector<MovePosition> answer_gain{
+    kMoveND, kMoveLD, kMoveOD, kMoveMD, kMoveME, kMoveMF, kMoveLF, kMoveOG, kMoveNF, kMoveKF,
+    kMoveEO, kMoveAK, kMoveAL, kMoveDA, kMoveBA, kMoveBD, kMoveCC, kMoveDD, kMoveCE, kMoveCD,
+    kMoveCG, kMoveDF, kMoveGC, kMoveEC, kMoveAG, kMoveAH, kMoveFC, kMoveEB, kMoveGD, kMoveGE,
+    kMoveHC, kMoveFE, kMoveNE, kMoveLG, kMoveLA, kMoveLE, kMoveJE, kMoveGF, kMoveIH, kMoveHG,
+    kMoveHI, kMoveEL, kMoveBI, kMoveFH, kMoveEH, kMoveDI, kMoveCI, kMoveCK, kMoveDL, kMoveFI,
+    kMoveEM, kMoveFN, kMoveEN, kMoveHN, kMoveGK, kMoveKK, kMoveIK, kMoveHL, kMoveNH, kMoveMI,
+    kMoveKI, kMoveOI, kMoveOJ, kMoveOM, kMoveMM, kMoveKM, kMoveNM, kMoveKL, kMoveML, kMoveMO,
+    kMoveLN, kMoveKO, kMoveLO
+  };
+
+  static std::vector<MovePosition> answer_cost{
+    kMoveLB, kMoveKE, kMoveOB, kMoveKD, kMoveMB, kMoveMG, kMoveKG, kMoveOF, kMoveKC, kMoveJF,
+    kMoveAO, kMoveCM, kMoveAJ, kMoveFA, kMoveAA, kMoveBC, kMoveDB, kMoveFF, kMoveDE, kMoveCB,
+    kMoveCF, kMoveBH, kMoveFD, kMoveFB, kMoveBF, kMoveAF, kMoveDC, kMoveED, kMoveHE, kMoveGB,
+    kMoveIC, kMoveJA, kMoveNC, kMoveKH, kMoveNA, kMoveLC, kMoveID, kMoveGG, kMoveJG, kMoveJI,
+    kMoveHJ, kMoveFK, kMoveDK, kMoveEG, kMoveGH, kMoveBK, kMoveEI, kMoveCH, kMoveCL, kMoveIL,
+    kMoveBJ, kMoveGO, kMoveEK, kMoveGN, kMoveFL, kMoveII, kMoveJK, kMoveHO, kMoveNG, kMoveLJ,
+    kMoveLH, kMoveNI, kMoveOH, kMoveOL, kMoveNN, kMoveNJ, kMoveLM, kMoveKJ, kMoveMJ, kMoveMN,
+    kMoveJL, kMoveKN, kMoveIO, kMoveNO
+  };
+
+  static MoveBitSet answer_gain_bit, answer_cost_bit;
+
+  if(answer_gain_bit.none()){
+    for(const auto move : answer_gain){
+      answer_gain_bit.set(move);
+    }
+
+    for(const auto move : answer_cost){
+      answer_cost_bit.set(move);
+    }
+  }
+
+  // todo delete
+  static size_t path_through_matrix[256] = {0};
+
+  {
+    MoveList gain_list;
+    GetMoveList(four_space.GetGainBit(), &gain_list);
+
+    for(const auto move : gain_list){
+      path_through_matrix[move]++;
+    }    
+  }
+  
+  if(count % 10000 == 0){
+    std::cerr << "\tPath through on move" << std::endl;
+
+    for(const auto move : GetAllInBoardMove()){
+      Cordinate x, y;
+      GetMoveCordinate(move, &x, &y);
+  
+      std::cerr << path_through_matrix[move] << ",";
+  
+      if(x == 15){
+        std::cerr << std::endl;
+      }
+    }
+  }
+
+  // todo delete
+  bool is_answer = (answer_gain_bit & four_space.GetGainBit()) == four_space.GetGainBit();
+  is_answer &= (answer_cost_bit & four_space.GetCostBit()) == four_space.GetCostBit();
+/*
+  if(!is_answer){
+    return;
+  }
+*/
+
+  // todo delete
+  const auto gain_bit = four_space.GetGainBit();
+  if(gain_bit[kMoveNA] || gain_bit[kMoveIA] || gain_bit[kMoveMG]){
+    return;
+  }
+
+  if(is_answer){
+    std::cerr << "answer: " << MoveString(move) << ", " << four_space.GetGainBit().count() << ", ";
+
+    MoveList gain_list, cost_list, move_list;
+    GetMoveList(four_space.GetGainBit(), &gain_list);
+    GetMoveList(four_space.GetCostBit(), &cost_list);
+
+    for(size_t i=0, size=gain_list.size(); i<size; i++){
+      move_list += gain_list[i];
+      move_list += cost_list[i];
+    }
+
+    std::cerr << gain_list.str() << ", " << cost_list.str() << ", " << move_list.str() << std::endl;
+
+    if(move == kMoveMO){
+      int a = 1;
+    }
+  }
+
+  static constexpr PlayerTurn Q = GetOpponentTurn(P);
+  static constexpr PositionState S = GetPlayerStone(P);
+  static constexpr PositionState T = GetPlayerStone(Q);
+
+  SetMoveBit<S>(four_space.GetGainBit());
+  SetMoveBit<T>(four_space.GetCostBit());
+
+  const bool is_five = IsFiveStones<P>() || IsFiveStones<Q>();
+
+  SetMoveBit<kOpenPosition>(four_space.GetGainBit());
+  SetMoveBit<kOpenPosition>(four_space.GetCostBit());
+
+  if(is_five){
+    static size_t is_five_count = 0;
+    
+    // todo delete
+    is_five_count++;
+    
+    if(is_five_count % 1000 == 0)
+      std::cerr << "is_five: " << is_five_count << std::endl;
+    
+    return;
+  }
+  
   if(IsRegisteredFourSpace(move, four_space)){
     // すでに登録済みの獲得/損失空間がある場合は終了
     static size_t skipped_add_four_space = 0;
@@ -73,11 +192,6 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
     //std::cerr << "skipped_add_four_space rate: " << 1.0 * skipped_add_four_space / count << std::endl;
     return;
   }
-
-  move_four_space_list_[move].emplace_back(four_space);
-  const auto move_rest_key = static_cast<RestListKey>(move);
-
-  rest_list_puttable_four_space_[move_rest_key].emplace_back(four_space);
 
   // todo delete
   static size_t check_count = 0;
@@ -97,49 +211,17 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
 
   // 位置moveを残路に持つ緩和四ノビごとに獲得/損失空間を追加できるかチェックする
   std::map<RestListKey, std::vector<FourSpace>> additional_four_space;
-  UpdateAdditionalPuttableFourSpace<P>(move, four_space, &additional_four_space);
+  UpdateRestListPuttableFourSpace(move, four_space, &additional_four_space);
+  UpdateAdditionalPuttableFourSpace<P>(move, four_space, additional_four_space);
 
   // 位置moveの直線近傍から緩和四ノビを作れるかチェックする
   GenerateRelaxedFour<P>(move, four_space, additional_four_space);
 }
 
 template<PlayerTurn P>
-void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, std::map<RestListKey, std::vector<FourSpace>> * const additional_four_space)
+void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::map<RestListKey, std::vector<FourSpace>> &additional_four_space)
 {
-  assert(additional_four_space != nullptr);
-  const auto find_it = move_rest_key_list_.find(move);
-
-  if(find_it == move_rest_key_list_.end()){
-    return;
-  }
-
-  // todo delete
-  static size_t count = 0;
-
-  if(++count % 10000 == 0){
-    std::cerr << "UpdateAdditionalPuttableFourSpace: " << count << std::endl;
-  }
-
-  const auto &rest_key_set = find_it->second;
-  auto it = rest_key_set.begin();
-  const auto it_end = rest_key_set.end();
-
-  for(; it!=it_end; ++it){
-    // 位置moveを含む開残路リスト(move, move以外)を取得
-    const auto rest_key = *it;
-    std::vector<MovePosition> rest_list;
-
-    GetRestPosition(move, rest_key, &rest_list);
-
-    // 獲得/損失空間の追加による新たな同時設置可能な獲得/損失空間を求める
-    std::vector<FourSpace> puttable_four_space_list;
-    EnumerateAdditionalPuttableFourSpace(move, four_space, rest_list, &puttable_four_space_list);
-
-    std::vector<FourSpace> &rest_key_four_space = (*additional_four_space)[rest_key];
-    std::copy(puttable_four_space_list.begin(), puttable_four_space_list.end(), std::back_inserter(rest_key_four_space));
-  }
-
-  for(const auto& additional : *additional_four_space){
+  for(const auto& additional : additional_four_space){
     const auto rest_key = additional.first;
     const auto &additional_four_space_list = additional.second;
 
@@ -150,7 +232,7 @@ void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move,
       continue;
     }
 
-    const auto& relaxed_four_id_list = find_it->second;
+    const auto relaxed_four_id_list = find_it->second;   // todo vectorが拡張されるとloopでエラーになる？dequeにすべき？いったんコピーで対処
 
     for(const auto relaxed_four_id : relaxed_four_id_list){
       const auto& relaxed_four = GetRelaxedFour(relaxed_four_id);
@@ -197,18 +279,6 @@ void FourSpaceSearch::GenerateRelaxedFour(const MovePosition gain_position, cons
 
   LineNeighborhood line_neighborhood(gain_position, kOpenStateNeighborhoodSize, *this);
 
-  // すでにチェック済みか調べる
-  LocalBitBoard local_bit_board;
-  line_neighborhood.GetLocalBitBoard(&local_bit_board);
-
-  if(IsRegisteredLocalBitBoard(gain_position, local_bit_board)){
-    SetMoveBit<kOpenPosition>(neighbor_gain_bit);
-    SetMoveBit<kOpenPosition>(neighbor_cost_bit);
-    return;
-  }
-
-  move_local_bitboard_list_[gain_position].emplace_back(local_bit_board);
-  
   // 新たに四ノビを作れるかチェックする
   static constexpr uint64_t kUpdateFlagFour = P == kBlackTurn ? kUpdateFlagFourBlack : kUpdateFlagFourWhite;
   static constexpr uint64_t kUpdateFlagPointOfSword = P == kBlackTurn ? kUpdateFlagPointOfSwordBlack : kUpdateFlagPointOfSwordWhite;
@@ -236,20 +306,8 @@ void FourSpaceSearch::GenerateRelaxedFour(const MovePosition gain_position, cons
   std::set<RestListKey> checked_rest_key_set;
   
   for(const auto next_four_info : next_four_info_list){
-    const MovePosition rest_1 = std::get<2>(next_four_info);
-    const MovePosition rest_2 = std::get<3>(next_four_info);
-    const MovePosition rest_3 = std::get<4>(next_four_info);
-
     std::vector<MovePosition> rest_list;
-    rest_list.reserve(3);
-
-    for(const auto rest_move : {rest_1, rest_2, rest_3}){
-      if(!move_gain_list_[rest_move].empty()){
-        rest_list.emplace_back(rest_move);
-      }
-    }
-
-    const auto rest_key = GetOpenRestKey(rest_list);
+    const auto rest_key = GetRestList(next_four_info, &rest_list);
 
     if(checked_rest_key_set.find(rest_key) != checked_rest_key_set.end()){
       continue;
@@ -277,20 +335,9 @@ void FourSpaceSearch::GenerateRelaxedFour(const MovePosition gain_position, cons
     const MovePosition next_gain = std::get<0>(next_four_info);
     const MovePosition next_cost = std::get<1>(next_four_info);
 
-    const MovePosition rest_1 = std::get<2>(next_four_info);
-    const MovePosition rest_2 = std::get<3>(next_four_info);
-    const MovePosition rest_3 = std::get<4>(next_four_info);
-
     std::vector<MovePosition> rest_list;
-    rest_list.reserve(3);
+    const auto rest_key = GetRestList(next_four_info, &rest_list);
 
-    for(const auto rest_move : {rest_1, rest_2, rest_3}){
-      if(!move_gain_list_[rest_move].empty()){
-        rest_list.emplace_back(rest_move);
-      }
-    }
-
-    const auto rest_key = GetOpenRestKey(rest_list);
     const auto& four_space_list = rest_key_four_space_list[rest_key];
 
     if(four_space_list.empty()){
@@ -322,28 +369,11 @@ void FourSpaceSearch::GenerateRelaxedFour(const MovePosition gain_position, cons
       const bool is_open_four = IsOpenFourMove<P>(next_gain);
       const bool is_four = IsFourMove<P>(next_gain, &guard_move);
       const bool is_forbidden = IsForbiddenMove<P>(next_gain);
-      bool opponent_guard_failed = false;
-
-      if(!is_open_four && is_four){
-        // 四ノリがある場合にノリ返せるかチェック
-        SetState<S>(next_gain);
-        SetState<T>(guard_move);
-
-        MovePosition opponent_guard;
-        const bool is_opponent_four = IsFourMoveOnBoard<Q>(guard_move, &opponent_guard);
-
-        if(is_opponent_four){
-          opponent_guard_failed = !IsFourMove<P>(opponent_guard, NULL);
-        }
-
-        SetState<kOpenPosition>(next_gain);
-        SetState<kOpenPosition>(guard_move);
-      }
       
       SetMoveBit<kOpenPosition>(next_four_space.GetGainBit());
       SetMoveBit<kOpenPosition>(next_four_space.GetCostBit());
 
-      if(!is_open_four && (!is_four || is_forbidden || guard_move != next_cost || opponent_guard_failed)){
+      if(!is_open_four && (!is_four || is_forbidden || guard_move != next_cost)){
         static size_t four_check_skip_count = 0;
 
         if(++four_check_skip_count % 1000 == 0){
@@ -355,9 +385,10 @@ void FourSpaceSearch::GenerateRelaxedFour(const MovePosition gain_position, cons
 
       AddRelaxedFour(next_gain, next_cost, rest_list);
 
-      if(is_open_four){
-        continue;
-      }
+      // todo comment delete
+//      if(is_open_four){
+//        continue;
+//      }
 
       next_four_space.Add(next_gain, next_cost);
       AddFourSpace<P>(next_gain, next_four_space);
@@ -513,7 +544,14 @@ inline void FourSpaceSearch::GetRestRelaxedFourIDList(const MovePosition move, s
 
 inline const std::vector<FourSpace>& FourSpaceSearch::GetFourSpaceList(const MovePosition move) const
 {
-  return move_four_space_list_[move];
+  const auto find_it = rest_list_puttable_four_space_.find(move);
+  static std::vector<FourSpace> empty_list;
+
+  if(find_it == rest_list_puttable_four_space_.end()){
+    return empty_list;
+  }else{
+    return rest_list_puttable_four_space_.at(move);
+  }
 }
 
 template<PositionState S>

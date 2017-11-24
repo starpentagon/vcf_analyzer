@@ -1,7 +1,5 @@
 #include <set>  // todo delete
 
-#include "MoveTree.h"   // todo delete
-#include "HashTable.h"   // todo delete
 #include "FourSpaceSearch.h"
 
 using namespace std;
@@ -121,7 +119,7 @@ const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
   size_t max_length = 0;
 
   for(const auto move : GetAllInBoardMove()){
-    for(const auto& four_space : move_four_space_list_[move]){
+    for(const auto& four_space : GetFourSpaceList(move)){
       const auto length = four_space.GetGainBit().count();
       max_length = max(length, max_length);
     }
@@ -206,19 +204,53 @@ void FourSpaceSearch::EnumeratePuttableFourSpace(const MovePosition move, const 
 
   const auto rest_size = rest_list.size();
   assert(rest_size <= 2);
+
+  auto dummy = rest_list; // todo modify
+  const auto rest_list_key = GetOpenRestKey(dummy);
   vector<FourSpace> four_space_list{four_space};
+
+  vector<MovePosition> all_rest_list{rest_list};
+  all_rest_list.emplace_back(move);
+  const auto all_rest_key = GetOpenRestKey(all_rest_list);
+  const auto all_rest_size = rest_size + 1;
+
+  if(rest_list_puttable_four_space_.find(all_rest_key) == rest_list_puttable_four_space_.end()){
+    // 残路リストキーが初出の場合は全パターンを生成する
+    if(all_rest_size == 1){
+      puttable_four_space_list->emplace_back(four_space);
+    }else if(all_rest_size == 2){
+      const auto& rest_four_space_list_0 = GetFourSpaceList(all_rest_list[0]);
+      const auto& rest_four_space_list_1 = GetFourSpaceList(all_rest_list[1]);
+
+      GeneratePuttableFourSpace(rest_four_space_list_0, rest_four_space_list_1, puttable_four_space_list);
+    }else{
+      vector<FourSpace> puttable_four_space_list_pre;
+
+      if(rest_list_puttable_four_space_.find(rest_list_key) == rest_list_puttable_four_space_.end()){
+        const auto& rest_four_space_list_0 = GetFourSpaceList(rest_list[0]);
+        const auto& rest_four_space_list_1 = GetFourSpaceList(rest_list[1]);
+  
+        GeneratePuttableFourSpace(rest_four_space_list_0, rest_four_space_list_1, &puttable_four_space_list_pre);
+        AddRestListFourSpace(rest_list_key, puttable_four_space_list_pre);
+      }else{
+        puttable_four_space_list_pre = rest_list_puttable_four_space_[rest_list_key];
+      }
+
+      const auto& rest_four_space_list_2 = GetFourSpaceList(move);
+      GeneratePuttableFourSpace(rest_four_space_list_2, puttable_four_space_list_pre, puttable_four_space_list);
+    }
+
+    AddRestListFourSpace(all_rest_key, *puttable_four_space_list);
+    return;
+  }
 
   if(rest_size == 0){
     puttable_four_space_list->emplace_back(four_space);
   }else if(rest_size == 1){
     const auto& rest_four_space_list_0 = GetFourSpaceList(rest_list[0]);
-
     GeneratePuttableFourSpace(four_space_list, rest_four_space_list_0, puttable_four_space_list);
     //cerr << "EnumeratePuttableFourSpace-1: " << rest_four_space_list_0.size() << " -> " << puttable_four_space_list->size() << endl;
   }else{
-    auto dummy = rest_list; // todo modify
-    const auto rest_list_key = GetOpenRestKey(dummy);
-
     vector<FourSpace> puttable_four_space_list_pre;
 
     if(rest_list_puttable_four_space_.find(rest_list_key) == rest_list_puttable_four_space_.end()){
@@ -226,48 +258,43 @@ void FourSpaceSearch::EnumeratePuttableFourSpace(const MovePosition move, const 
       const auto& rest_four_space_list_1 = GetFourSpaceList(rest_list[1]);
 
       GeneratePuttableFourSpace(rest_four_space_list_0, rest_four_space_list_1, &puttable_four_space_list_pre);
-      rest_list_puttable_four_space_[rest_list_key] = puttable_four_space_list_pre;
-      move_rest_key_list_[rest_list[0]].insert(rest_list_key);
-      move_rest_key_list_[rest_list[1]].insert(rest_list_key);
+      AddRestListFourSpace(rest_list_key, puttable_four_space_list_pre);
     }else{
       // todo delete
-      vector<FourSpace> dummy;
+/*      vector<FourSpace> dummy, dummy_uniq;
       const auto& rest_four_space_list_0 = GetFourSpaceList(rest_list[0]);
       const auto& rest_four_space_list_1 = GetFourSpaceList(rest_list[1]);
 
       GeneratePuttableFourSpace(rest_four_space_list_0, rest_four_space_list_1, &dummy);
-      const auto &test = rest_list_puttable_four_space_[rest_list_key];
-      assert(dummy.size() == test.size());
 
+      for(const auto &elem : dummy){
+        bool is_same = false;
+
+        for(const auto elem2 : dummy_uniq){
+          if(elem == elem2){
+            is_same = true;
+            break;
+          }
+        }
+
+        if(!is_same){
+          dummy_uniq.emplace_back(elem);
+        }
+      }
+
+      const auto test_four_space_0 = rest_list_puttable_four_space_[rest_list[0]];
+      const auto test_four_space_1 = rest_list_puttable_four_space_[rest_list[1]];
+      const auto &test = rest_list_puttable_four_space_[rest_list_key];
+      assert(dummy_uniq.size() == test.size());
+*/
       puttable_four_space_list_pre = rest_list_puttable_four_space_[rest_list_key];
     }
 
     GeneratePuttableFourSpace(four_space_list, puttable_four_space_list_pre, puttable_four_space_list);
     //cerr << "EnumeratePuttableFourSpace2-1: " << four_space_list.size() * rest_four_space_list_0.size() << " -> " << puttable_four_space_list_pre.size() << endl;
   }
-}
 
-void FourSpaceSearch::EnumerateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list)
-{
-  vector<FourSpace> generated_four_space;
-  EnumeratePuttableFourSpace(move, four_space, rest_list, &generated_four_space);
-
-  std::vector<MovePosition> all_rest_list(rest_list);
-  all_rest_list.emplace_back(move);
-  const auto all_rest_list_key = GetOpenRestKey(all_rest_list);
-  puttable_four_space_list->reserve(generated_four_space.size());
-
-  for(const auto &additional_four_space : generated_four_space){
-    if(IsRegisteredFourSpace(all_rest_list_key, additional_four_space)){
-      continue;
-    }
-
-    puttable_four_space_list->emplace_back(additional_four_space);
-  }
-
-  for(const auto rest_move : all_rest_list){
-    move_rest_key_list_[rest_move].insert(all_rest_list_key);
-  }
+  AddRestListFourSpace(all_rest_key, *puttable_four_space_list);
 }
 
 void FourSpaceSearch::GeneratePuttableFourSpace(const vector<FourSpace> &four_space_list_1, const vector<FourSpace> &four_space_list_2, vector<FourSpace> * const puttable_four_space_list) const
@@ -283,8 +310,23 @@ void FourSpaceSearch::GeneratePuttableFourSpace(const vector<FourSpace> &four_sp
         continue;
       }
 
-      puttable_four_space_list->emplace_back(four_space_1);
-      puttable_four_space_list->back().Add(four_space_2);
+      FourSpace four_space(four_space_1);
+      four_space.Add(four_space_2);
+
+      bool is_generated = false;
+
+      for(const auto& generated_four_space : *puttable_four_space_list){
+        if(generated_four_space == four_space){
+          is_generated = true;
+          break;
+        }
+      }
+
+      if(is_generated){
+        continue;
+      }
+
+      puttable_four_space_list->emplace_back(four_space);
     }
   }
 }
@@ -340,7 +382,7 @@ void FourSpaceSearch::GetRestPosition(const MovePosition move, RestListKey rest_
 {
   assert(rest_list != nullptr);
   assert(rest_list->empty());
-  assert(((move | move << 8 | move << 16) & rest_list_key) != 0);
+  assert(IsMoveInRestPosition(rest_list_key, move));
   static constexpr RestListKey kMoveMask = 0xFF;
 
   while(rest_list_key != 0){
@@ -388,48 +430,6 @@ const bool FourSpaceSearch::IsRegisteredFourSpace(const RestListKey rest_key, co
   return false;
 }
 
-void FourSpaceSearch::EnumerateRestKeyFourSpaceList(const RestListKey rest_key, std::vector<FourSpace> * const puttable_four_space_list)
-{
-  assert(puttable_four_space_list != nullptr);
-
-  const auto find_it = rest_list_puttable_four_space_.find(rest_key);
-
-  if(find_it != rest_list_puttable_four_space_.end()){
-    *puttable_four_space_list = find_it->second;
-    return;
-  }
-
-  // 設置可能な獲得/損失空間を生成する
-  vector<MovePosition> rest_list;
-  GetRestPosition(rest_key, &rest_list);
-
-  const size_t rest_size = rest_list.size();
-  assert(rest_size >= 2);
-
-  if(rest_size == 2){
-    const auto& rest_four_space_list_0 = GetFourSpaceList(rest_list[0]);
-    const auto& rest_four_space_list_1 = GetFourSpaceList(rest_list[1]);
-
-    GeneratePuttableFourSpace(rest_four_space_list_0, rest_four_space_list_1, puttable_four_space_list);
-  }else{
-    vector<MovePosition> sub_rest_list{rest_list[0], rest_list[1]};
-    const auto sub_rest_key = GetOpenRestKey(sub_rest_list);
-
-    vector<FourSpace> sub_four_space_list;
-    EnumerateRestKeyFourSpaceList(sub_rest_key, &sub_four_space_list);
-
-    const auto& rest_four_space_list_2 = GetFourSpaceList(rest_list[2]);
-
-    GeneratePuttableFourSpace(sub_four_space_list, rest_four_space_list_2, puttable_four_space_list);
-  }
-
-  rest_list_puttable_four_space_[rest_key] = *puttable_four_space_list;
-
-  for(const auto rest_move : rest_list){
-    move_rest_key_list_[rest_move].insert(rest_key);
-  }
-}
-
 void FourSpaceSearch::ShowBoardRelaxedFourCount() const
 {
   for(const auto move : GetAllInBoardMove()){
@@ -459,6 +459,167 @@ void FourSpaceSearch::ShowBoardGainCostSpaceCount() const
       cerr << endl;
     }
   }  
+}
+
+const bool FourSpaceSearch::IsMoveInRestPosition(const RestListKey rest_list_key, const MovePosition move) const
+{
+  const bool is_move_in_rest = ((move | move << 8 | move << 16) & rest_list_key) != 0;
+  return is_move_in_rest;
+}
+
+const bool FourSpaceSearch::IsProperSubset(const RestListKey sub_rest_key, const RestListKey super_rest_key, MovePosition * const additional_move) const
+{
+  assert(additional_move != nullptr);
+
+  if(sub_rest_key == super_rest_key){
+    return false;
+  }
+
+  vector<MovePosition> sub_rest, super_rest;
+  GetRestPosition(sub_rest_key, &sub_rest);
+  GetRestPosition(super_rest_key, &super_rest);
+
+  MoveBitSet super_bit;
+
+  for(const auto move : super_rest){
+    super_bit.set(move);
+  }
+
+  for(const auto move : sub_rest){
+    if(!super_bit[move]){
+      return false;
+    }
+
+    super_bit.reset(move);
+  }
+
+  MoveList additional_move_list;
+  GetMoveList(super_bit, &additional_move_list);
+  assert(additional_move_list.size() == 1);
+
+  *additional_move = additional_move_list[0];
+
+  return true;
+}
+
+const size_t FourSpaceSearch::GetRestListSize(const RestListKey rest_key) const
+{
+  static constexpr size_t kMoveMask = 255;
+  size_t count = (rest_key & kMoveMask) != 0 ? 1 : 0;
+  count += (rest_key & (kMoveMask << 8)) != 0 ? 1 : 0;
+  count += (rest_key & (kMoveMask << 16)) != 0 ? 1 : 0;
+
+  return count;
+}
+
+void FourSpaceSearch::UpdateRestListPuttableFourSpace(const RestListKey rest_key, const FourSpace &four_space, std::map<RestListKey, std::vector<FourSpace>> * const additional_four_space)
+{
+  assert(additional_four_space != nullptr);
+
+  if(IsRegisteredFourSpace(rest_key, four_space)){
+    return;
+  }
+
+  AddRestListFourSpace(rest_key, four_space);
+  (*additional_four_space)[rest_key].emplace_back(four_space);
+
+  const auto find_it = rest_key_tree_.find(rest_key);
+
+  if(find_it == rest_key_tree_.end()){
+    return;
+  }
+
+  const auto& child_rest_key_set = find_it->second;
+
+  std::vector<FourSpace> four_space_list{four_space};
+
+  for(const auto child_rest_key : child_rest_key_set){
+    MovePosition additional_move;
+
+    if(!IsProperSubset(rest_key, child_rest_key, &additional_move)){
+      continue;
+    }
+  
+    std::vector<FourSpace> next_four_space_list;
+    const auto& registered_four_space_list = GetFourSpaceList(additional_move);
+    GeneratePuttableFourSpace(four_space_list, registered_four_space_list, &next_four_space_list);
+
+    for(const auto next_four_space : next_four_space_list){
+      UpdateRestListPuttableFourSpace(child_rest_key, next_four_space, additional_four_space);
+    }
+  }
+}
+
+const RestListKey FourSpaceSearch::GetRestList(const NextRelaxedFourInfo &next_four_info, std::vector<MovePosition> * const rest_list) const
+{
+  assert(rest_list != nullptr);
+
+  const MovePosition rest_1 = std::get<2>(next_four_info);
+  const MovePosition rest_2 = std::get<3>(next_four_info);
+  const MovePosition rest_3 = std::get<4>(next_four_info);
+
+  rest_list->reserve(3);
+
+  for(const auto rest_move : {rest_1, rest_2, rest_3}){
+    if(!move_gain_list_[rest_move].empty()){
+      rest_list->emplace_back(rest_move);
+    }
+  }
+
+  const auto rest_key = GetOpenRestKey(*rest_list);
+  return rest_key;
+}
+
+void FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space)
+{
+  if(IsRegisteredFourSpace(rest_key, four_space)){
+    return;
+  }
+
+  rest_list_puttable_four_space_[rest_key].emplace_back(four_space);
+
+  vector<MovePosition> rest_list;
+  GetRestPosition(rest_key, &rest_list);
+
+  for(const auto rest_move : rest_list){
+    move_rest_key_list_[rest_move].insert(rest_key);
+  }
+
+  const auto rest_size = rest_list.size();
+  assert(rest_size >= 1 && rest_size <= 3);
+
+  if(rest_size == 2){
+    for(const auto rest_move : rest_list){
+      rest_key_tree_[rest_move].insert(rest_key);
+    }
+  }else{
+    static constexpr array<size_t, 3> index_min_list{{0, 0, 1}};
+    static constexpr array<size_t, 3> index_max_list{{1, 2, 2}};
+    
+    for(size_t i=0; i<3; i++){
+      const auto index_min = index_min_list[i];
+      const auto index_max = index_max_list[i];
+
+      const auto rest_min = rest_list[index_min];
+      const auto rest_max = rest_list[index_max];
+
+      vector<MovePosition> parent_rest_list{
+        rest_min, rest_max
+      };
+
+      const auto parent_rest_key = GetOpenRestKey(parent_rest_list);
+      rest_key_tree_[parent_rest_key].insert(rest_key);
+      rest_key_tree_[index_min].insert(parent_rest_key);
+      rest_key_tree_[index_max].insert(parent_rest_key);
+    }
+  }
+}
+
+void FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const vector<FourSpace> &four_space_list)
+{
+  for(const auto& four_space : four_space_list){
+    AddRestListFourSpace(rest_key, four_space);
+  }
 }
 
 }   // namespace realcore

@@ -22,9 +22,6 @@ namespace realcore{
 //! 指し手位置ごとに緩和四ノビIDのリストを保持するテーブル
 typedef std::array<std::vector<RelaxedFourID>, kMoveNum> MoveRelaxedFourIDList;
 
-//! 指し手位置ごとに獲得/損失空間のリストを保持するテーブル
-typedef std::array<std::vector<FourSpace>, kMoveNum> MoveFourSpaceList;
-
 //! 指し手位置ごとに緩和四ノビ生成でチェック済みの直線近傍パターンを保持するテーブル
 typedef std::array<std::vector<LocalBitBoard>, kMoveNum> MoveLocalBitBoardList;
 
@@ -158,12 +155,25 @@ private:
   //! @brief 開残路位置を取得する
   void GetRestPosition(RestListKey rest_list_key, std::vector<MovePosition> * const rest_list) const;
 
+  //! @brief 開残路リストのkeyがmoveを含むかチェックする
+  const bool IsMoveInRestPosition(const RestListKey rest_list_key, const MovePosition move) const;
+
   //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間の増分を反映する
   //! @param move 獲得/損失空間が追加された位置
   //! @param four_space 追加した獲得/損失空間
   //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
   template<PlayerTurn P>
-  void UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, std::map<RestListKey, std::vector<FourSpace>> * const additional_four_space);
+  void UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::map<RestListKey, std::vector<FourSpace>> &additional_four_space);
+
+  //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間の増分を反映する
+  //! @param rest_key 獲得/損失空間が追加された残路リストのキー
+  //! @param four_space 追加した獲得/損失空間
+  //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
+  void UpdateRestListPuttableFourSpace(const RestListKey rest_key, const FourSpace &four_space, std::map<RestListKey, std::vector<FourSpace>> * const additional_four_space);
+
+  //! @brief 獲得/損失空間を追加する
+  void AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space);
+  void AddRestListFourSpace(const RestListKey rest_key, const std::vector<FourSpace> &four_space_list);
 
   //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間を列挙する
   //! @param move 獲得/損失空間が追加された位置
@@ -172,19 +182,19 @@ private:
   //! @brief 生成した獲得/損失空間がすでに生成済みかどうかのチェックを行わず生成した獲得/損失空間をすべて格納する
   void EnumeratePuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list);
 
-  //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間を列挙する
-  //! @param move 獲得/損失空間が追加された位置
-  //! @param four_space 追加した獲得/損失空間
-  //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
-  //! @brief 生成した獲得/損失空間がすでに生成済みかどうかのチェックを行い未生成のもののみ格納する
-  void EnumerateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list);
-
-  //! @brief 開残路リストキーに対応する同時設置可能な獲得/損失空間の一覧を取得する
-  //! @note rest_list_puttable_four_space_にrest_keyが未登録の場合は同時設置可能な獲得/損失空間を生成する
-  void EnumerateRestKeyFourSpaceList(const RestListKey rest_key, std::vector<FourSpace> * const puttable_four_space_list);
-
   //! @brief 開残路リストに登録ずみの獲得/損失空間かどうかをチェックする
   const bool IsRegisteredFourSpace(const RestListKey rest_key, const FourSpace &four_space) const;
+
+  //! @brief sub_rest_keyがsuper_rest_keyが厳密に含まれている(sub_rest_key \subset super_rest_key, sub_rest_key \ne super_rest_key)かチェックする
+  //! @retval sub_rest_keyがsuper_rest_keyに含まれており要素数の差が1の場合にtrue
+  //! @param additional_move sub_rest_keyとsuper_rest_keyの差分
+  const bool IsProperSubset(const RestListKey sub_rest_key, const RestListKey super_rest_key, MovePosition * const additional_move) const;
+
+  //! @brief 残路リスト/残路リストキーを取得する
+  const RestListKey GetRestList(const NextRelaxedFourInfo &next_four_info, std::vector<MovePosition> * const rest_list) const;
+
+  //! @brief 残路リストの長さを返す
+  const size_t GetRestListSize(const RestListKey rest_key) const;
 
   //! @brief MoveBitSetの内容をBitBoardに反映する
   template<PositionState S>
@@ -203,10 +213,10 @@ private:
   MoveRelaxedFourIDList move_cost_list_;    //! 位置moveが損失路になる緩和四ノビIDのリスト
   MoveRelaxedFourIDList move_open_rest_list_;    //! 位置moveが開残路になる緩和四ノビIDのリスト
   
-  MoveFourSpaceList move_four_space_list_;    //! 位置moveごとの局所獲得/損失空間のリスト
   MoveLocalBitBoardList move_local_bitboard_list_;    //! 位置moveごとの緩和四ノビ生成でチェック済みの直線近傍パターン
 
   std::map<RestListKey, std::vector<FourSpace>> rest_list_puttable_four_space_;    //! 開残路リストkeyごとに同時設置可能な獲得/損失空間のリスト
+  std::map<RestListKey, std::set<RestListKey>> rest_key_tree_;      //! 開残路キーの依存木
   std::map<MovePosition, std::set<RestListKey>> move_rest_key_list_;   //! 位置moveを含む開残路リストkeyのリスト
   std::map<RestListKey, std::vector<RelaxedFourID>> rest_list_relaxed_four_list_;  //! 開残路リスト -> 緩和四ノビIDのリスト
 
