@@ -20,9 +20,7 @@ const RelaxedFourStatus RelaxedFour::GetRelaxedFourStatus(const FourSpace &four_
   GetLineNeighborhoodBit(gain_, kOpenStateNeighborhoodSize, &local_gain_bit);
   GetLineNeighborhoodBit(cost_, kOpenStateNeighborhoodSize, &local_cost_bit);
 
-  // todo comment delete
-  //local_bit = local_gain_bit | local_cost_bit;
-  local_bit = local_bit.flip();
+  local_bit = local_gain_bit | local_cost_bit;
 
   FourSpace local_four_space(four_space, local_bit);
 
@@ -46,9 +44,6 @@ const RelaxedFourStatus RelaxedFour::GetRelaxedFourStatus(const FourSpace &four_
     local_bit_board.SetState<T>(move);
   }
 
-  const bool is_five = local_bit_board.IsFiveStones<kBlackTurn>() || local_bit_board.IsFiveStones<kWhiteTurn>();
-  assert(!is_five);
-  
   // 着手時に五連以上ができるかチェック
   if(status == kRelaxedFourUnknown){
     local_bit_board.SetState<S>(gain_);
