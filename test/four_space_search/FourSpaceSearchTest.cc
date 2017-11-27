@@ -35,8 +35,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveHF, kMoveHG
@@ -83,8 +84,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kWhiteTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveJG, kMoveLG
@@ -132,8 +134,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveHD, kMoveHE, kMoveHG, kMoveHI
@@ -184,8 +187,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kWhiteTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveIG, kMoveLG, kMoveMG, kMoveNG
@@ -232,8 +236,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveFE, kMoveFF, kMoveHF, kMoveHG, 
@@ -286,8 +291,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kWhiteTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveKD, kMoveLE, kMoveJG, kMoveLG,
@@ -336,8 +342,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveDA, kMoveEA, kMoveAD, kMoveAE, 
@@ -391,8 +398,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kWhiteTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveDA, kMoveEA, kMoveAD, kMoveAE, 
@@ -446,8 +454,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveDA, kMoveEA, kMoveAD, kMoveAE, 
@@ -507,8 +516,9 @@ public:
     FourSpaceSearch four_space_search(bit_board);
     four_space_search.ExpandFourSpace<kBlackTurn>();
 
-    const auto &move_gain_list = four_space_search.move_gain_list_;
-    const auto &move_cost_list = four_space_search.move_cost_list_;
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+    four_space_search.GetCostMoveRelaxedFourIDList(&move_cost_list);
 
     const MovePosition expect_list[] = {
       kMoveBD, kMoveEG, kMoveFH, kMoveGI, 
@@ -595,8 +605,11 @@ public:
       kMoveLN, kMoveKO, kMoveLO
     };
 
+    MoveRelaxedFourIDList move_gain_list, move_cost_list;
+    four_space_search.GetGainMoveRelaxedFourIDList(&move_gain_list);
+
     for(const auto move : answer){
-      if(four_space_search.move_gain_list_[move].empty()){
+      if(move_gain_list[move].empty()){
         cerr << MoveString(move) << endl;
         //EXPECT_TRUE(!four_space_search.move_gain_list_[move].empty());
       }

@@ -1,5 +1,6 @@
 #include <functional>
 
+#include "FourSpace.h"
 #include "RelaxedFour.h"
 
 using namespace std;
@@ -23,6 +24,7 @@ const RelaxedFour& RelaxedFour::operator=(const RelaxedFour &relaxed_four)
     gain_ = relaxed_four.GetGainPosition();
     cost_ = relaxed_four.GetCostPosition();
     rest_list_ = relaxed_four.GetRestPositionList();
+    transposition_table_ = relaxed_four.GetTranspositionTable();
   }
 
   return *this;
@@ -65,6 +67,30 @@ const uint64_t RelaxedFour::GetKey() const
   }
 
   return key;
+}
+
+const RelaxedFourStatus RelaxedFour::CheckTranspositionTable(const FourSpace &local_four_space) const
+{
+  for(const auto& element : transposition_table_){
+    const auto& four_space = element.first;
+
+    if(four_space == local_four_space){
+      return element.second;
+    }
+  }
+
+  return kRelaxedFourUnknown;
+}
+
+const bool RelaxedFour::IsExpandable(const RelaxedFourStatus status) const
+{
+  assert(status != kRelaxedFourUnknown);
+  
+  bool is_expandable = status == kRelaxedFourDblFourThree;
+  is_expandable |= status == kRelaxedFourOpponentFour;
+  is_expandable |= status == kRelaxedFourFeasible;
+  
+  return is_expandable;
 }
 
 }   // namespace realcore

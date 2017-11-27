@@ -11,6 +11,7 @@
 
 namespace realcore
 {
+
 class FourSpaceTest;
 
 //! 獲得/損失空間

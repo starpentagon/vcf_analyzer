@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 
+#include "FourSpace.h"
 #include "RelaxedFour.h"
 
 using namespace std;

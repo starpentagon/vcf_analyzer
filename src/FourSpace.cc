@@ -48,7 +48,7 @@ const bool FourSpace::IsConflict(const MovePosition gain_position, const MovePos
 
 const bool FourSpace::IsPuttable() const
 {
-  return (gain_bit_ & cost_bit_).none();
+  return (gain_bit_ & cost_bit_).none() && (gain_bit_.count() == cost_bit_.count());
 }
 
 const bool FourSpace::IsPuttable(const FourSpace &four_space) const
