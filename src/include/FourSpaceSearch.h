@@ -158,11 +158,12 @@ private:
   void UpdateRestListPuttableFourSpace(const RestListKey rest_key, const FourSpace &four_space, std::map<RestListKey, std::vector<FourSpace>> * const additional_four_space);
 
   //! @brief 獲得/損失空間を追加する
+  //! @retval true 追加, false 登録済みや実現不可能なため追加せず
   template<PlayerTurn P>
-  void AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space);
+  const bool AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space);
 
   template<PlayerTurn P>
-  void AddRestListFourSpace(const RestListKey rest_key, const std::vector<FourSpace> &four_space_list);
+  void AddRestListFourSpace(const RestListKey rest_key, const std::vector<FourSpace> &four_space_list, std::vector<FourSpace> * const added_four_space_list);
 
   //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間を列挙する
   //! @param rest_list 開残路リスト

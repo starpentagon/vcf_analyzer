@@ -242,6 +242,12 @@ void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move,
         if(rest_four_space.IsConflict(gain_position, cost_position)){
           continue;
         }
+
+        // --todo delete
+        if(relaxed_four_id == 1273){
+          int a = 1;
+        }
+        // todo delete --
   
         const BitBoard& bit_board = *this;
         const auto relaxed_four_status = relaxed_four.GetRelaxedFourStatus<P>(rest_four_space, bit_board);
@@ -270,8 +276,11 @@ void FourSpaceSearch::UpdateRestListPuttableFourSpace(const RestListKey rest_key
     return;
   }
 
-  AddRestListFourSpace<P>(rest_key, four_space);
-  (*additional_four_space)[rest_key].emplace_back(four_space);
+  const bool is_added = AddRestListFourSpace<P>(rest_key, four_space);
+
+  if(is_added){
+    (*additional_four_space)[rest_key].emplace_back(four_space);
+  }
 
   const auto find_it = rest_key_tree_.find(rest_key);
 
@@ -523,20 +532,20 @@ void FourSpaceSearch::EnumeratePuttableFourSpace(const std::vector<MovePosition>
   const auto move = rest_list.back();
   sub_rest_list.pop_back();
 
-  std::vector<FourSpace> move_four_space_list, sub_four_space_list;
+  std::vector<FourSpace> move_four_space_list, sub_four_space_list, four_space_list;
   EnumeratePuttableFourSpace<P>(sub_rest_list, &sub_four_space_list);
 
   move_four_space_list = GetFourSpaceList(move);
 
-  GeneratePuttableFourSpace(move_four_space_list, sub_four_space_list, puttable_four_space_list);
-  AddRestListFourSpace<P>(rest_list_key, *puttable_four_space_list);    // todo AddRestListFourSpaceでIsRegisteredFourSpaceスキップすることで高速化可能
+  GeneratePuttableFourSpace(move_four_space_list, sub_four_space_list, &four_space_list);
+  AddRestListFourSpace<P>(rest_list_key, four_space_list, puttable_four_space_list);    // todo AddRestListFourSpaceでIsRegisteredFourSpaceスキップすることで高速化可能
 }
 
 template<PlayerTurn P>
-void FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space)
+const bool FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space)
 {
   if(IsRegisteredFourSpace(rest_key, four_space)){
-    return;
+    return false;
   }
 
   // 五が生じる獲得/損失空間は生成しない
@@ -552,7 +561,7 @@ void FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const Fou
   SetMoveBit<kOpenPosition>(four_space.GetCostBit());
 
   if(is_five){
-    return;
+    return false;
   }
 
   const auto& find_it = rest_list_puttable_four_space_.find(rest_key);
@@ -600,13 +609,22 @@ void FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const Fou
       rest_key_tree_[index_max].insert(parent_rest_key);
     }
   }
+
+  return true;
 }
 
 template<PlayerTurn P>
-void FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const std::vector<FourSpace> &four_space_list)
+void FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const std::vector<FourSpace> &four_space_list, std::vector<FourSpace> * const added_four_space_list)
 {
+  assert(added_four_space_list != nullptr);
+  assert(added_four_space_list->empty());
+
   for(const auto& four_space : four_space_list){
-    AddRestListFourSpace<P>(rest_key, four_space);
+    const bool is_added = AddRestListFourSpace<P>(rest_key, four_space);
+
+    if(is_added){
+      added_four_space_list->emplace_back(four_space);
+    }
   }
 }
 
@@ -654,6 +672,12 @@ inline void FourSpaceSearch::AddFeasibleRelaxedFourID(const RelaxedFourID relaxe
   const auto& relaxed_four = GetRelaxedFour(relaxed_four_id);
   const auto gain_position = relaxed_four.GetGainPosition();
   const auto& find_it = move_feasible_relaxed_four_id_list_.find(gain_position);
+
+  // -- todo delete
+  if(gain_position == kMoveEL){
+    int a = 1;
+  }
+  // todo delete --
 
   if(find_it == move_feasible_relaxed_four_id_list_.end()){
     const auto& insert_result = 
