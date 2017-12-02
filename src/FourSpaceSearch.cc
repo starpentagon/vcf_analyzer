@@ -61,6 +61,7 @@ const pair<RelaxedFourID, bool> FourSpaceSearch::AddRelaxedFour(const RelaxedFou
     relaxed_fourid_vector_ptr->emplace_back(four_id);
   }
 
+  UpdateRestListKeyTree(rest_position_list);
   return make_pair(four_id, true);
 }
 
@@ -88,14 +89,6 @@ size_t FourSpaceSearch::GetRestableRelaxedFourIDList(const MovePosition gain_pos
       continue;
     }
 
-    // todo delete --
-    if(check_move == kMoveEL){
-      int a = 1;
-    }
-
-    assert(rest_list_puttable_four_space_.find(check_move) != rest_list_puttable_four_space_.end());
-    // -- todo delete
-
     const auto& relaxed_id_set_ptr = find_it->second;
 
     for(const auto relaxed_four_id : *relaxed_id_set_ptr){
@@ -122,14 +115,6 @@ size_t FourSpaceSearch::GetRestableRelaxedFourIDList(const MovePosition gain_pos
     if(find_it == move_feasible_relaxed_four_id_list_.end()){
       continue;
     }
-
-    // todo delete --
-    if(check_move == kMoveEL){
-      int a = 1;
-    }
-
-    assert(rest_list_puttable_four_space_.find(check_move) != rest_list_puttable_four_space_.end());
-    // -- todo delete
 
     const auto& relaxed_id_set_ptr = find_it->second;
 
@@ -380,12 +365,6 @@ const RestListKey FourSpaceSearch::GetRestList(const NextRelaxedFourInfo &next_f
 
     if(is_feasible){
       rest_list->emplace_back(rest_move);
-
-      // todo delete --
-      if(rest_move == kMoveEL && rest_list_puttable_four_space_.find(rest_move) == rest_list_puttable_four_space_.end()){
-        int a = 1;
-      }
-      // -- todo delete
     }
   }
 
@@ -432,6 +411,50 @@ void FourSpaceSearch::GetCostMoveRelaxedFourIDList(MoveRelaxedFourIDList * const
       (*move_relaxed_four_id_list)[cost].emplace_back(relaxed_four_id);
     }
   }
+}
+
+void FourSpaceSearch::UpdateRestListKeyTree(const RestListKey rest_list_key)
+{
+  vector<MovePosition> rest_position_list;
+  GetRestPosition(rest_list_key, &rest_position_list);
+  const auto rest_size = rest_position_list.size();
+
+  if(rest_size <= 1){
+    return;
+  }
+  
+  if(rest_size == 2){
+    for(const auto rest_move : rest_position_list){
+      rest_key_tree_[rest_move].insert(rest_list_key);
+    }
+  }else if(rest_size == 3){
+    static constexpr std::array<size_t, 3> index_min_list{{0, 0, 1}};
+    static constexpr std::array<size_t, 3> index_max_list{{1, 2, 2}};
+    
+    for(size_t i=0; i<3; i++){
+      const auto index_min = index_min_list[i];
+      const auto index_max = index_max_list[i];
+
+      const auto rest_min = rest_position_list[index_min];
+      const auto rest_max = rest_position_list[index_max];
+
+      std::vector<MovePosition> parent_rest_list{
+        rest_min, rest_max
+      };
+
+      const auto parent_rest_key = GetOpenRestKey(parent_rest_list);
+      rest_key_tree_[parent_rest_key].insert(rest_list_key);
+
+      UpdateRestListKeyTree(parent_rest_list);
+    }
+  }  
+}
+
+void FourSpaceSearch::UpdateRestListKeyTree(const vector<MovePosition> &rest_list)
+{
+  auto dummy = rest_list; // todo modify
+  const auto rest_list_key = GetOpenRestKey(dummy);
+  UpdateRestListKeyTree(rest_list_key);
 }
 
 }   // namespace realcore

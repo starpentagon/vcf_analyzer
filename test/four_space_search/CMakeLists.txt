@@ -5,8 +5,8 @@ set(project_name four_space_search_test)
 project(${project_name} CXX)
 
 # Build Type(Release or Debug)
-set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 # ccache
 find_program(CCACHE_FOUND ccache)
@@ -17,6 +17,7 @@ endif(CCACHE_FOUND)
 
 # コンパイルオプション
 add_definitions("-Wall -std=c++14")
+# add_definitions("-Wall -DNDEBUG -std=c++14")  # profile用
 
 # インクルードパス
 include_directories(${CMAKE_SOURCE_DIR}/../../src/include)

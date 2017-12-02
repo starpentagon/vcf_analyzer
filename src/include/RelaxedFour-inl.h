@@ -59,17 +59,6 @@ const RelaxedFourStatus RelaxedFour::GetRelaxedFourStatus(const FourSpace &four_
     local_bit_board.SetState<kOpenPosition>(cost_);
   }
 
-  // R-四ノビが成立するかチェックする
-  MovePosition guard_move;
-
-  if(status == kRelaxedFourUnknown){
-    if(!local_bit_board.IsFourMove<P>(gain_, &guard_move)){
-      status = kRelaxedFourFail;
-    }else if(cost_ != guard_move){
-      status = kRelaxedFourFail;
-    }
-  }
-
   // 四々/三々チェックを行う
   if(status == kRelaxedFourUnknown){
     if(local_bit_board.IsForbiddenMove<P>(gain_)){
@@ -82,6 +71,17 @@ const RelaxedFourStatus RelaxedFour::GetRelaxedFourStatus(const FourSpace &four_
   if(status == kRelaxedFourUnknown){
     if(local_bit_board.IsOpenFourMove<P>(gain_)){
       status = kRelaxedFourTerminate;
+    }
+  }
+
+  // R-四ノビが成立するかチェックする
+  MovePosition guard_move;
+  
+  if(status == kRelaxedFourUnknown){
+    if(!local_bit_board.IsFourMove<P>(gain_, &guard_move)){
+      status = kRelaxedFourFail;
+    }else if(cost_ != guard_move){
+      status = kRelaxedFourFail;
     }
   }
 

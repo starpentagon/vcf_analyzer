@@ -160,10 +160,14 @@ private:
   //! @brief 獲得/損失空間を追加する
   //! @retval true 追加, false 登録済みや実現不可能なため追加せず
   template<PlayerTurn P>
-  const bool AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space);
+  const bool AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space, const bool is_register_check);
 
   template<PlayerTurn P>
-  void AddRestListFourSpace(const RestListKey rest_key, const std::vector<FourSpace> &four_space_list, std::vector<FourSpace> * const added_four_space_list);
+  void AddRestListFourSpace(const RestListKey rest_key, const std::vector<FourSpace> &four_space_list, const bool is_register_check, std::vector<FourSpace> * const added_four_space_list);
+
+  //! @brief 開残路の獲得/損失空間リストに対して緩和四ノビを展開する
+  template<PlayerTurn P>
+  void ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, const std::vector<FourSpace> &rest_four_space_list);
 
   //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間を列挙する
   //! @param rest_list 開残路リスト
@@ -204,6 +208,10 @@ private:
   //! @brief 獲得路が位置moveとなるR-四ノビ可能な緩和四ノビIDを追加する
   void AddFeasibleRelaxedFourID(const RelaxedFourID relaxed_four_id);
 
+  //! @brief 開残路キーの依存木を更新する
+  void UpdateRestListKeyTree(const std::vector<MovePosition> &rest_list);
+  void UpdateRestListKeyTree(const RestListKey rest_list_key);
+
   std::vector<std::unique_ptr<RelaxedFour>> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
   std::map<uint64_t, RelaxedFourID> transposition_table_;   //! RelaxedFourの置換表(到達路、損失路、残路が等しいRelaxedFourを同一視)
   
@@ -212,7 +220,7 @@ private:
   MoveLocalBitBoardList move_local_bitboard_list_;    //! 位置moveごとの緩和四ノビ生成でチェック済みの直線近傍パターン
   
   std::map<RestListKey, FourSpaceVectorPtr> rest_list_puttable_four_space_;    //! 開残路リストkeyごとに同時設置可能な獲得/損失空間のリスト
-  std::map<RestListKey, std::set<RestListKey>> rest_key_tree_;      //! 開残路キーの依存木
+  std::map<RestListKey, std::set<RestListKey>> rest_key_tree_;      //! 開残路キーの依存木RestListKey k -> rest_key_tree_[k] kに依存するRestListKey
   std::map<RestListKey, RelaxedFourIDVectorPtr> rest_list_relaxed_four_list_;  //! 開残路リスト -> 緩和四ノビIDのリスト
 
   PlayerTurn attack_player_;    //! 詰め方(黒 or 白)

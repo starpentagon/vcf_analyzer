@@ -58,15 +58,15 @@ const bool FourSpace::IsPuttable(const FourSpace &four_space) const
   const auto &check_gain_bit = four_space.GetGainBit();
   const auto &check_cost_bit = four_space.GetCostBit();
 
-  if((check_gain_bit & cost_bit_).any()){
-    return false;
-  }
-
+  // @note cost bitのチェックを先にした方が3%程度高速
   if((check_cost_bit & gain_bit_).any()){
     return false;
   }
 
-  // todo 石数チェックの追加をドキュメント化
+  if((check_gain_bit & cost_bit_).any()){
+    return false;
+  }
+
   if((check_gain_bit | gain_bit_).count() != (check_cost_bit | cost_bit_).count()){
     return false;
   }
