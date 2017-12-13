@@ -9,6 +9,7 @@
 #include <cstdint>
 
 #include "Move.h"
+#include "BitBoard.h"
 
 namespace realcore
 {
@@ -28,7 +29,6 @@ typedef std::uint64_t RelaxedFourID;    //!< Relaxed Four(獲得路、損失路�
 static constexpr RelaxedFourID kInvalidFourID = 0;    // 無効なRelaxed Four IDを表す
 
 class FourSpace;
-class BitBoard;
 
 typedef std::vector<std::pair<FourSpace, RelaxedFourStatus>> RelaxedFourStatusTable;    //! 置換表
 
@@ -80,7 +80,11 @@ public:
 
   //! 獲得/損失空間に対するR-四ノビ状態を取得する
   template<PlayerTurn P>
-  const RelaxedFourStatus GetRelaxedFourStatus(const FourSpace &four_space, const BitBoard &bit_board);
+  const RelaxedFourStatus GetRelaxedFourStatus(const FourSpace &four_space, const BitBoard &bit_board, MovePair * const opponent_four);
+
+  //! 生じている四ノリをノリ返し/無効化できるか判定する
+  template<PlayerTurn P>
+  const bool CanGuardOpponentFour(const FourSpace &four_space, const BitBoard &bit_board) const;
 
   //! 登録済みの獲得/損失空間かチェックする
   //! @retval 未登録の場合はkRelaxedFourUnknownを返し、登録済みの場合はR-四ノビ状態を返す
@@ -90,6 +94,9 @@ public:
   const bool IsExpandable(const RelaxedFourStatus status) const;
   
 private:
+  template<PlayerTurn P>
+  const bool CanGuardOpponentFour(const FourSpace &four_space, const MovePair &move_pair, const BitBoard &bit_board) const;
+  
   MovePosition gain_;            //!< 獲得路
   MovePosition cost_;            //!< 損失路
   std::vector<MovePosition> rest_list_;  //!< 開残路リスト

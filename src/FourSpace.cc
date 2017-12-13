@@ -1,3 +1,5 @@
+#include <set>
+
 #include "FourSpace.h"
 #include "MoveList.h"
 
@@ -19,6 +21,7 @@ FourSpace::FourSpace(const FourSpace &four_space, const MoveBitSet &neighborhood
 {
   gain_bit_ = four_space.GetGainBit() & neighborhood_bit;
   cost_bit_ = four_space.GetCostBit() & neighborhood_bit;
+  opponent_four_list_ = four_space.GetOpponentFourList();
 }
 
 void FourSpace::Add(const MovePosition gain_position, const MovePosition cost_position)
@@ -35,6 +38,52 @@ void FourSpace::Add(const FourSpace &four_space)
   
   gain_bit_ |= four_space.GetGainBit();
   cost_bit_ |= four_space.GetCostBit();
+
+  set<uint64_t> move_pair_key_set;
+
+  for(const auto move_pair : opponent_four_list_){
+    const auto four_move = move_pair.first;
+    const auto guard_move = move_pair.second;
+    const uint64_t key = four_move << 8 | guard_move;
+
+    move_pair_key_set.insert(key);
+  }
+
+  const auto& opponet_four_list = four_space.GetOpponentFourList();
+
+  for(const auto move_pair : opponet_four_list){
+    const auto four_move = move_pair.first;
+    const auto guard_move = move_pair.second;
+    const uint64_t key = four_move << 8 | guard_move;
+
+    const auto find_it = move_pair_key_set.find(key);
+
+    if(find_it != move_pair_key_set.end()){
+      continue;
+    }
+
+    opponent_four_list_.emplace_back(move_pair);
+  }
+}
+
+void FourSpace::AddOpponentFour(const MovePair &opponent_four)
+{
+  const auto find_it = find(opponent_four_list_.begin(), opponent_four_list_.end(), opponent_four);
+
+  if(find_it != opponent_four_list_.end()){
+    return;
+  }
+
+  opponent_four_list_.emplace_back(opponent_four);
+
+  // todo delete -- 
+  static size_t size = 0;
+
+  if(size < opponent_four_list_.size()){
+    size = opponent_four_list_.size();
+    cerr << "opponent size: " << size << endl;
+  }
+  // -- todo delete
 }
 
 const bool FourSpace::IsConflict(const MovePosition gain_position, const MovePosition cost_position) const
@@ -94,11 +143,17 @@ const MoveBitSet FourSpace::GetNeighborhoodCostBit(const MoveBitSet &neighborhoo
   return cost_bit_ & neighborhood_bit;
 }
 
+const vector<MovePair>& FourSpace::GetOpponentFourList() const
+{
+  return opponent_four_list_;
+}
+
 const FourSpace& FourSpace::operator=(const FourSpace &four_space)
 {
   if(this != &four_space){
     gain_bit_ = four_space.GetGainBit();
     cost_bit_ = four_space.GetCostBit();
+    opponent_four_list_ = four_space.GetOpponentFourList();
   }
 
   return *this;
@@ -111,6 +166,10 @@ const bool FourSpace::operator==(const FourSpace &four_space) const
   }
 
   if(cost_bit_ != four_space.GetCostBit()){
+    return false;
+  }
+
+  if(opponent_four_list_ != four_space.GetOpponentFourList()){
     return false;
   }
 

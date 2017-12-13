@@ -209,7 +209,8 @@ void FourSpaceSearch::ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, con
     }
 
     const BitBoard& bit_board = *this;
-    const auto relaxed_four_status = relaxed_four.GetRelaxedFourStatus<P>(rest_four_space, bit_board);
+    MovePair opponent_four;
+    const auto relaxed_four_status = relaxed_four.GetRelaxedFourStatus<P>(rest_four_space, bit_board, &opponent_four);
 
     // todo delete --
     static std::array<size_t, 100> status_count_array{{0}};
@@ -234,7 +235,7 @@ void FourSpaceSearch::ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, con
     if(relaxed_four_status == kRelaxedFourTerminate){
       FourSpace child_four_space(gain_position, cost_position);
       child_four_space.Add(rest_four_space);
-  
+      
       AddFeasibleRelaxedFourID(relaxed_four_id);
 
       std::map<RestListKey, std::vector<FourSpace>> additional_four_space;
@@ -258,6 +259,10 @@ void FourSpaceSearch::ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, con
     child_four_space.Add(rest_four_space);
 
     AddFeasibleRelaxedFourID(relaxed_four_id);
+
+    if(relaxed_four_status == kRelaxedFourOpponentFour){
+      child_four_space.AddOpponentFour(opponent_four);
+    }
 
     AddFourSpace<P>(gain_position, child_four_space);
   }
