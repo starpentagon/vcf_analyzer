@@ -49,22 +49,13 @@ const uint64_t RelaxedFour::GetKey() const
   uint64_t key = static_cast<uint64_t>(gain_) << 32;
   key |= static_cast<uint64_t>(cost_) << 24;
 
-  const auto rest_size = rest_list_.size();
-  assert(rest_size <= 3);
+  uint64_t rest_key = 0ULL;
 
-  if(rest_size >= 1){
-    key |= static_cast<uint64_t>(rest_list_[0]) << 16;
+  for(const auto rest_move : rest_list_){
+    rest_key = (rest_key << 8) | static_cast<uint64_t>(rest_move);
   }
-  
-  if(rest_size >= 2){
-    assert(rest_list_[0] > rest_list_[1]);
-    key |= static_cast<uint64_t>(rest_list_[1]) << 8;    
-  }
-  
-  if(rest_size == 3){
-    assert(rest_list_[1] > rest_list_[2]);
-    key |= static_cast<uint64_t>(rest_list_[2]);
-  }
+
+  key |= rest_key;
 
   return key;
 }

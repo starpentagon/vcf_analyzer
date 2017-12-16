@@ -17,12 +17,11 @@ const RelaxedFourStatus RelaxedFour::GetRelaxedFourStatus(const FourSpace &four_
   static constexpr PositionState S = GetPlayerStone(P);
   static constexpr PositionState T = GetPlayerStone(Q);
 
-  // local bitsetを生成する(todo cacheして高速化)
-  MoveBitSet local_gain_bit, local_cost_bit, local_bit;
-  GetLineNeighborhoodBit(gain_, kOpenStateNeighborhoodSize, &local_gain_bit);
-  GetLineNeighborhoodBit(cost_, kOpenStateNeighborhoodSize, &local_cost_bit);
-
-  local_bit = local_gain_bit | local_cost_bit;
+  // local bitsetを生成する
+  const MoveBitSet &local_gain_bit = GetLineNeighborhoodBit<kOpenStateNeighborhoodSize>(gain_);
+  const MoveBitSet &local_cost_bit = GetLineNeighborhoodBit<kOpenStateNeighborhoodSize>(cost_);
+  
+  MoveBitSet local_bit = local_gain_bit | local_cost_bit;
 
   FourSpace local_four_space(four_space, local_bit);
 
@@ -46,48 +45,81 @@ const RelaxedFourStatus RelaxedFour::GetRelaxedFourStatus(const FourSpace &four_
     local_bit_board.SetState<T>(move);
   }
 
-  // 着手時に五連以上ができるかチェック
-  if(status == kRelaxedFourUnknown){
-    local_bit_board.SetState<S>(gain_);
-    local_bit_board.SetState<T>(cost_);
+  assert(!local_bit_board.IsFiveStones<kBlackTurn>());
+  assert(!local_bit_board.IsFiveStones<kWhiteTurn>());
 
-    const bool is_five = local_bit_board.IsFiveStones<kBlackTurn>() || local_bit_board.IsFiveStones<kWhiteTurn>();
+  // 獲得路を着手した時に攻め方に五連以上ができる場合は親ノードで終端 or 長連を自ら打つ場合なので実現不可能
+  if(status == kRelaxedFourUnknown){
+    const bool is_five = local_bit_board.IsFiveStones<P>(gain_);
 
     if(is_five){
       status = kRelaxedFourInfeasible;
     }
-
-    local_bit_board.SetState<kOpenPosition>(gain_);
-    local_bit_board.SetState<kOpenPosition>(cost_);
   }
 
-  // 防御不可能な四ノリが発生していないかチェックする
-/*
+  // 獲得路 -> 損失路を着手した時に受け方に
+  // (i)五連が生じている -> 実現不可能
+  // (ii)長連が生じている -> 終端(白番のみ)
   if(status == kRelaxedFourUnknown){
-    if(!CanGuardOpponentFour<P>(four_space, bit_board)){
+    local_bit_board.SetState<S>(gain_);
+
+    const bool is_overline = Q == kBlackTurn && local_bit_board.IsOverline<kBlackTurn>(cost_);
+    const bool is_five = (!is_overline && local_bit_board.IsFiveStones<Q>(cost_));
+    
+    local_bit_board.SetState<kOpenPosition>(gain_);
+
+    if(is_five){
       status = kRelaxedFourInfeasible;
+    }else if(is_overline){
+      status = kRelaxedFourTerminate;
     }
   }
-*/
-  // 四々/三々チェックを行う
-  if(status == kRelaxedFourUnknown){
-    if(local_bit_board.IsForbiddenMove<P>(gain_)){
+
+  // @note 防御不可能な四ノリが発生していないかのチェックは計算量が多く不採用
+
+  // 長連のチェックはすでに行っているため四々/三々チェックを行う
+  if(P == kBlackTurn && status == kRelaxedFourUnknown){
+    if(local_bit_board.IsDoubleFourMove<P>(gain_) || local_bit_board.IsDoubleSemiThreeMove<P>(gain_)){
       status = kRelaxedFourDblFourThree;
     }
   }
   
-  // 終端チェックを行う
-  // todo 白番にも対応(黒の「五連以上」と「長連」を分けて判定する必要あり)
+  // 終端チェックを行う(黒/白共通)
   if(status == kRelaxedFourUnknown){
     if(local_bit_board.IsOpenFourMove<P>(gain_)){
       status = kRelaxedFourTerminate;
     }
   }
 
-  // R-四ノビが成立するかチェックする
+  // 終端チェックを行う(白番のみ)
+  if(P == kWhiteTurn && status == kRelaxedFourUnknown){
+    if(local_bit_board.IsDoubleFourMove<P>(gain_)){
+      status = kRelaxedFourTerminate;
+    }
+
+    local_bit_board.SetState<S>(gain_);
+
+    if(local_bit_board.IsDoubleFourMove<Q>(cost_) || local_bit_board.IsDoubleSemiThreeMove<Q>(cost_)){
+      status = kRelaxedFourTerminate;
+    }
+
+    local_bit_board.SetState<kOpenPosition>(gain_);
+  }
+
+  // 黒番の場合、長連筋になることがあるためR-四ノビが成立するかチェックする
   MovePosition guard_move;
+
+  // todo delete --
+  if(P == kWhiteTurn && status == kRelaxedFourUnknown){
+    if(!local_bit_board.IsFourMove<P>(gain_, &guard_move)){
+      assert(false);
+    }else if(cost_ != guard_move){
+      assert(false);
+    }
+  }
+  // -- todo delete
   
-  if(status == kRelaxedFourUnknown){
+  if(P == kBlackTurn && status == kRelaxedFourUnknown){
     if(!local_bit_board.IsFourMove<P>(gain_, &guard_move)){
       status = kRelaxedFourFail;
     }else if(cost_ != guard_move){
@@ -124,29 +156,6 @@ const RelaxedFourStatus RelaxedFour::GetRelaxedFourStatus(const FourSpace &four_
 }
 
 template<PlayerTurn P>
-const bool RelaxedFour::CanGuardOpponentFour(const FourSpace &four_space, const BitBoard &bit_board) const
-{
-  // todo implementation for white
-  if(P == kWhiteTurn){
-    return true;
-  }
-
-  const auto opponent_four_list = four_space.GetOpponentFourList();
-
-  if(opponent_four_list.empty()){
-    return true;
-  }
-
-  for(const auto &move_pair : opponent_four_list){
-    if(!CanGuardOpponentFour<P>(four_space, move_pair, bit_board)){
-      return false;
-    }
-  }
-
-  return true;
-}
-
-template<PlayerTurn P>
 const bool RelaxedFour::CanGuardOpponentFour(const FourSpace &four_space, const MovePair &move_pair, const BitBoard &bit_board) const
 {
   static constexpr PlayerTurn Q = GetOpponentTurn(P);
@@ -156,11 +165,10 @@ const bool RelaxedFour::CanGuardOpponentFour(const FourSpace &four_space, const 
   const auto opponent_four_move = move_pair.first;
   const auto guard_move = move_pair.second;
 
-  MoveBitSet local_gain_bit, local_cost_bit, local_bit;
-  GetLineNeighborhoodBit(guard_move, kOpenStateNeighborhoodSize, &local_gain_bit);
-  GetLineNeighborhoodBit(opponent_four_move, kOpenStateNeighborhoodSize, &local_cost_bit);
+  const MoveBitSet &local_gain_bit = GetLineNeighborhoodBit<kOpenStateNeighborhoodSize>(guard_move);
+  const MoveBitSet &local_cost_bit = GetLineNeighborhoodBit<kOpenStateNeighborhoodSize>(guard_move);
 
-  local_bit = local_gain_bit | local_cost_bit;
+  MoveBitSet local_bit = local_gain_bit | local_cost_bit;
   
   FourSpace local_four_space(four_space, local_bit);
   BitBoard local_bit_board(bit_board);
@@ -232,6 +240,22 @@ const bool RelaxedFour::CanGuardOpponentFour(const FourSpace &four_space, const 
   }
 
   return false;
+}
+
+inline const MovePosition RelaxedFour::GetGainPosition() const{
+  return gain_;
+}
+
+inline const MovePosition RelaxedFour::GetCostPosition() const{
+  return cost_;
+}
+
+inline const std::vector<MovePosition>& RelaxedFour::GetRestPositionList() const{
+  return rest_list_;
+}
+
+inline const RelaxedFourStatusTable& RelaxedFour::GetTranspositionTable() const{
+  return transposition_table_;
 }
 
 }   // namespace realcore

@@ -38,14 +38,14 @@ class RelaxedFour
   friend class RelaxedFourTest;
 
 public:
-  //! コンストラクタ
+  //! @brief コンストラクタ
   //! @param gain 獲得路
   //! @param cost 損失路
   //! @param rest_list 開残路に着手する緩和四ノビのID
   //! @param four_space_list 実現手順のリスト
   RelaxedFour(const MovePosition gain, const MovePosition cost, const std::vector<MovePosition> &rest_list);
 
-  //! コピーコンストラクタ
+  //! @brief コピーコンストラクタ
   RelaxedFour(const RelaxedFour &relaxed_four);
 
   //! @brief 代入演算子
@@ -55,42 +55,35 @@ public:
   const bool operator==(const RelaxedFour &relaxed_four) const;
   const bool operator!=(const RelaxedFour &relaxed_four) const;
 
-  //! 獲得路を取得する
-  const MovePosition GetGainPosition() const{
-    return gain_;
-  }
+  //! @brief 獲得路を取得する
+  const MovePosition GetGainPosition() const;
 
-  //! 損失路を取得する
-  const MovePosition GetCostPosition() const{
-    return cost_;
-  }
+  //! @brief 損失路を取得する
+  const MovePosition GetCostPosition() const;
 
-  //! 開残路の位置を取得する
-  const std::vector<MovePosition>& GetRestPositionList() const{
-    return rest_list_;
-  }
+  //! @brief 開残路の位置を取得する
+  const std::vector<MovePosition>& GetRestPositionList() const;
 
-  //! 置換表を取得する
-  const RelaxedFourStatusTable& GetTranspositionTable() const{
-    return transposition_table_;
-  }
+  //! @brief 置換表を取得する
+  const RelaxedFourStatusTable& GetTranspositionTable() const;
 
-  //! Relaxed Fourのキーを返す
+  //! @brief Relaxed Fourのキーを返す
+  //! @note (獲得路, 損失路, 開残路リスト)を一意に識別するキー
   const std::uint64_t GetKey() const;
 
-  //! 獲得/損失空間に対するR-四ノビ状態を取得する
+  //! @brief 獲得/損失空間に対するR-四ノビ状態を取得する
+  //! @param four_space 開残路の獲得/損失空間
+  //! @param 開始局面のBitBoard
+  //! @param 四ノリがある場合の四ノリする手とその防手の格納先
+  //! @pre 開残路の獲得/損失空間で五連以上ができていないこと
   template<PlayerTurn P>
   const RelaxedFourStatus GetRelaxedFourStatus(const FourSpace &four_space, const BitBoard &bit_board, MovePair * const opponent_four);
 
-  //! 生じている四ノリをノリ返し/無効化できるか判定する
-  template<PlayerTurn P>
-  const bool CanGuardOpponentFour(const FourSpace &four_space, const BitBoard &bit_board) const;
-
-  //! 登録済みの獲得/損失空間かチェックする
+  //! @brief 登録済みの獲得/損失空間かチェックする
   //! @retval 未登録の場合はkRelaxedFourUnknownを返し、登録済みの場合はR-四ノビ状態を返す
   const RelaxedFourStatus CheckTranspositionTable(const FourSpace &local_four_space) const;
 
-  //! 展開可能なR-四ノビ状態かチェックする
+  //! @brief 展開可能なR-四ノビ状態かチェックする
   const bool IsExpandable(const RelaxedFourStatus status) const;
   
 private:

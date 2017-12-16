@@ -171,10 +171,8 @@ TEST_F(FourSpaceTest, GetNeighborhoodGainBitTest)
   space.Add(kMoveHH, kMoveHI);
   space.Add(kMoveAA, kMoveCA);
 
-  MoveBitSet neighbor_center, neighbor_corner;
-
-  GetLineNeighborhoodBit(kMoveHH, 5, &neighbor_center);
-  GetLineNeighborhoodBit(kMoveBA, 1, &neighbor_corner);
+  const MoveBitSet &neighbor_center = GetLineNeighborhoodBit<5>(kMoveHH);
+  const MoveBitSet &neighbor_corner = GetLineNeighborhoodBit<1>(kMoveAA);
   
   {
     const auto &bit = space.GetNeighborhoodGainBit(neighbor_center);
@@ -197,11 +195,9 @@ TEST_F(FourSpaceTest, GetNeighborhoodCostBitTest)
   space.Add(kMoveHH, kMoveHI);
   space.Add(kMoveAA, kMoveCA);
 
-  MoveBitSet neighbor_center, neighbor_corner;
+  const MoveBitSet &neighbor_center = GetLineNeighborhoodBit<5>(kMoveHH);
+  const MoveBitSet &neighbor_corner = GetLineNeighborhoodBit<1>(kMoveBA);
 
-  GetLineNeighborhoodBit(kMoveHH, 5, &neighbor_center);
-  GetLineNeighborhoodBit(kMoveBA, 1, &neighbor_corner);
-  
   {
     const auto &bit = space.GetNeighborhoodCostBit(neighbor_center);
 

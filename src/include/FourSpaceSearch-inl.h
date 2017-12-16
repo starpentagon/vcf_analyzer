@@ -347,8 +347,7 @@ void FourSpaceSearch::GenerateRelaxedFour(const MovePosition gain_position, cons
   }
 
   // 追加する獲得/損失空間と直線近傍のANDパターンを生成
-  MoveBitSet neighborhood_bit;
-  GetLineNeighborhoodBit(gain_position, kOpenStateNeighborhoodSize, &neighborhood_bit);
+  const MoveBitSet &neighborhood_bit = GetLineNeighborhoodBit<kOpenStateNeighborhoodSize>(gain_position);
 
   const auto &neighbor_gain_bit = four_space.GetNeighborhoodGainBit(neighborhood_bit);
   const auto &neighbor_cost_bit = four_space.GetNeighborhoodCostBit(neighborhood_bit);
