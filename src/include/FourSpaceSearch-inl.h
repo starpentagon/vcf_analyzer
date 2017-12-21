@@ -63,40 +63,6 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
   static size_t count = 0;
   count++;
 
-  static std::vector<MovePosition> answer_gain{
-    kMoveND, kMoveLD, kMoveOD, kMoveMD, kMoveME, kMoveMF, kMoveLF, kMoveOG, kMoveNF, kMoveKF,
-    kMoveEO, kMoveAK, kMoveAL, kMoveDA, kMoveBA, kMoveBD, kMoveCC, kMoveDD, kMoveCE, kMoveCD,
-    kMoveCG, kMoveDF, kMoveGC, kMoveEC, kMoveAG, kMoveAH, kMoveFC, kMoveEB, kMoveGD, kMoveGE,
-    kMoveHC, kMoveFE, kMoveNE, kMoveLG, kMoveLA, kMoveLE, kMoveJE, kMoveGF, kMoveIH, kMoveHG,
-    kMoveHI, kMoveEL, kMoveBI, kMoveFH, kMoveEH, kMoveDI, kMoveCI, kMoveCK, kMoveDL, kMoveFI,
-    kMoveEM, kMoveFN, kMoveEN, kMoveHN, kMoveGK, kMoveKK, kMoveIK, kMoveHL, kMoveNH, kMoveMI,
-    kMoveKI, kMoveOI, kMoveOJ, kMoveOM, kMoveMM, kMoveKM, kMoveNM, kMoveKL, kMoveML, kMoveMO,
-    kMoveLN, kMoveKO, kMoveLO
-  };
-
-  static std::vector<MovePosition> answer_cost{
-    kMoveLB, kMoveKE, kMoveOB, kMoveKD, kMoveMB, kMoveMG, kMoveKG, kMoveOF, kMoveKC, kMoveJF,
-    kMoveAO, kMoveCM, kMoveAJ, kMoveFA, kMoveAA, kMoveBC, kMoveDB, kMoveFF, kMoveDE, kMoveCB,
-    kMoveCF, kMoveBH, kMoveFD, kMoveFB, kMoveBF, kMoveAF, kMoveDC, kMoveED, kMoveHE, kMoveGB,
-    kMoveIC, kMoveJA, kMoveNC, kMoveKH, kMoveNA, kMoveLC, kMoveID, kMoveGG, kMoveJG, kMoveJI,
-    kMoveHJ, kMoveFK, kMoveDK, kMoveEG, kMoveGH, kMoveBK, kMoveEI, kMoveCH, kMoveCL, kMoveIL,
-    kMoveBJ, kMoveGO, kMoveEK, kMoveGN, kMoveFL, kMoveII, kMoveJK, kMoveHO, kMoveNG, kMoveLJ,
-    kMoveLH, kMoveNI, kMoveOH, kMoveOL, kMoveNN, kMoveNJ, kMoveLM, kMoveKJ, kMoveMJ, kMoveMN,
-    kMoveJL, kMoveKN, kMoveIO, kMoveNO
-  };
-
-  static MoveBitSet answer_gain_bit, answer_cost_bit;
-
-  if(answer_gain_bit.none()){
-    for(const auto move : answer_gain){
-      answer_gain_bit.set(move);
-    }
-
-    for(const auto move : answer_cost){
-      answer_cost_bit.set(move);
-    }
-  }
-
   // todo delete
   static size_t path_through_matrix[256] = {0};
 
@@ -124,29 +90,6 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
     }
   }
 */
-  // todo delete
-  bool is_answer = (answer_gain_bit & four_space.GetGainBit()) == four_space.GetGainBit();
-  is_answer &= (answer_cost_bit & four_space.GetCostBit()) == four_space.GetCostBit();
-/*
-  if(!is_answer){
-    return;
-  }
-*/
-
-  if(is_answer){
-    std::cerr << "answer: " << MoveString(move) << ", " << four_space.GetGainBit().count() << ", ";
-
-    MoveList gain_list, cost_list, move_list;
-    GetMoveList(four_space.GetGainBit(), &gain_list);
-    GetMoveList(four_space.GetCostBit(), &cost_list);
-
-    for(size_t i=0, size=gain_list.size(); i<size; i++){
-      move_list += gain_list[i];
-      move_list += cost_list[i];
-    }
-
-    std::cerr << gain_list.str() << ", " << cost_list.str() << ", " << move_list.str() << std::endl;
-  }
 
   if(IsRegisteredFourSpace(move, four_space)){
     // すでに登録済みの獲得/損失空間がある場合は終了
@@ -294,7 +237,9 @@ void FourSpaceSearch::UpdateRestListPuttableFourSpace(const OpenRestListKey rest
 {
   assert(additional_four_space != nullptr);
 
-  if(IsRegisteredFourSpace(rest_key, four_space)){
+  const bool register_checked = rest_key <= 0xFF;    // rest_keyが開残路１つ以下の場合は登録チェック済みのためスキップ
+
+  if(!register_checked && IsRegisteredFourSpace(rest_key, four_space)){
     return;
   }
 
@@ -305,13 +250,11 @@ void FourSpaceSearch::UpdateRestListPuttableFourSpace(const OpenRestListKey rest
     (*additional_four_space)[rest_key].emplace_back(four_space);
   }
 
-  const auto find_it = rest_key_tree_.find(rest_key);
+  const auto& child_rest_key_set = open_rest_dependency_.GetChildSet(rest_key);
 
-  if(find_it == rest_key_tree_.end()){
+  if(child_rest_key_set.empty()){
     return;
   }
-
-  const auto& child_rest_key_set = find_it->second;
 
   std::vector<FourSpace> four_space_list{four_space};
 
@@ -608,7 +551,7 @@ const bool FourSpaceSearch::AddRestListFourSpace(const OpenRestListKey rest_key,
     four_space_vector_ptr->emplace_back(four_space);
   }
 
-  UpdateRestListKeyTree(rest_key);
+  open_rest_dependency_.Add(rest_key);
 
   return true;
 }

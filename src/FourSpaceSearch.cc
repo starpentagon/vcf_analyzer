@@ -61,7 +61,7 @@ const pair<RelaxedFourID, bool> FourSpaceSearch::AddRelaxedFour(const RelaxedFou
     relaxed_fourid_vector_ptr->emplace_back(four_id);
   }
 
-  UpdateRestListKeyTree(rest_key);
+  open_rest_dependency_.Add(rest_key);
   return make_pair(four_id, true);
 }
 
@@ -210,6 +210,7 @@ const bool FourSpaceSearch::IsRegisteredFourSpace(const OpenRestListKey rest_key
     return false;
   }
 
+  // todo Hashを使ったチェックの高速化
   const auto& four_space_list_ptr = find_it->second;
 
   for(const auto &registered_four_space : *four_space_list_ptr){
@@ -322,42 +323,4 @@ void FourSpaceSearch::GetCostMoveRelaxedFourIDList(MoveRelaxedFourIDList * const
   }
 }
 
-void FourSpaceSearch::UpdateRestListKeyTree(const OpenRestListKey rest_list_key)
-{
-  vector<MovePosition> rest_position_list;
-  GetOpenRestMoveList(rest_list_key, &rest_position_list);
-  const auto rest_size = rest_position_list.size();
-
-  if(rest_size <= 1){
-    return;
-  }
-  
-  if(rest_size == 2){
-    for(const auto rest_move : rest_position_list){
-      rest_key_tree_[rest_move].insert(rest_list_key);
-    }
-  }else if(rest_size == 3){
-    static constexpr std::array<size_t, 3> index_min_list{{0, 0, 1}};
-    static constexpr std::array<size_t, 3> index_max_list{{1, 2, 2}};
-    
-    for(size_t i=0; i<3; i++){
-      const auto index_min = index_min_list[i];
-      const auto index_max = index_max_list[i];
-
-      const auto rest_min = rest_position_list[index_min];
-      const auto rest_max = rest_position_list[index_max];
-
-      std::vector<MovePosition> parent_rest_list{
-        rest_min, rest_max
-      };
-
-      OpenRestList open_rest_list(parent_rest_list);
-
-      const auto parent_rest_key = open_rest_list.GetOpenRestKey();
-      rest_key_tree_[parent_rest_key].insert(rest_list_key);
-
-      UpdateRestListKeyTree(parent_rest_key);
-    }
-  }  
-}
 }   // namespace realcore

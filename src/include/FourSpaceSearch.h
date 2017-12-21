@@ -17,6 +17,7 @@
 #include "HashTable.h"
 #include "FourSpace.h"
 #include "OpenRestList.h"
+#include "OpenRestDependency.h"
 
 namespace realcore{
 
@@ -188,9 +189,6 @@ private:
   //! @brief 獲得路が位置moveとなるR-四ノビ可能な緩和四ノビIDを追加する
   void AddFeasibleRelaxedFourID(const RelaxedFourID relaxed_four_id);
 
-  //! @brief 開残路キーの依存木を更新する
-  void UpdateRestListKeyTree(const OpenRestListKey rest_list_key);
-
   std::vector<std::unique_ptr<RelaxedFour>> relaxed_four_list_;   //! relaxed_four_list_[RelaxedFourID] -> RelaxedFourIDに対応するRelaxedFourのデータ
   std::map<uint64_t, RelaxedFourID> transposition_table_;   //! RelaxedFourの置換表(到達路、損失路、残路が等しいRelaxedFourを同一視)
   
@@ -199,7 +197,7 @@ private:
   MoveLocalBitBoardList move_local_bitboard_list_;    //! 位置moveごとの緩和四ノビ生成でチェック済みの直線近傍パターン
   
   std::map<OpenRestListKey, FourSpaceVectorPtr> rest_list_puttable_four_space_;    //! 開残路リストkeyごとに同時設置可能な獲得/損失空間のリスト
-  std::map<OpenRestListKey, std::set<OpenRestListKey>> rest_key_tree_;      //! 開残路キーの依存木RestListKey k -> rest_key_tree_[k] kに依存するRestListKey
+  OpenRestDependency open_rest_dependency_;   //! 開残路の依存関係を管理する
   std::map<OpenRestListKey, RelaxedFourIDVectorPtr> rest_list_relaxed_four_list_;  //! 開残路リスト -> 緩和四ノビIDのリスト
 };
 
