@@ -261,7 +261,7 @@ void FourSpaceSearch::ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, con
     AddFeasibleRelaxedFourID(relaxed_four_id);
 
     if(relaxed_four_status == kRelaxedFourOpponentFour){
-      child_four_space.AddOpponentFour(opponent_four);
+      child_four_space.SetOpponentFour(opponent_four);
     }
 
     AddFourSpace<P>(gain_position, child_four_space);

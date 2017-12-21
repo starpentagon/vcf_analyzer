@@ -15,6 +15,33 @@ public:
 
     ASSERT_TRUE(four_space.gain_bit_.none());
     ASSERT_TRUE(four_space.cost_bit_.none());
+    ASSERT_FALSE(four_space.GetOpponentFourInfo().IsOpponentFour());
+  }
+
+  void ConstructorMoveInitTest(){
+    FourSpace four_space(kMoveHH, kMoveHI);
+    
+    ASSERT_EQ(1, four_space.gain_bit_.count());
+    ASSERT_TRUE(four_space.gain_bit_[kMoveHH]);
+    
+    ASSERT_EQ(1, four_space.cost_bit_.count());
+    ASSERT_TRUE(four_space.cost_bit_[kMoveHI]);
+
+    ASSERT_FALSE(four_space.GetOpponentFourInfo().IsOpponentFour());
+  }
+
+  void ConstructorLocalInitTest(){
+    FourSpace four_space_base(kMoveHH, kMoveHI);
+    MoveBitSet mask_bit;
+
+    mask_bit.set(kMoveHH);
+    FourSpace four_space(four_space_base, mask_bit);
+    
+    ASSERT_EQ(1, four_space.gain_bit_.count());
+    ASSERT_TRUE(four_space.gain_bit_[kMoveHH]);
+    
+    ASSERT_TRUE(four_space.cost_bit_.none());
+    ASSERT_FALSE(four_space.GetOpponentFourInfo().IsOpponentFour());
   }
 
   void AddMoveTest()
@@ -23,31 +50,64 @@ public:
 
     four_space.Add(kMoveHH, kMoveHI);
     
-    ASSERT_TRUE(four_space.gain_bit_[kMoveHH]);
     ASSERT_EQ(1, four_space.gain_bit_.count());
-    ASSERT_TRUE(four_space.cost_bit_[kMoveHI]);
+    ASSERT_TRUE(four_space.gain_bit_[kMoveHH]);
     ASSERT_EQ(1, four_space.cost_bit_.count());
+    ASSERT_TRUE(four_space.cost_bit_[kMoveHI]);
+
+    four_space.Add(kMoveAA, kMoveAB);
+
+    ASSERT_EQ(2, four_space.gain_bit_.count());
+    ASSERT_TRUE(four_space.gain_bit_[kMoveHH]);
+    ASSERT_TRUE(four_space.gain_bit_[kMoveAA]);
+    ASSERT_EQ(2, four_space.cost_bit_.count());
+    ASSERT_TRUE(four_space.cost_bit_[kMoveHI]);
+    ASSERT_TRUE(four_space.cost_bit_[kMoveAB]);
   }
 
-  void AddSeqTest()
+  void AddSpaceTest()
   {
     FourSpace four_space;
     four_space.Add(kMoveHH, kMoveHI);
     four_space.Add(kMoveHJ, kMoveHK);
     
     FourSpace four_space_added;
+    four_space_added.Add(kMoveHH, kMoveHI);
     four_space_added.Add(kMoveHL, kMoveHM);
     four_space_added.Add(four_space);
     
+    ASSERT_EQ(3, four_space_added.gain_bit_.count());
     ASSERT_TRUE(four_space_added.gain_bit_[kMoveHH]);
     ASSERT_TRUE(four_space_added.gain_bit_[kMoveHJ]);
     ASSERT_TRUE(four_space_added.gain_bit_[kMoveHL]);
-    ASSERT_EQ(3, four_space_added.gain_bit_.count());
     
+    ASSERT_EQ(3, four_space_added.cost_bit_.count());
     ASSERT_TRUE(four_space_added.cost_bit_[kMoveHI]);
     ASSERT_TRUE(four_space_added.cost_bit_[kMoveHK]);
     ASSERT_TRUE(four_space_added.cost_bit_[kMoveHM]);
-    ASSERT_EQ(3, four_space_added.cost_bit_.count());
+  }
+
+  void SetOpponentFourTest(){
+    {
+      FourSpace four_space;
+      MovePair four_move(kMoveHH, kMoveHI);
+      four_space.SetOpponentFour(four_move);
+
+      OpponentFourInfo expected;
+      expected.SetOpponentFour(four_move);
+
+      ASSERT_TRUE(four_space.GetOpponentFourInfo() == expected);
+    }
+    {
+      FourSpace four_space;
+      MovePair four_move(kMoveHH, kMoveHI);
+      four_space.SetOpponentFour(four_move, kMoveHJ, kMoveHK);
+
+      OpponentFourInfo expected;
+      expected.SetOpponentFour(four_move, kMoveHJ, kMoveHK);
+
+      ASSERT_TRUE(four_space.GetOpponentFourInfo() == expected);
+    }
   }
 
   void ConflictMoveTest()
@@ -108,6 +168,8 @@ public:
 TEST_F(FourSpaceTest, ConstructorTest)
 {
   ConstructorTest();
+  ConstructorMoveInitTest();
+  ConstructorLocalInitTest();
 }
 
 TEST_F(FourSpaceTest, AddMoveTest)
@@ -115,9 +177,13 @@ TEST_F(FourSpaceTest, AddMoveTest)
   AddMoveTest();
 }
 
-TEST_F(FourSpaceTest, AddSeqTest)
+TEST_F(FourSpaceTest, AddSpaceTest)
 {
-  AddSeqTest();
+  AddSpaceTest();
+}
+
+TEST_F(FourSpaceTest, SetOpponentFourTest){
+  SetOpponentFourTest();
 }
 
 TEST_F(FourSpaceTest, ConflictMoveTest)

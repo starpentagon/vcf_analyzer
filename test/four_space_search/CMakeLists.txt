@@ -41,7 +41,9 @@ add_executable(
     ../../../src/FourSpaceSearch.cc
     ../../../src/FourSpace.cc
     ../../../src/RelaxedFour.cc
+    ../../../src/OpponentFourInfo.cc
     ../FourSpaceSearchTest.cc
+    ../OpponentFourInfoTest.cc
     ../FourSpaceTest.cc
     ../RelaxedFourTest.cc
 )

@@ -6,9 +6,8 @@
 #ifndef FOUR_SPACE_H
 #define FOUR_SPACE_H
 
-#include <map>
 #include "Move.h"
-#include "BitBoard.h"
+#include "OpponentFourInfo.h"
 
 namespace realcore
 {
@@ -28,14 +27,12 @@ public:
   //! @brief 手順を追加する
   //! @note 四ノリ情報は別途追加する必要あり
   void Add(const MovePosition gain_position, const MovePosition cost_position);
-
-  //! @brief 手順を追加する
-  //! @note 四ノリ情報も追加する
   void Add(const FourSpace &four_space);
 
-  //! @brief 四ノリを追加する
-  void AddOpponentFour(const MovePair &opponent_four);
-  
+  //! @brief 四ノリを設定する
+  void SetOpponentFour(const MovePair &opponent_four);
+  void SetOpponentFour(const MovePair &opponent_four, const MovePosition disabling_move_1, const MovePosition disabling_move_2);
+
   //! @brief 指し手が競合していないかチェックする
   const bool IsConflict(const MovePosition gain_position, const MovePosition cost_position) const;
 
@@ -66,13 +63,13 @@ public:
   //! @param neighborhood_bit 直線近傍のbit
   const MoveBitSet GetNeighborhoodCostBit(const MoveBitSet &neighborhood_bit) const;
 
-  //! @brief 四ノリリストを取得する
-  const std::vector<MovePair>& GetOpponentFourList() const;
+  //! @brief 四ノリ情報を取得する
+  const OpponentFourInfo& GetOpponentFourInfo() const;
 
 private:
   MoveBitSet gain_bit_;   //! 獲得路のbit
   MoveBitSet cost_bit_;   //! 損失路のbit
-  std::vector<MovePair> opponent_four_list_;    //! 四ノリリスト
+  OpponentFourInfo opponent_four_;  //! 四ノリ情報
 };
 
 } // namespace realcore
