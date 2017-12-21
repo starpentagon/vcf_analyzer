@@ -7,10 +7,9 @@ using namespace std;
 
 namespace realcore{
 
-RelaxedFour::RelaxedFour(const MovePosition gain, const MovePosition cost, const vector<MovePosition> &rest_list)
-: gain_(gain), cost_(cost), rest_list_(rest_list)
+RelaxedFour::RelaxedFour(const MovePosition gain, const MovePosition cost, const vector<MovePosition> &rest_move_list)
+: gain_(gain), cost_(cost), open_rest_list_(rest_move_list)
 {
-  sort(rest_list_.begin(), rest_list_.end(), greater<MovePosition>());
 }
 
 RelaxedFour::RelaxedFour(const RelaxedFour &relaxed_four)
@@ -23,7 +22,7 @@ const RelaxedFour& RelaxedFour::operator=(const RelaxedFour &relaxed_four)
   if(this != &relaxed_four){
     gain_ = relaxed_four.GetGainPosition();
     cost_ = relaxed_four.GetCostPosition();
-    rest_list_ = relaxed_four.GetRestPositionList();
+    open_rest_list_ = relaxed_four.GetOpenRestList();
     transposition_table_ = relaxed_four.GetTranspositionTable();
   }
 
@@ -34,7 +33,7 @@ const bool RelaxedFour::operator==(const RelaxedFour &relaxed_four) const
 {
   bool is_same = gain_ == relaxed_four.GetGainPosition();
   is_same &= cost_ == relaxed_four.GetCostPosition();
-  is_same &= rest_list_ == relaxed_four.GetRestPositionList();
+  is_same &= open_rest_list_ == relaxed_four.GetOpenRestList();
 
   return is_same;
 }
@@ -46,16 +45,9 @@ const bool RelaxedFour::operator!=(const RelaxedFour &relaxed_four) const
 
 const uint64_t RelaxedFour::GetKey() const
 {
-  uint64_t key = static_cast<uint64_t>(gain_) << 32;
+  uint64_t key = open_rest_list_.GetOpenRestKey();
+  key |= static_cast<uint64_t>(gain_) << 32;
   key |= static_cast<uint64_t>(cost_) << 24;
-
-  uint64_t rest_key = 0ULL;
-
-  for(const auto rest_move : rest_list_){
-    rest_key = (rest_key << 8) | static_cast<uint64_t>(rest_move);
-  }
-
-  key |= rest_key;
 
   return key;
 }

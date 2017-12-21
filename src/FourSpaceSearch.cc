@@ -7,7 +7,7 @@ using namespace std;
 namespace realcore{
 
 FourSpaceSearch::FourSpaceSearch(const BitBoard &bit_board)
-: BitBoard(bit_board), attack_player_(kBlackTurn)
+: BitBoard(bit_board)
 {
   vector<MovePosition> null_rest_list;
   vector<FourSpace> null_four_space_list;
@@ -23,10 +23,10 @@ const pair<RelaxedFourID, bool> FourSpaceSearch::AddRelaxedFour(const NextRelaxe
   const MovePosition next_gain = get<0>(next_relaxed_four);
   const MovePosition next_cost = get<1>(next_relaxed_four);
 
-  vector<MovePosition> rest_list;
-  GetRestList(next_relaxed_four, &rest_list);
+  OpenRestList open_rest_list;
+  GetRestList(next_relaxed_four, &open_rest_list);
 
-  RelaxedFour relaxed_four(next_gain, next_cost, rest_list);
+  RelaxedFour relaxed_four(next_gain, next_cost, open_rest_list.GetOpenRestMoveList());
   return AddRelaxedFour(relaxed_four);
 }
 
@@ -44,8 +44,8 @@ const pair<RelaxedFourID, bool> FourSpaceSearch::AddRelaxedFour(const RelaxedFou
   const RelaxedFourID four_id = relaxed_four_list_.size() - 1;
   transposition_table_.insert(make_pair(key, four_id));
   
-  auto rest_position_list = relaxed_four.GetRestPositionList();
-  const auto rest_key = GetOpenRestKey(rest_position_list);
+  const auto& open_rest_list = relaxed_four.GetOpenRestList();
+  const auto rest_key = open_rest_list.GetOpenRestKey();
 
   const auto& four_id_find_it = rest_list_relaxed_four_list_.find(rest_key);
 
@@ -61,7 +61,7 @@ const pair<RelaxedFourID, bool> FourSpaceSearch::AddRelaxedFour(const RelaxedFou
     relaxed_fourid_vector_ptr->emplace_back(four_id);
   }
 
-  UpdateRestListKeyTree(rest_position_list);
+  UpdateRestListKeyTree(rest_key);
   return make_pair(four_id, true);
 }
 
@@ -202,58 +202,7 @@ const bool FourSpaceSearch::IsRegisteredLocalBitBoard(const MovePosition move, c
   return false;
 }
 
-const RestListKey FourSpaceSearch::GetOpenRestKey(vector<MovePosition> &rest_list) const
-{
-  RestListKey rest_key = 0ULL;
-
-  if(rest_list.empty()){
-    return rest_key;
-  }
-
-  sort(rest_list.begin(), rest_list.end(), greater<MovePosition>());
-
-  for(const auto rest_move : rest_list){
-    rest_key = rest_key << 8;
-    rest_key |= rest_move;
-  }
-
-  return rest_key;
-}
-
-void FourSpaceSearch::GetRestPosition(const MovePosition move, RestListKey rest_list_key, vector<MovePosition> * const rest_list) const
-{
-  assert(rest_list != nullptr);
-  assert(rest_list->empty());
-  assert(IsMoveInRestPosition(rest_list_key, move));
-  static constexpr RestListKey kMoveMask = 0xFF;
-
-  while(rest_list_key != 0){
-    const auto rest_move = static_cast<MovePosition>(rest_list_key & kMoveMask);
-    rest_list_key = rest_list_key >> 8;
-
-    if(rest_move == move){
-      continue;
-    }
-
-    rest_list->emplace_back(rest_move);
-  }
-}
-
-void FourSpaceSearch::GetRestPosition(RestListKey rest_list_key, std::vector<MovePosition> * const rest_list) const
-{
-  assert(rest_list != nullptr);
-  assert(rest_list->empty());
-  static constexpr RestListKey kMoveMask = 0xFF;
-
-  while(rest_list_key != 0){
-    const auto rest_move = static_cast<MovePosition>(rest_list_key & kMoveMask);
-    rest_list_key = rest_list_key >> 8;
-
-    rest_list->emplace_back(rest_move);
-  }
-}
-
-const bool FourSpaceSearch::IsRegisteredFourSpace(const RestListKey rest_key, const FourSpace &four_space) const
+const bool FourSpaceSearch::IsRegisteredFourSpace(const OpenRestListKey rest_key, const FourSpace &four_space) const
 {
   const auto find_it = rest_list_puttable_four_space_.find(rest_key);
 
@@ -311,64 +260,24 @@ void FourSpaceSearch::ShowBoardGainCostSpaceCount() const
   }  
 }
 
-const bool FourSpaceSearch::IsMoveInRestPosition(const RestListKey rest_list_key, const MovePosition move) const
+const OpenRestListKey FourSpaceSearch::GetRestList(const NextRelaxedFourInfo &next_four_info, OpenRestList * const open_rest_list) const
 {
-  const bool is_move_in_rest = ((move | move << 8 | move << 16) & rest_list_key) != 0;
-  return is_move_in_rest;
-}
-
-const MovePosition FourSpaceSearch::GetAdditionalMove(const RestListKey sub_rest_key, const RestListKey super_rest_key) const{
-  vector<MovePosition> sub_rest, super_rest;
-  GetRestPosition(sub_rest_key, &sub_rest);
-  GetRestPosition(super_rest_key, &super_rest);
-
-  MoveBitSet super_bit;
-  
-  for(const auto move : super_rest){
-    super_bit.set(move);
-  }
-
-  for(const auto move : sub_rest){
-    super_bit.reset(move);
-  }
-  
-  MoveList additional_move_list;
-  GetMoveList(super_bit, &additional_move_list);
-  assert(additional_move_list.size() == 1);
-
-  return additional_move_list[0];
-}
-
-const size_t FourSpaceSearch::GetRestListSize(const RestListKey rest_key) const
-{
-  static constexpr size_t kMoveMask = 0xFF;
-  size_t count = (rest_key & kMoveMask) != 0 ? 1 : 0;
-  count += (rest_key & (kMoveMask << 8)) != 0 ? 1 : 0;
-  count += (rest_key & (kMoveMask << 16)) != 0 ? 1 : 0;
-
-  return count;
-}
-
-const RestListKey FourSpaceSearch::GetRestList(const NextRelaxedFourInfo &next_four_info, std::vector<MovePosition> * const rest_list) const
-{
-  assert(rest_list != nullptr);
-  assert(rest_list->empty());
+  assert(open_rest_list != nullptr);
+  assert(open_rest_list->empty());
 
   const MovePosition rest_1 = std::get<2>(next_four_info);
   const MovePosition rest_2 = std::get<3>(next_four_info);
   const MovePosition rest_3 = std::get<4>(next_four_info);
 
-  rest_list->reserve(3);
-
   for(const auto rest_move : {rest_1, rest_2, rest_3}){
     const bool is_feasible = move_feasible_relaxed_four_id_list_.find(rest_move) != move_feasible_relaxed_four_id_list_.end();
 
     if(is_feasible){
-      rest_list->emplace_back(rest_move);
+      open_rest_list->Add(rest_move);
     }
   }
 
-  const auto rest_key = GetOpenRestKey(*rest_list);
+  const auto rest_key = open_rest_list->GetOpenRestKey();
   return rest_key;
 }
 
@@ -413,10 +322,10 @@ void FourSpaceSearch::GetCostMoveRelaxedFourIDList(MoveRelaxedFourIDList * const
   }
 }
 
-void FourSpaceSearch::UpdateRestListKeyTree(const RestListKey rest_list_key)
+void FourSpaceSearch::UpdateRestListKeyTree(const OpenRestListKey rest_list_key)
 {
   vector<MovePosition> rest_position_list;
-  GetRestPosition(rest_list_key, &rest_position_list);
+  GetOpenRestMoveList(rest_list_key, &rest_position_list);
   const auto rest_size = rest_position_list.size();
 
   if(rest_size <= 1){
@@ -442,19 +351,13 @@ void FourSpaceSearch::UpdateRestListKeyTree(const RestListKey rest_list_key)
         rest_min, rest_max
       };
 
-      const auto parent_rest_key = GetOpenRestKey(parent_rest_list);
+      OpenRestList open_rest_list(parent_rest_list);
+
+      const auto parent_rest_key = open_rest_list.GetOpenRestKey();
       rest_key_tree_[parent_rest_key].insert(rest_list_key);
 
-      UpdateRestListKeyTree(parent_rest_list);
+      UpdateRestListKeyTree(parent_rest_key);
     }
   }  
 }
-
-void FourSpaceSearch::UpdateRestListKeyTree(const vector<MovePosition> &rest_list)
-{
-  auto dummy = rest_list; // todo modify
-  const auto rest_list_key = GetOpenRestKey(dummy);
-  UpdateRestListKeyTree(rest_list_key);
-}
-
 }   // namespace realcore

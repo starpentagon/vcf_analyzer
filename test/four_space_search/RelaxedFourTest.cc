@@ -71,11 +71,12 @@ public:
 TEST_F(RelaxedFourTest, ConstructorTest)
 {
   vector<MovePosition> rest_list{{kMoveAD, kMoveAC}};
+  vector<MovePosition> expected_rest_list{{kMoveAC, kMoveAD}};
   RelaxedFour relaxed_four(kMoveAA, kMoveAB, rest_list);
 
   ASSERT_EQ(kMoveAA, relaxed_four.GetGainPosition());
   ASSERT_EQ(kMoveAB, relaxed_four.GetCostPosition());
-  ASSERT_EQ(rest_list, relaxed_four.GetRestPositionList());
+  ASSERT_EQ(expected_rest_list, relaxed_four.GetOpenRestList().GetOpenRestMoveList());
   ASSERT_TRUE(relaxed_four.GetTranspositionTable().empty());
 }
 
@@ -145,28 +146,28 @@ TEST_F(RelaxedFourTest, GetKeyTest)
   {
     vector<MovePosition> rest_list{{kMoveAD, kMoveAE, kMoveAC}};
     RelaxedFour relaxed_four(kMoveAA, kMoveAB, rest_list);
-    constexpr uint64_t key = static_cast<uint64_t>(kMoveAA) << 32 | kMoveAB << 24 | kMoveAE << 16 | kMoveAD << 8 | kMoveAC;
+    constexpr uint64_t key = (static_cast<uint64_t>(kMoveAA) << 32) | (kMoveAB << 24) | (kMoveAC << 16) | (kMoveAD << 8) | (kMoveAE);
 
     ASSERT_EQ(key, relaxed_four.GetKey());
   }
   {
     vector<MovePosition> rest_list{{kMoveAD, kMoveAC}};
     RelaxedFour relaxed_four(kMoveAA, kMoveAB, rest_list);
-    constexpr uint64_t key = static_cast<uint64_t>(kMoveAA) << 32 | kMoveAB << 24 | kMoveAD << 8 | kMoveAC;
+    constexpr uint64_t key = (static_cast<uint64_t>(kMoveAA) << 32) | (kMoveAB << 24) | (kMoveAC << 8) | (kMoveAD);
 
     ASSERT_EQ(key, relaxed_four.GetKey());
   }
   {
     vector<MovePosition> rest_list{kMoveAC};
     RelaxedFour relaxed_four(kMoveAA, kMoveAB, rest_list);
-    constexpr uint64_t key = static_cast<uint64_t>(kMoveAA) << 32 | kMoveAB << 24 | kMoveAC;
+    constexpr uint64_t key = (static_cast<uint64_t>(kMoveAA) << 32) | (kMoveAB << 24) | (kMoveAC);
 
     ASSERT_EQ(key, relaxed_four.GetKey());
   }
   {
     vector<MovePosition> rest_list;
     RelaxedFour relaxed_four(kMoveAA, kMoveAB, rest_list);
-    constexpr uint64_t key = static_cast<uint64_t>(kMoveAA) << 32 | kMoveAB << 24;
+    constexpr uint64_t key = (static_cast<uint64_t>(kMoveAA) << 32) | (kMoveAB << 24);
 
     ASSERT_EQ(key, relaxed_four.GetKey());
   }

@@ -250,8 +250,8 @@ inline const MovePosition RelaxedFour::GetCostPosition() const{
   return cost_;
 }
 
-inline const std::vector<MovePosition>& RelaxedFour::GetRestPositionList() const{
-  return rest_list_;
+inline const OpenRestList& RelaxedFour::GetOpenRestList() const{
+  return open_rest_list_;
 }
 
 inline const RelaxedFourStatusTable& RelaxedFour::GetTranspositionTable() const{

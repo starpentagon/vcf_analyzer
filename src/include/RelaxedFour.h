@@ -10,6 +10,7 @@
 
 #include "Move.h"
 #include "BitBoard.h"
+#include "OpenRestList.h"
 
 namespace realcore
 {
@@ -43,7 +44,7 @@ public:
   //! @param cost 損失路
   //! @param rest_list 開残路に着手する緩和四ノビのID
   //! @param four_space_list 実現手順のリスト
-  RelaxedFour(const MovePosition gain, const MovePosition cost, const std::vector<MovePosition> &rest_list);
+  RelaxedFour(const MovePosition gain, const MovePosition cost, const std::vector<MovePosition> &rest_move_list);
 
   //! @brief コピーコンストラクタ
   RelaxedFour(const RelaxedFour &relaxed_four);
@@ -61,8 +62,8 @@ public:
   //! @brief 損失路を取得する
   const MovePosition GetCostPosition() const;
 
-  //! @brief 開残路の位置を取得する
-  const std::vector<MovePosition>& GetRestPositionList() const;
+  //! @brief 開残路リストを取得する
+  const OpenRestList& GetOpenRestList() const;
 
   //! @brief 置換表を取得する
   const RelaxedFourStatusTable& GetTranspositionTable() const;
@@ -92,7 +93,7 @@ private:
   
   MovePosition gain_;            //!< 獲得路
   MovePosition cost_;            //!< 損失路
-  std::vector<MovePosition> rest_list_;  //!< 開残路リスト
+  OpenRestList open_rest_list_;  //!< 開残路リスト
   RelaxedFourStatusTable transposition_table_;    //! LocalFourSpace -> RelaxedFourStatusの置換表
 };
 

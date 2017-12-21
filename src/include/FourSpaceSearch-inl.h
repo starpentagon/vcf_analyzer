@@ -11,8 +11,6 @@ namespace realcore
 template<PlayerTurn P>
 void FourSpaceSearch::ExpandFourSpace(const std::vector<MovePair> &four_list)
 {
-  attack_player_ = P;
-
   for(const auto &four : four_list){
     const auto four_attack = four.first;
     const auto four_guard = four.second;
@@ -177,7 +175,7 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
   }
 
   // 位置moveを残路に持つ緩和四ノビごとに獲得/損失空間を追加できるかチェックする
-  std::map<RestListKey, std::vector<FourSpace>> additional_four_space;
+  std::map<OpenRestListKey, std::vector<FourSpace>> additional_four_space;
   UpdateRestListPuttableFourSpace<P>(move, four_space, &additional_four_space);
   UpdateAdditionalPuttableFourSpace<P>(move, four_space, additional_four_space);
 
@@ -187,10 +185,10 @@ void FourSpaceSearch::AddFourSpace(const MovePosition move, const FourSpace &fou
 
   for(const auto relaxed_four_id : relaxed_four_id_list){
     auto& relaxed_four = GetRelaxedFour(relaxed_four_id);
-    const auto& rest_list = relaxed_four.GetRestPositionList();
+    const auto& open_rest_list = relaxed_four.GetOpenRestList();
 
     std::vector<FourSpace> rest_four_space_list;
-    EnumeratePuttableFourSpace<P>(rest_list, &rest_four_space_list);
+    EnumeratePuttableFourSpace<P>(open_rest_list, &rest_four_space_list);
 
     ExpandRelaxedFour<P>(relaxed_four_id, rest_four_space_list);
   }
@@ -238,7 +236,7 @@ void FourSpaceSearch::ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, con
       
       AddFeasibleRelaxedFourID(relaxed_four_id);
 
-      std::map<RestListKey, std::vector<FourSpace>> additional_four_space;
+      std::map<OpenRestListKey, std::vector<FourSpace>> additional_four_space;
       UpdateRestListPuttableFourSpace<P>(gain_position, child_four_space, &additional_four_space);
 
       // todo delete --
@@ -269,7 +267,7 @@ void FourSpaceSearch::ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, con
 }
 
 template<PlayerTurn P>
-void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::map<RestListKey, std::vector<FourSpace>> &additional_four_space)
+void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::map<OpenRestListKey, std::vector<FourSpace>> &additional_four_space)
 {
   for(const auto& additional : additional_four_space){
     const auto rest_key = additional.first;
@@ -292,7 +290,7 @@ void FourSpaceSearch::UpdateAdditionalPuttableFourSpace(const MovePosition move,
 }
 
 template<PlayerTurn P>
-void FourSpaceSearch::UpdateRestListPuttableFourSpace(const RestListKey rest_key, const FourSpace &four_space, std::map<RestListKey, std::vector<FourSpace>> * const additional_four_space)
+void FourSpaceSearch::UpdateRestListPuttableFourSpace(const OpenRestListKey rest_key, const FourSpace &four_space, std::map<OpenRestListKey, std::vector<FourSpace>> * const additional_four_space)
 {
   assert(additional_four_space != nullptr);
 
@@ -317,8 +315,14 @@ void FourSpaceSearch::UpdateRestListPuttableFourSpace(const RestListKey rest_key
 
   std::vector<FourSpace> four_space_list{four_space};
 
+  MoveBitSet rest_move_bit;
+  GetOpenRestBit(rest_key, &rest_move_bit);
+
   for(const auto child_rest_key : child_rest_key_set){
-    MovePosition additional_move = GetAdditionalMove(rest_key, child_rest_key);   // todo rest_keyのMoveBitSetを再利用すると高速化可能
+    MoveBitSet child_rest_move_bit;
+    GetOpenRestBit(child_rest_key, &child_rest_move_bit);
+    
+    MovePosition additional_move = GetAdditionalMove(rest_move_bit, child_rest_move_bit);
   
     std::vector<FourSpace> next_four_space_list;
     const auto& registered_four_space_list = GetFourSpaceList(additional_move);
@@ -526,21 +530,20 @@ void FourSpaceSearch::GetRelaxedFourFromThreeGainPosition(const MovePosition gai
 }
 
 template<PlayerTurn P>
-void FourSpaceSearch::EnumeratePuttableFourSpace(const std::vector<MovePosition> &rest_list, std::vector<FourSpace> * const puttable_four_space_list)
+void FourSpaceSearch::EnumeratePuttableFourSpace(const OpenRestList &open_rest_list, std::vector<FourSpace> * const puttable_four_space_list)
 {
   assert(puttable_four_space_list != nullptr);
   assert(puttable_four_space_list->empty());
 
-  const auto rest_size = rest_list.size();
+  const auto& rest_move_list = open_rest_list.GetOpenRestMoveList();
+  const auto rest_size = rest_move_list.size();
   assert(rest_size <= 3);
 
   if(rest_size == 0){
     return;
   }
 
-  auto dummy = rest_list; // todo modify
-  const auto rest_list_key = GetOpenRestKey(dummy);
-
+  const auto rest_list_key = open_rest_list.GetOpenRestKey();
   const auto find_it = rest_list_puttable_four_space_.find(rest_list_key);
 
   if(find_it != rest_list_puttable_four_space_.end()){
@@ -551,13 +554,13 @@ void FourSpaceSearch::EnumeratePuttableFourSpace(const std::vector<MovePosition>
 
   // 新たに生成が必要になるのは獲得/損失空間の組合せを考慮する場合のみ
   assert(rest_size >= 2);   
-  std::vector<MovePosition> sub_rest_list(rest_list);
+  std::vector<MovePosition> sub_rest_move_list(rest_move_list);
   
-  const auto move = rest_list.back();
-  sub_rest_list.pop_back();
+  const auto move = sub_rest_move_list.back();
+  sub_rest_move_list.pop_back();
 
   std::vector<FourSpace> move_four_space_list, sub_four_space_list, four_space_list;
-  EnumeratePuttableFourSpace<P>(sub_rest_list, &sub_four_space_list);
+  EnumeratePuttableFourSpace<P>(sub_rest_move_list, &sub_four_space_list);
 
   move_four_space_list = GetFourSpaceList(move);
 
@@ -568,7 +571,7 @@ void FourSpaceSearch::EnumeratePuttableFourSpace(const std::vector<MovePosition>
 }
 
 template<PlayerTurn P>
-const bool FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const FourSpace &four_space, const bool is_register_check)
+const bool FourSpaceSearch::AddRestListFourSpace(const OpenRestListKey rest_key, const FourSpace &four_space, const bool is_register_check)
 {
   if(is_register_check && IsRegisteredFourSpace(rest_key, four_space)){
     return false;
@@ -611,7 +614,7 @@ const bool FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, con
 }
 
 template<PlayerTurn P>
-void FourSpaceSearch::AddRestListFourSpace(const RestListKey rest_key, const std::vector<FourSpace> &four_space_list, const bool is_register_check, std::vector<FourSpace> * const added_four_space_list)
+void FourSpaceSearch::AddRestListFourSpace(const OpenRestListKey rest_key, const std::vector<FourSpace> &four_space_list, const bool is_register_check, std::vector<FourSpace> * const added_four_space_list)
 {
   assert(added_four_space_list != nullptr);
   assert(added_four_space_list->empty());
