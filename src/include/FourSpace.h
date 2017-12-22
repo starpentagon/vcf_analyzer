@@ -1,5 +1,5 @@
 //! @file
-//! @brief 緩和四ノビの獲得/損失空間を管理するクラス
+//! @brief 獲得/損失空間を保持するクラス
 //! @author Koichi NABETANI
 //! @date 2017/10/28
 

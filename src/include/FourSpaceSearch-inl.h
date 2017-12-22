@@ -182,13 +182,6 @@ void FourSpaceSearch::ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, con
       std::map<OpenRestListKey, std::vector<FourSpace>> additional_four_space;
       UpdateRestListPuttableFourSpace<P>(gain_position, child_four_space, &additional_four_space);
 
-      // todo delete --
-/*      MoveList term_gain, term_cost;
-      GetMoveList(child_four_space.GetGainBit(), &term_gain);
-      GetMoveList(child_four_space.GetCostBit(), &term_cost);
-*/      //std::cerr << "terminate: " << term_gain.str() << ", " << term_cost.str() << std::endl;
-      // -- todo delete
-
       continue;
     }
 

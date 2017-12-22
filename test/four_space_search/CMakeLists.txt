@@ -39,6 +39,7 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/../../realcore/src/BitSearch.cc
     ../../../src/RelaxedFour.cc
     ../../../src/FourSpaceSearch.cc
+    ../../../src/FourSpaceManager.cc
     ../../../src/FourSpace.cc
     ../../../src/RelaxedFour.cc
     ../../../src/OpponentFourInfo.cc
@@ -49,6 +50,7 @@ add_executable(
     ../OpenRestListTest.cc
     ../OpenRestDependencyTest.cc
     ../FourSpaceTest.cc
+    ../FourSpaceManagerTest.cc
     ../RelaxedFourTest.cc
 )
 
