@@ -145,5 +145,17 @@ const bool FourSpace::operator!=(const FourSpace &four_space) const
   return !(*this == four_space);
 }
 
+const size_t FourSpace::CalcHashValue() const
+{
+  hash<MoveBitSet> calculator;
+
+  const size_t gain_hash = calculator(gain_bit_);
+  size_t cost_hash = calculator(cost_bit_);
+  cost_hash = (cost_hash << 32) | (cost_hash >> 32);  // gain, costが入れ替わったFourSpaceのhash値が異なるようにする
+  const size_t hash = gain_hash ^ cost_hash; 
+
+  return hash;
+}
+
 }
 

@@ -278,6 +278,45 @@ TEST_F(FourSpaceTest, GetNeighborhoodCostBitTest)
   }
 }
 
+TEST_F(FourSpaceTest, CalcHashValueTest)
+{
+  {
+    FourSpace four_space_1(kMoveAA, kMoveAB);
+    FourSpace four_space_2(kMoveAA, kMoveAB);
+
+    const auto hash_1 = four_space_1.CalcHashValue();
+    const auto hash_2 = four_space_2.CalcHashValue();
+
+    ASSERT_EQ(hash_1, hash_2);
+  }
+  {
+    FourSpace four_space_1(kMoveAA, kMoveAB);
+    FourSpace four_space_2(kMoveAA, kMoveAC);
+
+    const auto hash_1 = four_space_1.CalcHashValue();
+    const auto hash_2 = four_space_2.CalcHashValue();
+
+    ASSERT_NE(hash_1, hash_2);
+  }
+  {
+    FourSpace four_space_1(kMoveAA, kMoveAB);
+    FourSpace four_space_2(kMoveAC, kMoveAD);
+
+    const auto hash_1 = four_space_1.CalcHashValue();
+    const auto hash_2 = four_space_2.CalcHashValue();
+
+    ASSERT_NE(hash_1, hash_2);
+  }
+  {
+    FourSpace four_space_1(kMoveAA, kMoveAB);
+    FourSpace four_space_2(kMoveAB, kMoveAA);
+
+    const auto hash_1 = four_space_1.CalcHashValue();
+    const auto hash_2 = four_space_2.CalcHashValue();
+
+    ASSERT_NE(hash_1, hash_2);
+  }
+}
 }
 
 

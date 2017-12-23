@@ -66,6 +66,9 @@ public:
   //! @brief 四ノリ情報を取得する
   const OpponentFourInfo& GetOpponentFourInfo() const;
 
+  //! @brief Hash値を計算する
+  const size_t CalcHashValue() const;
+
 private:
   MoveBitSet gain_bit_;   //! 獲得路のbit
   MoveBitSet cost_bit_;   //! 損失路のbit

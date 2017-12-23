@@ -10,7 +10,8 @@ class FourSpaceManagerTest
 {
 public:
   void ConstructorTest(){
-    FourSpaceManager four_space_manager;
+    MoveList move_list;
+    FourSpaceManager four_space_manager(move_list);
 
     ASSERT_EQ(1, four_space_manager.four_space_list_.size());   // kInvalidFourSpaceIDに対応する要素を追加するためサイズは1
     ASSERT_TRUE(four_space_manager.open_rest_key_four_space_id_.empty());
@@ -18,20 +19,19 @@ public:
 
   void GetFourSpaceIDTest()
   {
-    FourSpaceManager four_space_manager;
+    MoveList move_list;
+    FourSpaceManager four_space_manager(move_list);
     FourSpace empty_four_space;
 
-    ASSERT_EQ(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(kMoveAA, empty_four_space));
+    ASSERT_EQ(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(empty_four_space));
 
     FourSpace four_space_1(kMoveAA, kMoveAB);
-    vector<RestKeyFourSpace> added_list;
-    four_space_manager.AddFourSpace(kMoveAA, kMoveAB, four_space_1, &added_list);
+    four_space_manager.RegisterFourSpace(four_space_1);
 
-    ASSERT_EQ(1, four_space_manager.GetFourSpaceID(kMoveAA, four_space_1));
+    ASSERT_EQ(1, four_space_manager.GetFourSpaceID(four_space_1));
     
     FourSpace four_space_2(kMoveAB, kMoveAA);
-    ASSERT_EQ(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(kMoveAA, four_space_2));
-    ASSERT_EQ(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(kMoveAB, four_space_1));
+    ASSERT_EQ(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(four_space_2));
   }
 };
 
@@ -47,7 +47,8 @@ TEST_F(FourSpaceManagerTest, AddGetSigleElementTest)
   
   FourSpace four_space(gain, cost);
   
-  FourSpaceManager four_space_manager;
+  MoveList move_list;
+  FourSpaceManager four_space_manager(move_list);
   vector<RestKeyFourSpace> added_list;
 
   four_space_manager.AddFourSpace(gain, cost, four_space, &added_list);
