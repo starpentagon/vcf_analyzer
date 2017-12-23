@@ -48,6 +48,13 @@ private:
   template<PlayerTurn P>
   void AddOpenRestListFourSpace(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list);
 
+  //! @brief 2つの獲得/損失空間のIDリストから同時設置可能な獲得/損失空間のリストを生成する
+  //! @param four_space_id_list_1 獲得/損失空間のIDリスト
+  //! @param four_space_id_list_2 獲得/損失空間のIDリスト
+  //! @param puttable_four_space 同時設置可能な獲得/損失空間のリストの格納先
+  template<PlayerTurn P>
+  void GeneratePuttableFourSpace(const std::vector<FourSpaceID> &four_space_id_list_1, const std::vector<FourSpaceID> &four_space_id_list_2, std::vector<FourSpaceID> * const puttable_four_space_id_list);
+  
   //! @brief 同一のFourSpaceを検索する
   //! @retval kInvalidFourSpaceID: 同一のFourSpaceが存在せず
   const FourSpaceID GetFourSpaceID(const FourSpace &four_space) const;
@@ -55,6 +62,13 @@ private:
   //! @brief FourSpaceを登録する
   //! @pre four_spaceは未登録であること
   const FourSpaceID RegisterFourSpace(const FourSpace &four_space);
+
+  //! @brief 開残路にFourSpaceを登録する
+  //! @param open_rest_list_key 開残路キー
+  //! @param four_space_id FourSpaceID
+  //! @retval true 登録
+  //! @retval false 登録済
+  const bool RegisterOpenRestKeyFourSpace(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id);
 
   //! @brief 指定位置の獲得/損失空間のリストを取得する
   const std::vector<FourSpaceID>& GetFourSpaceIDList(const OpenRestListKey open_rest_list_key) const;

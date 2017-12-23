@@ -51,14 +51,14 @@ TEST_F(FourSpaceManagerTest, AddGetSigleElementTest)
   FourSpaceManager four_space_manager(move_list);
   vector<RestKeyFourSpace> added_list;
 
-  four_space_manager.AddFourSpace(gain, cost, four_space, &added_list);
+  four_space_manager.AddFourSpace<kBlackTurn>(gain, cost, four_space, &added_list);
 
   ASSERT_EQ(1, added_list.size());
 
   const auto rest_key = added_list[0].first;
   const auto four_space_id = added_list[0].second;
 
-  ASSERT_EQ(rest_key, 0);
+  ASSERT_EQ(gain, rest_key);
   ASSERT_EQ(1, four_space_id);
 
   const auto &manager_four_space = four_space_manager.GetFourSpace(four_space_id);

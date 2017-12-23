@@ -24,7 +24,93 @@ void FourSpaceManager::AddFourSpace(const MovePosition gain_move, const MovePosi
 template<PlayerTurn P>
 void FourSpaceManager::AddOpenRestListFourSpace(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list)
 {
+  const bool is_regiestered = RegisterOpenRestKeyFourSpace(open_rest_list_key, four_space_id);
 
+  if(!is_regiestered){
+    // すでに登録済のため抜ける
+    return;
+  }
+
+  added_four_space_list->emplace_back(std::make_pair(open_rest_list_key, four_space_id));
+
+  // open_rest_list_keyに依存する開残路キーのFourSpaceリストを更新する
+  const auto& child_rest_key_set = open_rest_dependency_.GetChildSet(open_rest_list_key);
+  
+  if(child_rest_key_set.empty()){
+    return;
+  }
+
+  std::vector<FourSpaceID> four_space_id_list{four_space_id};
+  
+  MoveBitSet rest_move_bit;
+  GetOpenRestBit(open_rest_list_key, &rest_move_bit);
+  
+  for(const auto child_rest_key : child_rest_key_set){
+    MoveBitSet child_rest_move_bit;
+    GetOpenRestBit(child_rest_key, &child_rest_move_bit);
+    
+    MovePosition additional_move = GetAdditionalMove(rest_move_bit, child_rest_move_bit);
+  
+    std::vector<FourSpaceID> next_four_space_id_list;
+    const auto& registered_four_space_id_list = GetFourSpaceIDList(additional_move);
+    GeneratePuttableFourSpace<P>(four_space_id_list, registered_four_space_id_list, &next_four_space_id_list);
+
+    for(const auto next_four_space : next_four_space_id_list){
+      AddOpenRestListFourSpace<P>(child_rest_key, next_four_space, added_four_space_list);
+    }
+  }
+}
+
+template<PlayerTurn P>
+void FourSpaceManager::GeneratePuttableFourSpace(const std::vector<FourSpaceID> &four_space_id_list_1, const std::vector<FourSpaceID> &four_space_id_list_2, std::vector<FourSpaceID> * const puttable_four_space_id_list)
+{
+  assert(puttable_four_space_id_list != nullptr);
+  assert(puttable_four_space_id_list->empty());
+
+  static constexpr PositionState S = GetPlayerStone(P);
+  static constexpr PositionState T = GetPlayerStone(GetOpponentTurn(P));
+
+  std::set<FourSpaceID> four_space_id_set;
+
+  for(const auto four_space_id_1 : four_space_id_list_1){
+    const auto &four_space_1 = GetFourSpace(four_space_id_1);
+
+    for(const auto four_space_id_2 : four_space_id_list_2){
+      const auto &four_space_2 = GetFourSpace(four_space_id_2);
+    
+      if(!four_space_1.IsPuttable(four_space_2)){
+        continue;
+      }
+
+      FourSpace four_space(four_space_1);
+      four_space.Add(four_space_2);
+
+      FourSpaceID four_space_id = GetFourSpaceID(four_space);
+
+      if(four_space_id == kInvalidFourSpaceID){
+        bit_board_.SetState<S>(four_space.GetGainBit());
+        bit_board_.SetState<T>(four_space.GetCostBit());
+
+        const bool is_five = bit_board_.IsFiveStones<P>();
+
+        bit_board_.SetState<kOpenPosition>(four_space.GetGainBit() | four_space.GetCostBit());
+
+        if(is_five){
+          continue;
+        }
+
+        four_space_id = RegisterFourSpace(four_space);
+      }
+
+      four_space_id_set.insert(four_space_id);
+    }
+  }
+
+  puttable_four_space_id_list->reserve(four_space_id_set.size());
+
+  for(const auto four_space_id : four_space_id_set){
+    puttable_four_space_id_list->emplace_back(four_space_id);
+  }
 }
 
 inline const FourSpace& FourSpaceManager::GetFourSpace(const FourSpaceID four_space_id) const
