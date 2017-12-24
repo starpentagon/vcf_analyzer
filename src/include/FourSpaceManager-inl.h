@@ -131,6 +131,11 @@ inline const std::vector<FourSpaceID>& FourSpaceManager::GetFourSpaceIDList(cons
   }
 }
 
+inline void FourSpaceManager::AddOpenRestListKey(const OpenRestListKey open_rest_list_key)
+{
+  open_rest_dependency_.Add(open_rest_list_key);
+}
+
 }   // namespace realcore
 
 #endif    // FOUR_SPACE_MANAGER_H

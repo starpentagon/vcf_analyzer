@@ -41,6 +41,7 @@ public:
   void AddFourSpace(const MovePosition gain_move, const MovePosition cost_move, const FourSpace &four_space, std::vector<RestKeyFourSpace> * const added_four_space_list);
 
   //! @brief 開残路キーを追加する
+  //! @note AddFourSpaceでRelaxedFourオブジェクトを受け取るようにすれば不要？
   void AddOpenRestListKey(const OpenRestListKey open_rest_list_key);
 
 private:
