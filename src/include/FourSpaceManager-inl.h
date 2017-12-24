@@ -113,6 +113,55 @@ void FourSpaceManager::GeneratePuttableFourSpace(const std::vector<FourSpaceID> 
   }
 }
 
+template<PlayerTurn P>
+void FourSpaceManager::EnumeratePuttableFourSpace(const OpenRestList &open_rest_list, std::vector<FourSpaceID> * const puttable_four_space_id_list)
+{
+  assert(puttable_four_space_id_list != nullptr);
+  assert(puttable_four_space_id_list->empty());
+
+  const auto& rest_move_list = open_rest_list.GetOpenRestMoveList();
+  const auto rest_size = rest_move_list.size();
+  assert(rest_size <= 3);
+
+  if(rest_size == 0){
+    return;
+  }
+
+  const auto rest_list_key = open_rest_list.GetOpenRestKey();
+  const auto find_it = open_rest_key_four_space_id_.find(rest_list_key);
+
+  if(find_it != open_rest_key_four_space_id_.end()){
+    // 生成済みの場合
+    *puttable_four_space_id_list = find_it->second;
+    return;
+  }
+
+  // 新たに生成が必要になるのは獲得/損失空間の組合せを考慮する場合のみ
+  assert(rest_size >= 2);   
+  std::vector<MovePosition> sub_rest_move_list(rest_move_list);
+  
+  const auto move = sub_rest_move_list.back();
+  sub_rest_move_list.pop_back();
+
+  std::vector<FourSpaceID> sub_four_space_list;
+  OpenRestList sub_open_rest(sub_rest_move_list);
+
+  EnumeratePuttableFourSpace<P>(sub_open_rest, &sub_four_space_list);
+
+  const auto& move_four_space_list = GetFourSpaceIDList(move);
+
+  std::vector<FourSpaceID> generated_four_space_id_list;
+  GeneratePuttableFourSpace<P>(move_four_space_list, sub_four_space_list, &generated_four_space_id_list);
+
+  open_rest_key_four_space_id_.insert(
+    make_pair(rest_list_key, generated_four_space_id_list)
+  );
+
+  open_rest_dependency_.Add(rest_list_key);
+
+  *puttable_four_space_id_list = generated_four_space_id_list;
+}
+
 inline const FourSpace& FourSpaceManager::GetFourSpace(const FourSpaceID four_space_id) const
 {
   assert(four_space_id < four_space_list_.size());

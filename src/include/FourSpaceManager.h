@@ -30,15 +30,21 @@ class FourSpaceManager
   friend class FourSpaceManagerTest;
 
 public:
-  FourSpaceManager(const MoveList &board_move_list);
+  FourSpaceManager(const BitBoard &bit_board);
 
   //! @brief FourSpaceを取得する
   const FourSpace& GetFourSpace(const FourSpaceID four_space_id) const;
 
   //! @brief FourSpaceを追加する
   //! @param added_four_space_list 新規に追加した(開残路キー, FourSpaceID)のリスト
+  //! @note すでに生成済みの開残路キーのFourSpaceを更新する
   template<PlayerTurn P>
   void AddFourSpace(const MovePosition gain_move, const MovePosition cost_move, const FourSpace &four_space, std::vector<RestKeyFourSpace> * const added_four_space_list);
+
+  //! @brief 開残路の同時設置可能なFourSpaceを列挙する
+  //! @note 列挙に必要な開残路キーに対応するFourSpaceを生成する
+  template<PlayerTurn P>
+  void EnumeratePuttableFourSpace(const OpenRestList &open_rest_list, std::vector<FourSpaceID> * const puttable_four_space_id_list);
 
   //! @brief 開残路キーを追加する
   //! @note AddFourSpaceでRelaxedFourオブジェクトを受け取るようにすれば不要？

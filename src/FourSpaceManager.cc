@@ -3,8 +3,8 @@
 using namespace std;
 using namespace realcore;
 
-FourSpaceManager::FourSpaceManager(const MoveList &board_move_list)
-: bit_board_(board_move_list)
+FourSpaceManager::FourSpaceManager(const BitBoard &bit_board)
+: bit_board_(bit_board)
 {
   // kInvalidFourSpaceIDに対応する要素を追加
   four_space_list_.emplace_back();
@@ -41,6 +41,8 @@ const bool FourSpaceManager::RegisterOpenRestKeyFourSpace(const OpenRestListKey 
     const auto insert_result = open_rest_key_four_space_id_.insert(
       make_pair(open_rest_list_key, vector<FourSpaceID>())
     );
+
+    open_rest_dependency_.Add(open_rest_list_key);
 
     assert(insert_result.second);
     

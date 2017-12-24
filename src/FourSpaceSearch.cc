@@ -7,7 +7,7 @@ using namespace std;
 namespace realcore{
 
 FourSpaceSearch::FourSpaceSearch(const BitBoard &bit_board)
-: BitBoard(bit_board)
+: BitBoard(bit_board), four_space_manager_(bit_board)
 {
   vector<MovePosition> null_rest_list;
   vector<FourSpace> null_four_space_list;
@@ -61,7 +61,7 @@ const pair<RelaxedFourID, bool> FourSpaceSearch::AddRelaxedFour(const RelaxedFou
     relaxed_fourid_vector_ptr->emplace_back(four_id);
   }
 
-  open_rest_dependency_.Add(rest_key);
+  four_space_manager_.AddOpenRestListKey(rest_key);
   return make_pair(four_id, true);
 }
 

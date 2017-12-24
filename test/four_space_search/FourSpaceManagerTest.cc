@@ -10,8 +10,8 @@ class FourSpaceManagerTest
 {
 public:
   void ConstructorTest(){
-    MoveList move_list;
-    FourSpaceManager four_space_manager(move_list);
+    BitBoard bit_board;
+    FourSpaceManager four_space_manager(bit_board);
 
     ASSERT_EQ(1, four_space_manager.four_space_list_.size());   // kInvalidFourSpaceIDに対応する要素を追加するためサイズは1
     ASSERT_TRUE(four_space_manager.open_rest_key_four_space_id_.empty());
@@ -19,8 +19,8 @@ public:
 
   void GetRegisterFourSpaceIDTest()
   {
-    MoveList move_list;
-    FourSpaceManager four_space_manager(move_list);
+    BitBoard bit_board;
+    FourSpaceManager four_space_manager(bit_board);
     FourSpace empty_four_space;
 
     ASSERT_EQ(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(empty_four_space));
@@ -36,8 +36,8 @@ public:
 
   void GetRegisterOpenRestKeyFourSpaceTest()
   {
-    MoveList move_list;
-    FourSpaceManager four_space_manager(move_list);
+    BitBoard bit_board;
+    FourSpaceManager four_space_manager(bit_board);
 
     constexpr OpenRestListKey key = 123456;
 
@@ -59,8 +59,8 @@ public:
 
   void GeneratePuttableFourSpaceTest()
   {
-    MoveList move_list;
-    FourSpaceManager four_space_manager(move_list);
+    BitBoard bit_board;
+    FourSpaceManager four_space_manager(bit_board);
 
     // ID:1-1
     {
@@ -151,8 +151,8 @@ public:
 
   void AddGetMultiElementTest()
   {
-    MoveList move_list;
-    FourSpaceManager four_space_manager(move_list);
+    BitBoard bit_board;
+    FourSpaceManager four_space_manager(bit_board);
 
     vector<MovePosition> open_rest_move{kMoveAA, kMoveAB};
     OpenRestList open_rest_list(open_rest_move);
@@ -233,6 +233,97 @@ public:
       }
     }
   }
+
+  void EnumeratePuttableFourSpaceTest()
+  {
+    BitBoard bit_board;
+    FourSpaceManager four_space_manager(bit_board);
+
+    {
+      // kMoveAA-1
+      FourSpace four_space(kMoveAA, kMoveBA);
+      vector<RestKeyFourSpace> added_list;
+
+      four_space_manager.AddFourSpace<kBlackTurn>(kMoveAA, kMoveBA, four_space, &added_list);
+    }
+    {
+      // kMoveAA-2
+      FourSpace four_space(kMoveAA, kMoveAB);
+      vector<RestKeyFourSpace> added_list;
+
+      four_space_manager.AddFourSpace<kBlackTurn>(kMoveAA, kMoveAB, four_space, &added_list);
+    }
+    {
+      // kMoveAB-1
+      FourSpace four_space(kMoveAB, kMoveBB);
+      vector<RestKeyFourSpace> added_list;
+
+      four_space_manager.AddFourSpace<kBlackTurn>(kMoveAB, kMoveBB, four_space, &added_list);
+    }
+    {
+      // kMoveAB-2
+      FourSpace four_space(kMoveAB, kMoveAA);
+      vector<RestKeyFourSpace> added_list;
+
+      four_space_manager.AddFourSpace<kBlackTurn>(kMoveAB, kMoveAA, four_space, &added_list);
+    }
+    {
+      // rest = kMoveAA
+      vector<MovePosition> rest_move_list{kMoveAA};
+      OpenRestList open_rest_list(rest_move_list);
+
+      vector<FourSpaceID> four_space_id_list;
+      four_space_manager.EnumeratePuttableFourSpace<kBlackTurn>(open_rest_list, &four_space_id_list);
+      ASSERT_EQ(2, four_space_id_list.size());
+
+      {
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[0]);
+        FourSpace expect(kMoveAA, kMoveBA);
+        ASSERT_TRUE(expect == four_space);
+      }
+      {
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[1]);
+        FourSpace expect(kMoveAA, kMoveAB);
+        ASSERT_TRUE(expect == four_space);
+      }
+    }
+    {
+      // rest = kMoveAB
+      vector<MovePosition> rest_move_list{kMoveAB};
+      OpenRestList open_rest_list(rest_move_list);
+
+      vector<FourSpaceID> four_space_id_list;
+      four_space_manager.EnumeratePuttableFourSpace<kBlackTurn>(open_rest_list, &four_space_id_list);
+      ASSERT_EQ(2, four_space_id_list.size());
+
+      {
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[0]);
+        FourSpace expect(kMoveAB, kMoveBB);
+        ASSERT_TRUE(expect == four_space);
+      }
+      {
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[1]);
+        FourSpace expect(kMoveAB, kMoveAA);
+        ASSERT_TRUE(expect == four_space);
+      }
+    }
+    {
+      // rest = kMoveAA & kMoveAB
+      vector<MovePosition> rest_move_list{kMoveAA, kMoveAB};
+      OpenRestList open_rest_list(rest_move_list);
+
+      vector<FourSpaceID> four_space_id_list;
+      four_space_manager.EnumeratePuttableFourSpace<kBlackTurn>(open_rest_list, &four_space_id_list);
+      ASSERT_EQ(1, four_space_id_list.size());
+
+      {
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[0]);
+        FourSpace expect(kMoveAA, kMoveBA);
+        expect.Add(kMoveAB, kMoveBB);
+        ASSERT_TRUE(expect == four_space);
+      }
+    }
+  }
 };
 
 TEST_F(FourSpaceManagerTest, ConstructorTest)
@@ -247,8 +338,8 @@ TEST_F(FourSpaceManagerTest, AddGetSigleElementTest)
   
   FourSpace four_space(gain, cost);
   
-  MoveList move_list;
-  FourSpaceManager four_space_manager(move_list);
+  BitBoard bit_board;
+  FourSpaceManager four_space_manager(bit_board);
   vector<RestKeyFourSpace> added_list;
 
   four_space_manager.AddFourSpace<kBlackTurn>(gain, cost, four_space, &added_list);
@@ -283,6 +374,11 @@ TEST_F(FourSpaceManagerTest, GetRegisterOpenRestKeyFourSpaceTest)
 TEST_F(FourSpaceManagerTest, GeneratePuttableFourSpaceTest)
 {
   GeneratePuttableFourSpaceTest();
+}
+
+TEST_F(FourSpaceManagerTest, EnumeratePuttableFourSpaceTest)
+{
+  EnumeratePuttableFourSpaceTest();
 }
 
 }   // namespace realcore

@@ -15,9 +15,7 @@
 #include "RelaxedFour.h"
 #include "BitBoard.h"
 #include "HashTable.h"
-#include "FourSpace.h"
-#include "OpenRestList.h"
-#include "OpenRestDependency.h"
+#include "FourSpaceManager.h"
 
 namespace realcore{
 
@@ -122,7 +120,7 @@ private:
 
   //! @brief 指定位置の獲得/損失空間を追加する
   template<PlayerTurn P>
-  void AddFourSpace(const MovePosition move, const FourSpace &four_space);
+  void AddFourSpace(const MovePosition gain_move, const MovePosition cost_move, const FourSpace &four_space);
 
   //! @brief 獲得/損失空間がすでに登録されているかチェックする
   const bool IsRegisteredFourSpace(const MovePosition move, const FourSpace &four_space) const;
@@ -133,35 +131,14 @@ private:
   //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間の増分を反映する
   //! @param move 獲得/損失空間が追加された位置
   //! @param four_space 追加した獲得/損失空間
-  //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
+  //! @param additional_four_space_list 追加した同時設置可能な獲得/損失空間
   template<PlayerTurn P>
-  void UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::map<OpenRestListKey, std::vector<FourSpace>> &additional_four_space);
-
-  //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間の増分を反映する
-  //! @param rest_key 獲得/損失空間が追加された残路リストのキー
-  //! @param four_space 追加した獲得/損失空間
-  //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
-  template<PlayerTurn P>
-  void UpdateRestListPuttableFourSpace(const OpenRestListKey rest_key, const FourSpace &four_space, std::map<OpenRestListKey, std::vector<FourSpace>> * const additional_four_space);
-
-  //! @brief 獲得/損失空間を追加する
-  //! @retval true 追加, false 登録済みや実現不可能なため追加せず
-  template<PlayerTurn P>
-  const bool AddRestListFourSpace(const OpenRestListKey rest_key, const FourSpace &four_space, const bool is_register_check);
-
-  template<PlayerTurn P>
-  void AddRestListFourSpace(const OpenRestListKey rest_key, const std::vector<FourSpace> &four_space_list, const bool is_register_check, std::vector<FourSpace> * const added_four_space_list);
+  void UpdateAdditionalPuttableFourSpace(const MovePosition move, const FourSpace &four_space, const std::vector<RestKeyFourSpace> &additional_four_space);
 
   //! @brief 開残路の獲得/損失空間リストに対して緩和四ノビを展開する
   template<PlayerTurn P>
-  void ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, const std::vector<FourSpace> &rest_four_space_list);
+  void ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, const std::vector<FourSpaceID> &rest_four_space_list);
 
-  //! @brief 獲得/損失空間の追加による開残路リストごとの同時設置可能な獲得/損失空間を列挙する
-  //! @param rest_list 開残路リスト
-  //! @param additional_four_space_list 同時設置可能な獲得/損失空間の格納先
-  template<PlayerTurn P>
-  void EnumeratePuttableFourSpace(const OpenRestList &open_rest_list, std::vector<FourSpace> * const puttable_four_space_list);
-  
   //! @brief 開残路リストに登録ずみの獲得/損失空間かどうかをチェックする
   const bool IsRegisteredFourSpace(const OpenRestListKey rest_key, const FourSpace &four_space) const;
     
@@ -197,7 +174,7 @@ private:
   MoveLocalBitBoardList move_local_bitboard_list_;    //! 位置moveごとの緩和四ノビ生成でチェック済みの直線近傍パターン
   
   std::map<OpenRestListKey, FourSpaceVectorPtr> rest_list_puttable_four_space_;    //! 開残路リストkeyごとに同時設置可能な獲得/損失空間のリスト
-  OpenRestDependency open_rest_dependency_;   //! 開残路の依存関係を管理する
+  FourSpaceManager four_space_manager_;     //! FourSpaceを管理する
   std::map<OpenRestListKey, RelaxedFourIDVectorPtr> rest_list_relaxed_four_list_;  //! 開残路リスト -> 緩和四ノビIDのリスト
 };
 
