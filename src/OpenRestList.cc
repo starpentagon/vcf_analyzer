@@ -118,6 +118,9 @@ void GetOpenRestMoveList(OpenRestListKey open_rest_key, std::vector<MovePosition
 
 const MovePosition GetAdditionalMove(const MoveBitSet &super_bit, const MoveBitSet &sub_bit)
 {
+  assert((super_bit & sub_bit) == sub_bit);
+  assert((super_bit | sub_bit) == super_bit);
+  
   MoveBitSet diff_bit = super_bit ^ sub_bit;
   
   MoveList additional_move_list;

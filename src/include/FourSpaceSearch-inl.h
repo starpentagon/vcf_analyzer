@@ -63,10 +63,12 @@ void FourSpaceSearch::AddFourSpace(const MovePosition gain_move, const MovePosit
   static size_t count = 0;
   count++;
 
+  /*
   if(count >= 1 * 10000){
     return;
   }
-
+  */
+  
   // todo delete
   static size_t path_through_matrix[256] = {0};
 

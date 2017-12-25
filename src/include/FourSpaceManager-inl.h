@@ -18,18 +18,38 @@ void FourSpaceManager::AddFourSpace(const MovePosition gain_move, const MovePosi
     four_space_id = RegisterFourSpace(four_space);
   }
   
+  // todo delete --
+  if(gain_move == kMoveBF && four_space.CalcHashValue() == 8730720847685340556){
+    int a = 1;
+  }
+  // -- todo delete
+
   AddOpenRestListFourSpace<P>(gain_move, four_space_id, added_four_space_list);
+
+  // todo delete --
+  std::vector<RestKeyFourSpace> debug;
+  AddOpenRestListFourSpaceOld<P>(gain_move, four_space_id, &debug);
+  const auto debug2 = *added_four_space_list;
+  
+  std::cerr << "move: " << MoveString(gain_move) << ", four space: " << four_space.CalcHashValue() << std::endl;
+
+  assert(debug.size() == debug2.size());
+  // -- todo delete
 }
 
 template<PlayerTurn P>
-void FourSpaceManager::AddOpenRestListFourSpace(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list)
+void FourSpaceManager::AddOpenRestListFourSpaceOld(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list)
 {
+  // todo comment delete
+  /*
   const bool is_regiestered = RegisterOpenRestKeyFourSpace(open_rest_list_key, four_space_id);
-
+  
   if(!is_regiestered){
     // すでに登録済のため抜ける
     return;
   }
+  
+  */
 
   added_four_space_list->emplace_back(std::make_pair(open_rest_list_key, four_space_id));
 
@@ -49,14 +69,59 @@ void FourSpaceManager::AddOpenRestListFourSpace(const OpenRestListKey open_rest_
     MoveBitSet child_rest_move_bit;
     GetOpenRestBit(child_rest_key, &child_rest_move_bit);
     
-    MovePosition additional_move = GetAdditionalMove(rest_move_bit, child_rest_move_bit);
+    MovePosition additional_move = GetAdditionalMove(child_rest_move_bit, rest_move_bit);
   
     std::vector<FourSpaceID> next_four_space_id_list;
     const auto& registered_four_space_id_list = GetFourSpaceIDList(additional_move);
     GeneratePuttableFourSpace<P>(four_space_id_list, registered_four_space_id_list, &next_four_space_id_list);
 
     for(const auto next_four_space : next_four_space_id_list){
-      AddOpenRestListFourSpace<P>(child_rest_key, next_four_space, added_four_space_list);
+      AddOpenRestListFourSpaceOld<P>(child_rest_key, next_four_space, added_four_space_list);
+    }
+  }
+}
+
+template<PlayerTurn P>
+void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list)
+{
+  // todo comment delete
+  /*
+  const bool is_regiestered = RegisterOpenRestKeyFourSpace(gain_move, four_space_id);
+
+  if(!is_regiestered){
+    // すでに登録済のため抜ける
+    return;
+  }
+  */
+  added_four_space_list->emplace_back(std::make_pair(gain_move, four_space_id));
+
+  // open_rest_list_keyに依存する開残路キーのFourSpaceリストを更新する
+  const auto& child_rest_key_set = open_rest_dependency_.GetChildSet(gain_move);
+  
+  if(child_rest_key_set.empty()){
+    return;
+  }
+
+  std::vector<FourSpaceID> four_space_id_list{four_space_id};
+  
+  for(const auto child_rest_key : child_rest_key_set){
+    std::vector<MovePosition> child_rest_move_list;
+    GetOpenRestMoveList(child_rest_key, &child_rest_move_list);
+
+    const auto find_it = find(child_rest_move_list.begin(), child_rest_move_list.end(), gain_move);
+    assert(find_it != child_rest_move_list.end());
+    child_rest_move_list.erase(find_it);
+
+    OpenRestList child_open_rest_list(child_rest_move_list);
+    std::vector<FourSpaceID> child_four_space_id_list;
+
+    EnumeratePuttableFourSpace<P>(child_open_rest_list, &child_four_space_id_list);
+
+    std::vector<FourSpaceID> puttable_four_space_id_list;
+    GeneratePuttableFourSpace<P>(four_space_id_list, child_four_space_id_list, &puttable_four_space_id_list);
+
+    for(const auto puttable_four_space_id : puttable_four_space_id_list){
+      added_four_space_list->emplace_back(std::make_pair(child_rest_key, puttable_four_space_id));
     }
   }
 }

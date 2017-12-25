@@ -140,11 +140,6 @@ public:
   {
     BitBoard bit_board;
     FourSpaceManager four_space_manager(bit_board);
-
-    vector<MovePosition> open_rest_move{kMoveAA, kMoveAB};
-    OpenRestList open_rest_list(open_rest_move);
-    const auto rest_key = open_rest_list.GetOpenRestKey();
-    four_space_manager.AddOpenRestListKey(rest_key);
     
     {
       // kMoveAA-1
@@ -174,6 +169,11 @@ public:
 
       four_space_manager.AddFourSpace<kBlackTurn>(kMoveAB, kMoveAA, four_space, &added_list);
     }
+
+    vector<MovePosition> open_rest_move{kMoveAA, kMoveAB};
+    OpenRestList open_rest_list(open_rest_move);
+    const auto rest_key = open_rest_list.GetOpenRestKey();
+    four_space_manager.AddOpenRestListKey(rest_key);
     
     {
       // rest = kMoveAA
