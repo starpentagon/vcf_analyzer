@@ -74,6 +74,11 @@ public:
   const size_t GetMaxRelaxedFourLength() const;
 
 private:
+  // 十年フィーバー用
+  // todo delete --
+  void TenYearsFeverCheck(const MovePosition gain_move, const FourSpace &four_space) const;
+  // -- todo delete
+
   const RelaxedFour& GetRelaxedFour(const RelaxedFourID relaxed_four_id) const;
   RelaxedFour& GetRelaxedFour(const RelaxedFourID relaxed_four_id);
 
@@ -115,15 +120,9 @@ private:
   //! @retval 開残路位置の数
   size_t GetRestableRelaxedFourIDList(const MovePosition gain_position, const BoardDirection direction, std::vector<RelaxedFourID> * const restable_four_id_list) const;
 
-  //! @brief 指定位置の獲得/損失空間のリストを取得する
-  const std::vector<FourSpace>& GetFourSpaceList(const MovePosition move) const;
-
   //! @brief 指定位置の獲得/損失空間を追加する
   template<PlayerTurn P>
   void AddFourSpace(const MovePosition gain_move, const MovePosition cost_move, const FourSpace &four_space);
-
-  //! @brief 獲得/損失空間がすでに登録されているかチェックする
-  const bool IsRegisteredFourSpace(const MovePosition move, const FourSpace &four_space) const;
 
  //! @brief 直線近傍パターンが緩和四ノビ生成でチェック済みかどうかを返す
  const bool IsRegisteredLocalBitBoard(const MovePosition move, const LocalBitBoard &local_bitboard) const;
@@ -139,21 +138,14 @@ private:
   template<PlayerTurn P>
   void ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, const std::vector<FourSpaceID> &rest_four_space_list);
 
-  //! @brief 開残路リストに登録ずみの獲得/損失空間かどうかをチェックする
-  const bool IsRegisteredFourSpace(const OpenRestListKey rest_key, const FourSpace &four_space) const;
-    
   //! @brief 残路リスト/残路リストキーを取得する
   const OpenRestListKey GetRestList(const NextRelaxedFourInfo &next_four_info, OpenRestList * const open_rest_list) const;
-
-  //! @brief MoveBitSetの内容をBitBoardに反映する
-  template<PositionState S>
-  void SetMoveBit(const MoveBitSet &move_bit);
 
   //! @brief 位置moveごとに緩和四ノビ数を出力する
   void ShowBoardRelaxedFourCount() const;
 
   //! @brief 位置moveごとに獲得/損失空間数を出力する
-  void ShowBoardGainCostSpaceCount() const;
+  void ShowBoardFourSpaceCount() const;
 
   //! @brief 位置moveが獲得路になる緩和四ノビIDのリスト
   //! @note 緩和四ノビは到達可能なものに限定
@@ -173,7 +165,6 @@ private:
   
   MoveLocalBitBoardList move_local_bitboard_list_;    //! 位置moveごとの緩和四ノビ生成でチェック済みの直線近傍パターン
   
-  std::map<OpenRestListKey, FourSpaceVectorPtr> rest_list_puttable_four_space_;    //! 開残路リストkeyごとに同時設置可能な獲得/損失空間のリスト
   FourSpaceManager four_space_manager_;     //! FourSpaceを管理する
   std::map<OpenRestListKey, RelaxedFourIDVectorPtr> rest_list_relaxed_four_list_;  //! 開残路リスト -> 緩和四ノビIDのリスト
 };

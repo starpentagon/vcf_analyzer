@@ -67,8 +67,9 @@ void FourSpaceManager::GeneratePuttableFourSpace(const std::vector<FourSpaceID> 
   assert(puttable_four_space_id_list != nullptr);
   assert(puttable_four_space_id_list->empty());
 
+  static constexpr PlayerTurn Q = GetOpponentTurn(P);
   static constexpr PositionState S = GetPlayerStone(P);
-  static constexpr PositionState T = GetPlayerStone(GetOpponentTurn(P));
+  static constexpr PositionState T = GetPlayerStone(Q);
 
   std::set<FourSpaceID> four_space_id_set;
 
@@ -91,7 +92,7 @@ void FourSpaceManager::GeneratePuttableFourSpace(const std::vector<FourSpaceID> 
         bit_board_.SetState<S>(four_space.GetGainBit());
         bit_board_.SetState<T>(four_space.GetCostBit());
 
-        const bool is_five = bit_board_.IsFiveStones<P>();
+        const bool is_five = bit_board_.IsFiveStones<P>() || bit_board_.IsFiveStones<Q>();
 
         bit_board_.SetState<kOpenPosition>(four_space.GetGainBit() | four_space.GetCostBit());
 
@@ -183,6 +184,19 @@ inline const std::vector<FourSpaceID>& FourSpaceManager::GetFourSpaceIDList(cons
 inline void FourSpaceManager::AddOpenRestListKey(const OpenRestListKey open_rest_list_key)
 {
   open_rest_dependency_.Add(open_rest_list_key);
+}
+
+inline const size_t FourSpaceManager::GetFourSpaceCount(const MovePosition move) const
+{
+  const auto find_it = open_rest_key_four_space_id_.find(move);
+
+  if(find_it == open_rest_key_four_space_id_.end()){
+    return 0;
+  }
+
+  const auto& four_space_id_list = find_it->second;
+
+  return four_space_id_list.size();
 }
 
 }   // namespace realcore

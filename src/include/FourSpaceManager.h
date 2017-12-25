@@ -50,7 +50,14 @@ public:
   //! @note AddFourSpaceでRelaxedFourオブジェクトを受け取るようにすれば不要？
   void AddOpenRestListKey(const OpenRestListKey open_rest_list_key);
 
-private:
+  //! @brief 緩和四ノビの最長回数
+  //! @note 解禁や四ノリを防ぐためにVCF手数は緩和四ノビ最長回数を上回る可能性あり
+  const size_t GetMaxRelaxedFourLength() const;
+
+  //! @brief 位置moveごとに獲得/損失空間数を取得する
+  const size_t GetFourSpaceCount(const MovePosition move) const;
+    
+  private:
   //! @brief 開残路のFourSpaceを追加する
   template<PlayerTurn P>
   void AddOpenRestListFourSpace(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list);
@@ -80,8 +87,10 @@ private:
   //! @brief 指定位置の獲得/損失空間のリストを取得する
   const std::vector<FourSpaceID>& GetFourSpaceIDList(const OpenRestListKey open_rest_list_key) const;
 
-  std::deque<FourSpace> four_space_list_;   //! FourSpaceID -> FourSpacePtrを保持するリスト
-  // todo implement transposition table
+  //! FourSpaceID -> FourSpacePtrを保持するリスト
+  //! @note unique_ptr<FourSpace>をvector型で保持した場合より2%程度高速
+  std::deque<FourSpace> four_space_list_;
+  std::multimap<size_t, FourSpaceID> four_space_hash_table_;    //! FourSpaceIDのHashTable
 
   OpenRestDependency open_rest_dependency_;   //! 開残路の依存関係を管理する
   std::map<OpenRestListKey, std::vector<FourSpaceID>> open_rest_key_four_space_id_;    //! 開残路キー -> FourSpaceIDのリスト

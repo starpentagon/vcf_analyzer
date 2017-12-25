@@ -12,9 +12,13 @@ FourSpaceManager::FourSpaceManager(const BitBoard &bit_board)
 
 const FourSpaceID FourSpaceManager::GetFourSpaceID(const FourSpace &four_space) const
 {
-  for(size_t four_space_id=1, size=four_space_list_.size(); four_space_id<size; four_space_id++){
-    const auto& registered_four_space = GetFourSpace(four_space_id);
+  const auto four_space_hash = four_space.CalcHashValue();
+  auto range = four_space_hash_table_.equal_range(four_space_hash);
 
+  for(auto it=range.first; it!=range.second; ++it){
+    const auto four_space_id = it->second;
+    const auto& registered_four_space = GetFourSpace(four_space_id);
+    
     if(registered_four_space == four_space){
       return four_space_id;
     }
@@ -29,6 +33,9 @@ const FourSpaceID FourSpaceManager::RegisterFourSpace(const FourSpace &four_spac
 
   four_space_list_.emplace_back(four_space);
   const size_t four_space_id = four_space_list_.size() - 1;
+
+  const auto four_space_hash = four_space.CalcHashValue();
+  four_space_hash_table_.emplace(four_space_hash, four_space_id);
 
   return four_space_id;
 }
@@ -64,4 +71,17 @@ const bool FourSpaceManager::RegisterOpenRestKeyFourSpace(const OpenRestListKey 
   four_space_id_list.emplace_back(four_space_id);
   
   return true;
+}
+
+const size_t FourSpaceManager::GetMaxRelaxedFourLength() const
+{
+  size_t max_length = 0;
+
+  for(const auto& four_space : four_space_list_){
+    const size_t length = four_space.GetGainBit().count();
+
+    max_length = std::max(length, max_length);
+  }
+
+  return max_length;
 }

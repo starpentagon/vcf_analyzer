@@ -128,33 +128,6 @@ size_t FourSpaceSearch::GetRestableRelaxedFourIDList(const MovePosition gain_pos
   return open_rest_count;
 }
 
-const size_t FourSpaceSearch::GetMaxRelaxedFourLength() const
-{
-  size_t max_length = 0;
-
-  for(const auto move : GetAllInBoardMove()){
-    for(const auto& four_space : GetFourSpaceList(move)){
-      const auto length = four_space.GetGainBit().count();
-      max_length = max(length, max_length);
-    }
-  }
-
-  return max_length;
-}
-
-const bool FourSpaceSearch::IsRegisteredFourSpace(const MovePosition move, const FourSpace &four_space) const
-{
-  const auto &four_space_list = GetFourSpaceList(move);
-
-  for(const auto &registered_four_space : four_space_list){
-    if(registered_four_space == four_space){
-      return true;
-    }
-  }
-
-  return false;
-}
-
 void FourSpaceSearch::GeneratePuttableFourSpace(const vector<FourSpace> &four_space_list_1, const vector<FourSpace> &four_space_list_2, vector<FourSpace> * const puttable_four_space_list) const
 {
   assert(puttable_four_space_list != nullptr);
@@ -202,26 +175,6 @@ const bool FourSpaceSearch::IsRegisteredLocalBitBoard(const MovePosition move, c
   return false;
 }
 
-const bool FourSpaceSearch::IsRegisteredFourSpace(const OpenRestListKey rest_key, const FourSpace &four_space) const
-{
-  const auto find_it = rest_list_puttable_four_space_.find(rest_key);
-
-  if(find_it == rest_list_puttable_four_space_.end()){
-    return false;
-  }
-
-  // todo Hashを使ったチェックの高速化
-  const auto& four_space_list_ptr = find_it->second;
-
-  for(const auto &registered_four_space : *four_space_list_ptr){
-    if(registered_four_space == four_space){
-      return true;
-    }
-  }
-
-  return false;
-}
-
 void FourSpaceSearch::ShowBoardRelaxedFourCount() const
 {
   for(const auto move : GetAllInBoardMove()){
@@ -244,16 +197,14 @@ void FourSpaceSearch::ShowBoardRelaxedFourCount() const
   }
 }
 
-void FourSpaceSearch::ShowBoardGainCostSpaceCount() const
+void FourSpaceSearch::ShowBoardFourSpaceCount() const
 {
   for(const auto move : GetAllInBoardMove()){
-    Cordinate x, y;
-    size_t four_space_count = 0;
-    GetMoveCordinate(move, &x, &y);
-
-    four_space_count = GetFourSpaceList(move).size();
-
+    const auto four_space_count = four_space_manager_.GetFourSpaceCount(move);
     cerr << four_space_count << ",";
+
+    Cordinate x, y;
+    GetMoveCordinate(move, &x, &y);
 
     if(x == 15){
       cerr << endl;
@@ -320,6 +271,69 @@ void FourSpaceSearch::GetCostMoveRelaxedFourIDList(MoveRelaxedFourIDList * const
 
       (*move_relaxed_four_id_list)[cost].emplace_back(relaxed_four_id);
     }
+  }
+}
+
+void FourSpaceSearch::TenYearsFeverCheck(const MovePosition gain_move, const FourSpace &four_space) const
+{
+  // 十年フィーバー
+  static MoveList board_move_list("hhgigjfgjjfjeeifhkijlijhllefcjejhmdgmcdjmkjdbblkbefmblgmdnimibjcnbjmaemhaibgambnbocncahbcojndokbeankganljoabkaacmaadoafoochaoeonokoo");
+  static BitBoard bit_board(board_move_list);
+
+  if(bit_board != *this){
+    return;
+  }
+  
+  static std::vector<MovePosition> answer_gain{
+    kMoveND, kMoveLD, kMoveOD, kMoveMD, kMoveME, kMoveMF, kMoveLF, kMoveOG, kMoveNF, kMoveKF,
+    kMoveEO, kMoveAK, kMoveAL, kMoveDA, kMoveBA, kMoveBD, kMoveCC, kMoveDD, kMoveCE, kMoveCD,
+    kMoveCG, kMoveDF, kMoveGC, kMoveEC, kMoveAG, kMoveAH, kMoveFC, kMoveEB, kMoveGD, kMoveGE,
+    kMoveHC, kMoveFE, kMoveNE, kMoveLG, kMoveLA, kMoveLE, kMoveJE, kMoveGF, kMoveIH, kMoveHG,
+    kMoveHI, kMoveEL, kMoveBI, kMoveFH, kMoveEH, kMoveDI, kMoveCI, kMoveCK, kMoveDL, kMoveFI,
+    kMoveEM, kMoveFN, kMoveEN, kMoveHN, kMoveGK, kMoveKK, kMoveIK, kMoveHL, kMoveNH, kMoveMI,
+    kMoveKI, kMoveOI, kMoveOJ, kMoveOM, kMoveMM, kMoveKM, kMoveNM, kMoveKL, kMoveML, kMoveMO,
+    kMoveLN, kMoveKO, kMoveLO
+  };
+
+  static std::vector<MovePosition> answer_cost{
+    kMoveLB, kMoveKE, kMoveOB, kMoveKD, kMoveMB, kMoveMG, kMoveKG, kMoveOF, kMoveKC, kMoveJF,
+    kMoveAO, kMoveCM, kMoveAJ, kMoveFA, kMoveAA, kMoveBC, kMoveDB, kMoveFF, kMoveDE, kMoveCB,
+    kMoveCF, kMoveBH, kMoveFD, kMoveFB, kMoveBF, kMoveAF, kMoveDC, kMoveED, kMoveHE, kMoveGB,
+    kMoveIC, kMoveJA, kMoveNC, kMoveKH, kMoveNA, kMoveLC, kMoveID, kMoveGG, kMoveJG, kMoveJI,
+    kMoveHJ, kMoveFK, kMoveDK, kMoveEG, kMoveGH, kMoveBK, kMoveEI, kMoveCH, kMoveCL, kMoveIL,
+    kMoveBJ, kMoveGO, kMoveEK, kMoveGN, kMoveFL, kMoveII, kMoveJK, kMoveHO, kMoveNG, kMoveLJ,
+    kMoveLH, kMoveNI, kMoveOH, kMoveOL, kMoveNN, kMoveNJ, kMoveLM, kMoveKJ, kMoveMJ, kMoveMN,
+    kMoveJL, kMoveKN, kMoveIO, kMoveNO
+  };
+
+  static MoveBitSet answer_gain_bit, answer_cost_bit;
+
+  if(answer_gain_bit.none()){
+    for(const auto move : answer_gain){
+      answer_gain_bit.set(move);
+    }
+
+    for(const auto move : answer_cost){
+      answer_cost_bit.set(move);
+    }
+  }  
+
+  bool is_answer = (answer_gain_bit & four_space.GetGainBit()) == four_space.GetGainBit();
+  is_answer &= (answer_cost_bit & four_space.GetCostBit()) == four_space.GetCostBit();
+
+  if(is_answer){
+    std::cerr << "answer: " << MoveString(gain_move) << ", " << four_space.GetGainBit().count() << ", ";
+
+    MoveList gain_list, cost_list, move_list;
+    GetMoveList(four_space.GetGainBit(), &gain_list);
+    GetMoveList(four_space.GetCostBit(), &cost_list);
+
+    for(size_t i=0, size=gain_list.size(); i<size; i++){
+      move_list += gain_list[i];
+      move_list += cost_list[i];
+    }
+
+    std::cerr << gain_list.str() << ", " << cost_list.str() << ", " << move_list.str() << std::endl;
   }
 }
 

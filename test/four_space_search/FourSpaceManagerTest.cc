@@ -70,7 +70,7 @@ public:
 
     // ID:1-2
     {
-      FourSpace four_space_1_2(kMoveAB, kMoveAA);
+      FourSpace four_space_1_2(kMoveOO, kMoveAA);
       four_space_manager.RegisterFourSpace(four_space_1_2);
     }
 
@@ -89,10 +89,10 @@ public:
 
     // ID:2-3
     {
-      FourSpace four_space_2_3(kMoveBA, kMoveBB);
-      four_space_2_3.Add(kMoveCA, kMoveCB);
-      four_space_2_3.Add(kMoveDA, kMoveDB);
-      four_space_2_3.Add(kMoveEA, kMoveEB);
+      FourSpace four_space_2_3(kMoveBA, kMoveAB);
+      four_space_2_3.Add(kMoveCA, kMoveAC);
+      four_space_2_3.Add(kMoveDA, kMoveAD);
+      four_space_2_3.Add(kMoveEA, kMoveAE);
       four_space_manager.RegisterFourSpace(four_space_2_3);
     }
 
@@ -101,8 +101,8 @@ public:
 
     four_space_manager.GeneratePuttableFourSpace<kBlackTurn>(id_list_1, id_list_2, &generated_list);
 
-    // 2 * 3 = 6通り中、(1-1)-(2-3)1は五連ができるた除外、(1-2)-(2-1)は同時設置不可のため除外
-    ASSERT_EQ(4, generated_list.size());
+    // 2 * 3 = 6通り中、(1-1)-(2-3), (1-2)-(2-3)は五連ができるた除外、(1-2)-(2-1)は同時設置不可のため除外
+    ASSERT_EQ(3, generated_list.size());
 
     {
       // (1-1)-(2-1)
@@ -126,23 +126,10 @@ public:
     }
     {
       // (1-2)-(2-2)
-      FourSpace expect(kMoveAB, kMoveAA);
+      FourSpace expect(kMoveOO, kMoveAA);
       expect.Add(kMoveHH, kMoveHI);
 
       const auto four_space_id = generated_list[2];
-      const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
-
-      ASSERT_TRUE(expect == four_space);
-    }
-    {
-      // (1-2)-(2-3)
-      FourSpace expect(kMoveAB, kMoveAA);
-      expect.Add(kMoveBA, kMoveBB);
-      expect.Add(kMoveCA, kMoveCB);
-      expect.Add(kMoveDA, kMoveDB);
-      expect.Add(kMoveEA, kMoveEB);
-
-      const auto four_space_id = generated_list[3];
       const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
 
       ASSERT_TRUE(expect == four_space);
@@ -379,6 +366,74 @@ TEST_F(FourSpaceManagerTest, GeneratePuttableFourSpaceTest)
 TEST_F(FourSpaceManagerTest, EnumeratePuttableFourSpaceTest)
 {
   EnumeratePuttableFourSpaceTest();
+}
+
+TEST_F(FourSpaceManagerTest, GetMaxRelaxedFourLengthTest)
+{
+  BitBoard bit_board;
+  FourSpaceManager four_space_manager(bit_board);
+  
+  ASSERT_EQ(0, four_space_manager.GetMaxRelaxedFourLength());
+
+  {
+    FourSpace four_space(kMoveAA, kMoveAB);
+    vector<RestKeyFourSpace> added_list;
+    
+    four_space_manager.AddFourSpace<kBlackTurn>(kMoveAA, kMoveAB, four_space, &added_list);
+    ASSERT_EQ(1, four_space_manager.GetMaxRelaxedFourLength());
+  }
+  {
+    FourSpace four_space(kMoveAA, kMoveAB);
+    four_space.Add(kMoveAC, kMoveAD);
+    four_space.Add(kMoveAE, kMoveAF);
+    four_space.Add(kMoveAG, kMoveAH);
+    vector<RestKeyFourSpace> added_list;
+    
+    four_space_manager.AddFourSpace<kBlackTurn>(kMoveAA, kMoveAB, four_space, &added_list);
+    ASSERT_EQ(4, four_space_manager.GetMaxRelaxedFourLength());
+  }
+}
+
+TEST_F(FourSpaceManagerTest, GetFourSpaceCountTest)
+{
+  BitBoard bit_board;
+  FourSpaceManager four_space_manager(bit_board);
+  
+  for(const auto move : GetAllMove()){
+    ASSERT_EQ(0, four_space_manager.GetFourSpaceCount(move));
+  }
+
+  {
+    FourSpace four_space(kMoveAA, kMoveAB);
+    vector<RestKeyFourSpace> added_list;
+    
+    four_space_manager.AddFourSpace<kBlackTurn>(kMoveAA, kMoveAB, four_space, &added_list);
+
+    for(const auto move : GetAllMove()){
+      if(move == kMoveAA){
+        ASSERT_EQ(1, four_space_manager.GetFourSpaceCount(move));
+      }else{
+        ASSERT_EQ(0, four_space_manager.GetFourSpaceCount(move));
+      }
+    }
+  }
+  {
+    FourSpace four_space(kMoveAA, kMoveAB);
+    four_space.Add(kMoveAC, kMoveAD);
+    four_space.Add(kMoveAE, kMoveAF);
+    four_space.Add(kMoveAG, kMoveAH);
+    vector<RestKeyFourSpace> added_list;
+    
+    four_space_manager.AddFourSpace<kBlackTurn>(kMoveAA, kMoveAB, four_space, &added_list);
+
+    for(const auto move : GetAllMove()){
+      if(move == kMoveAA){
+        ASSERT_EQ(2, four_space_manager.GetFourSpaceCount(move));
+      }else{
+        ASSERT_EQ(0, four_space_manager.GetFourSpaceCount(move));
+      }
+    }
+  }
 }
 
 }   // namespace realcore
