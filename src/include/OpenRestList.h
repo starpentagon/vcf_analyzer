@@ -23,7 +23,10 @@ void GetOpenRestMoveList(OpenRestListKey open_rest_key, std::vector<MovePosition
 //! @pre super_bitはsub_bitを包含していること
 //! @pre super_bitとsub_bitの差分は１つであること
 const MovePosition GetAdditionalMove(const MoveBitSet &super_bit, const MoveBitSet &sub_bit);
-  
+
+//! @brief 開残路キーの文字列を取得する
+std::string GetOpenRestKeyString(const OpenRestListKey open_rest_key);
+
 class OpenRestListTest;
 
 class OpenRestList

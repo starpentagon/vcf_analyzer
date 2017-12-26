@@ -18,12 +18,6 @@ void FourSpaceManager::AddFourSpace(const MovePosition gain_move, const MovePosi
     four_space_id = RegisterFourSpace(four_space);
   }
   
-  // todo delete --
-  if(gain_move == kMoveBF && four_space.CalcHashValue() == 8730720847685340556){
-    int a = 1;
-  }
-  // -- todo delete
-
   AddOpenRestListFourSpace<P>(gain_move, four_space_id, added_four_space_list);
 
   // todo delete --
@@ -52,6 +46,9 @@ void FourSpaceManager::AddOpenRestListFourSpaceOld(const OpenRestListKey open_re
   */
 
   added_four_space_list->emplace_back(std::make_pair(open_rest_list_key, four_space_id));
+
+  // todo delete
+  std::cerr << "Old: key: " << GetOpenRestKeyString(open_rest_list_key) << ", id: " << four_space_id << std::endl;
 
   // open_rest_list_keyに依存する開残路キーのFourSpaceリストを更新する
   const auto& child_rest_key_set = open_rest_dependency_.GetChildSet(open_rest_list_key);
@@ -84,19 +81,19 @@ void FourSpaceManager::AddOpenRestListFourSpaceOld(const OpenRestListKey open_re
 template<PlayerTurn P>
 void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list)
 {
-  // todo comment delete
-  /*
   const bool is_regiestered = RegisterOpenRestKeyFourSpace(gain_move, four_space_id);
 
   if(!is_regiestered){
     // すでに登録済のため抜ける
     return;
   }
-  */
+
   added_four_space_list->emplace_back(std::make_pair(gain_move, four_space_id));
+  std::cerr << "New: key: " << GetOpenRestKeyString(gain_move) << ", id: " << four_space_id << std::endl;
 
   // open_rest_list_keyに依存する開残路キーのFourSpaceリストを更新する
-  const auto& child_rest_key_set = open_rest_dependency_.GetChildSet(gain_move);
+  std::set<OpenRestListKey> child_rest_key_set;
+  open_rest_dependency_.GetAllDependentKeys(gain_move, &child_rest_key_set);
   
   if(child_rest_key_set.empty()){
     return;
@@ -122,6 +119,7 @@ void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, co
 
     for(const auto puttable_four_space_id : puttable_four_space_id_list){
       added_four_space_list->emplace_back(std::make_pair(child_rest_key, puttable_four_space_id));
+      std::cerr << "New: key: " << GetOpenRestKeyString(child_rest_key) << ", id: " << puttable_four_space_id << std::endl;
     }
   }
 }

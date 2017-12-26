@@ -129,5 +129,28 @@ const MovePosition GetAdditionalMove(const MoveBitSet &super_bit, const MoveBitS
 
   return additional_move_list[0];
 }
-  
+
+std::string GetOpenRestKeyString(const OpenRestListKey open_rest_key)
+{
+  vector<MovePosition> rest_move_list;
+  GetOpenRestMoveList(open_rest_key, &rest_move_list);
+
+  string open_rest_str("(");
+  bool is_first = true;
+
+  for(const auto rest_move : rest_move_list){
+    if(is_first){
+      is_first = false;
+    }else{
+      open_rest_str += ", ";
+    }
+
+    open_rest_str += MoveString(rest_move);
+  }
+
+  open_rest_str += ")";
+
+  return open_rest_str;
+}
+
 }   // namespace realcore
