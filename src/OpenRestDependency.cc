@@ -57,3 +57,19 @@ const std::set<OpenRestListKey>& OpenRestDependency::GetChildSet(const OpenRestL
 
   return find_it->second;
 }
+
+void OpenRestDependency::GetAllDependentKeys(const OpenRestListKey open_rest_list_key, std::set<OpenRestListKey> * const open_rest_key_set) const
+{
+  assert(open_rest_key_set != nullptr);
+
+  if(open_rest_key_set->find(open_rest_list_key) != open_rest_key_set->end()){
+    return;
+  }
+
+  const auto& child_open_rest_key_set = GetChildSet(open_rest_list_key);
+
+  for(const auto child_key : child_open_rest_key_set){
+    open_rest_key_set->insert(child_key);
+    GetAllDependentKeys(child_key, open_rest_key_set);
+  }
+}
