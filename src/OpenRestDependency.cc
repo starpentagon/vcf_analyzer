@@ -20,7 +20,6 @@ void OpenRestDependency::Add(const OpenRestListKey open_rest_list_key)
   if(rest_size == 2){
     for(const auto rest_move : rest_position_list){
       dependency_tree_[rest_move].insert(open_rest_list_key);
-      std::cerr << "DependencyAdded: " << MoveString(rest_move) << ", " <<  GetOpenRestKeyString(open_rest_list_key) << std::endl;
     }
   }else if(rest_size == 3){
     static constexpr std::array<size_t, 3> index_min_list{{0, 0, 1}};
@@ -41,7 +40,6 @@ void OpenRestDependency::Add(const OpenRestListKey open_rest_list_key)
 
       const auto parent_rest_key = open_rest_list.GetOpenRestKey();
       dependency_tree_[parent_rest_key].insert(open_rest_list_key);
-      std::cerr << "DependencyAdded: " << GetOpenRestKeyString(parent_rest_key) << ", " <<  GetOpenRestKeyString(open_rest_list_key) << std::endl;
 
       Add(parent_rest_key);
     }
@@ -71,7 +69,7 @@ void OpenRestDependency::GetAllDependentKeys(const OpenRestListKey open_rest_lis
   const auto& child_open_rest_key_set = GetChildSet(open_rest_list_key);
 
   for(const auto child_key : child_open_rest_key_set){
-    open_rest_key_set->insert(child_key);
     GetAllDependentKeys(child_key, open_rest_key_set);
+    open_rest_key_set->insert(child_key);
   }
 }

@@ -90,6 +90,10 @@ public:
   //! @brief 指定位置の獲得/損失空間のリストを取得する
   const std::vector<FourSpaceID>& GetFourSpaceIDList(const OpenRestListKey open_rest_list_key) const;
 
+  //! @brief 開残路キーのFourSpaceを依存している子のFourSpaceから作れているか確認する
+  //! @note デバッグ用機能
+  void IsFourSpaceConsistent();
+
   //! FourSpaceID -> FourSpacePtrを保持するリスト
   //! @note unique_ptr<FourSpace>をvector型で保持した場合より2%程度高速
   std::deque<FourSpace> four_space_list_;

@@ -17,6 +17,10 @@ void FourSpaceManager::AddFourSpace(const MovePosition gain_move, const MovePosi
     // 未登録の場合は登録する
     four_space_id = RegisterFourSpace(four_space);
   }
+
+  if(gain_move == kMoveIE && four_space.CalcHashValue() == 2786842811456232512){
+    int a = 1;
+  }
   
   AddOpenRestListFourSpace<P>(gain_move, four_space_id, added_four_space_list);
 
@@ -45,10 +49,16 @@ void FourSpaceManager::AddOpenRestListFourSpaceOld(const OpenRestListKey open_re
   
   */
 
+  for(const auto data : *added_four_space_list){
+    if(data.first == open_rest_list_key && data.second == four_space_id){
+      return;
+    }
+  }
+
   added_four_space_list->emplace_back(std::make_pair(open_rest_list_key, four_space_id));
 
   // todo delete
-  std::cerr << "Old: key: " << GetOpenRestKeyString(open_rest_list_key) << ", id: " << four_space_id << std::endl;
+  std::cerr << "Old: key: " << open_rest_list_key << " = " << GetOpenRestKeyString(open_rest_list_key) << ", id: " << four_space_id << std::endl;
 
   // open_rest_list_keyに依存する開残路キーのFourSpaceリストを更新する
   const auto& child_rest_key_set = open_rest_dependency_.GetChildSet(open_rest_list_key);
@@ -65,6 +75,10 @@ void FourSpaceManager::AddOpenRestListFourSpaceOld(const OpenRestListKey open_re
   for(const auto child_rest_key : child_rest_key_set){
     MoveBitSet child_rest_move_bit;
     GetOpenRestBit(child_rest_key, &child_rest_move_bit);
+
+    if(child_rest_key == 5867157){
+      int a = 1;
+    }
     
     MovePosition additional_move = GetAdditionalMove(child_rest_move_bit, rest_move_bit);
   
@@ -89,7 +103,7 @@ void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, co
   }
 
   added_four_space_list->emplace_back(std::make_pair(gain_move, four_space_id));
-  std::cerr << "New: key: " << GetOpenRestKeyString(gain_move) << ", id: " << four_space_id << std::endl;
+  std::cerr << "New: key: " << gain_move << " = " << GetOpenRestKeyString(gain_move) << ", id: " << four_space_id << std::endl;
 
   // open_rest_list_keyに依存する開残路キーのFourSpaceリストを更新する
   std::set<OpenRestListKey> child_rest_key_set;
@@ -118,8 +132,9 @@ void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, co
     GeneratePuttableFourSpace<P>(four_space_id_list, child_four_space_id_list, &puttable_four_space_id_list);
 
     for(const auto puttable_four_space_id : puttable_four_space_id_list){
+      RegisterOpenRestKeyFourSpace(child_rest_key, puttable_four_space_id);
       added_four_space_list->emplace_back(std::make_pair(child_rest_key, puttable_four_space_id));
-      std::cerr << "New: key: " << GetOpenRestKeyString(child_rest_key) << ", id: " << puttable_four_space_id << std::endl;
+      std::cerr << "New: key: " << child_rest_key << " = " << GetOpenRestKeyString(child_rest_key) << ", id: " << puttable_four_space_id << std::endl;
     }
   }
 }
