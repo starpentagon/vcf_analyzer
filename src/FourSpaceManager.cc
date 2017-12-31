@@ -56,6 +56,10 @@ const bool FourSpaceManager::RegisterOpenRestKeyFourSpace(const OpenRestListKey 
     auto& four_space_id_list = insert_result.first->second;
     four_space_id_list.emplace_back(four_space_id);
 
+    //todo delete --
+    IsFourSpaceConsistent<kBlackTurn>();
+    // -- todo delete
+
     return true;
   }
 
@@ -69,6 +73,9 @@ const bool FourSpaceManager::RegisterOpenRestKeyFourSpace(const OpenRestListKey 
   }
 
   four_space_id_list.emplace_back(four_space_id);
+    //todo delete --
+    IsFourSpaceConsistent<kBlackTurn>();
+    // -- todo delete
   
   return true;
 }

@@ -238,7 +238,66 @@ void FourSpaceManager::EnumeratePuttableFourSpace(const OpenRestList &open_rest_
 
   open_rest_dependency_.Add(rest_list_key);
 
+  //todo delete --
+  IsFourSpaceConsistent<P>();
+  // -- todo delete
+
   *puttable_four_space_id_list = generated_four_space_id_list;
+}
+
+template<PlayerTurn P>
+void FourSpaceManager::IsFourSpaceConsistent()
+{
+  for(const auto& element : open_rest_key_four_space_id_){
+    const auto open_rest_key = element.first;
+    std::vector<MovePosition> open_rest_move;
+
+    GetOpenRestMoveList(open_rest_key, &open_rest_move);
+    const auto rest_size = open_rest_move.size();
+
+    if(rest_size <= 1){
+      continue;
+    }
+
+    const auto& four_space_id_list = element.second;
+
+    std::set<FourSpaceID> element_four_space_id_set;
+
+    for(const auto four_space_id : four_space_id_list){
+      element_four_space_id_set.insert(four_space_id);
+    }
+
+    if(rest_size == 2){
+      const auto &four_space_id_1 = GetFourSpaceIDList(open_rest_move[0]);
+      const auto &four_space_id_2 = GetFourSpaceIDList(open_rest_move[1]);
+
+      std::vector<FourSpaceID> four_space_id;
+      GeneratePuttableFourSpace<P>(four_space_id_1, four_space_id_2, &four_space_id);
+
+      assert(four_space_id.size() == element_four_space_id_set.size());
+
+      for(const auto four_space_id : four_space_id){
+        assert(element_four_space_id_set.find(four_space_id) != element_four_space_id_set.end());
+      }
+    }else if(rest_size == 3){
+      const auto &four_space_id_1 = GetFourSpaceIDList(open_rest_move[0]);
+      const auto &four_space_id_2 = GetFourSpaceIDList(open_rest_move[1]);
+
+      std::vector<FourSpaceID> four_space_id_12;
+      GeneratePuttableFourSpace<P>(four_space_id_1, four_space_id_2, &four_space_id_12);
+      
+      const auto &four_space_id_3 = GetFourSpaceIDList(open_rest_move[2]);
+      
+      std::vector<FourSpaceID> four_space_id;
+      GeneratePuttableFourSpace<P>(four_space_id_12, four_space_id_3, &four_space_id);
+
+      assert(four_space_id.size() == element_four_space_id_set.size());
+
+      for(const auto four_space_id : four_space_id){
+        assert(element_four_space_id_set.find(four_space_id) != element_four_space_id_set.end());
+      }
+    }
+  }
 }
 
 inline const FourSpace& FourSpaceManager::GetFourSpace(const FourSpaceID four_space_id) const

@@ -57,7 +57,7 @@ public:
   //! @brief 位置moveごとに獲得/損失空間数を取得する
   const size_t GetFourSpaceCount(const MovePosition move) const;
     
-  private:
+private:
   //! @brief 開残路のFourSpaceを追加する
   template<PlayerTurn P>
   void AddOpenRestListFourSpace(const MovePosition gain_move, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list);
@@ -92,6 +92,7 @@ public:
 
   //! @brief 開残路キーのFourSpaceを依存している子のFourSpaceから作れているか確認する
   //! @note デバッグ用機能
+  template<PlayerTurn P>
   void IsFourSpaceConsistent();
 
   //! FourSpaceID -> FourSpacePtrを保持するリスト
