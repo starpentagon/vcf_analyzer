@@ -49,6 +49,10 @@ public:
   const bool operator==(const FourSpace &four_space) const;
   const bool operator!=(const FourSpace &four_space) const;
 
+  //! @brief 獲得路/損失路の比較を行う
+  //! @note 四ノリ情報の比較は行わない
+  const bool IsSameGainCostBit(const FourSpace &four_space) const;
+
   //! @brief 獲得路を取得する
   const MoveBitSet& GetGainBit() const;
 

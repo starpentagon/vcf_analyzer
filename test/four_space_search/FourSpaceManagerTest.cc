@@ -45,7 +45,7 @@ public:
 
     FourSpace four_space(kMoveAA, kMoveAB);
     const auto four_space_id = four_space_manager.RegisterFourSpace(four_space);
-    bool is_registered = four_space_manager.RegisterOpenRestKeyFourSpace(key, four_space_id);
+    bool is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
 
     ASSERT_TRUE(is_registered);
     auto& four_space_id_list = four_space_manager.GetFourSpaceIDList(key);
@@ -53,7 +53,7 @@ public:
     ASSERT_EQ(1, four_space_id_list.size());
     ASSERT_EQ(four_space_id, four_space_id_list[0]);
 
-    is_registered = four_space_manager.RegisterOpenRestKeyFourSpace(key, four_space_id);
+    is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
     ASSERT_FALSE(is_registered);
   }
 

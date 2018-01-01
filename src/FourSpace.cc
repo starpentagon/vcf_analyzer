@@ -123,13 +123,22 @@ const FourSpace& FourSpace::operator=(const FourSpace &four_space)
   return *this;
 }
 
-const bool FourSpace::operator==(const FourSpace &four_space) const
+const bool FourSpace::IsSameGainCostBit(const FourSpace &four_space) const
 {
   if(gain_bit_ != four_space.GetGainBit()){
     return false;
   }
 
   if(cost_bit_ != four_space.GetCostBit()){
+    return false;
+  }
+
+  return true;
+}
+
+const bool FourSpace::operator==(const FourSpace &four_space) const
+{
+  if(!IsSameGainCostBit(four_space)){
     return false;
   }
 

@@ -62,9 +62,6 @@ private:
   template<PlayerTurn P>
   void AddOpenRestListFourSpace(const MovePosition gain_move, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list);
 
-  template<PlayerTurn P>
-  void AddOpenRestListFourSpaceOld(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list);
-
   //! @brief 2つの獲得/損失空間のIDリストから同時設置可能な獲得/損失空間のリストを生成する
   //! @param four_space_id_list_1 獲得/損失空間のIDリスト
   //! @param four_space_id_list_2 獲得/損失空間のIDリスト
@@ -85,6 +82,7 @@ private:
   //! @param four_space_id FourSpaceID
   //! @retval true 登録
   //! @retval false 登録済
+  template<PlayerTurn P>
   const bool RegisterOpenRestKeyFourSpace(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id);
 
   //! @brief 指定位置の獲得/損失空間のリストを取得する

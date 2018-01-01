@@ -18,84 +18,21 @@ void FourSpaceManager::AddFourSpace(const MovePosition gain_move, const MovePosi
     four_space_id = RegisterFourSpace(four_space);
   }
 
-  if(gain_move == kMoveIE && four_space.CalcHashValue() == 2786842811456232512){
+  if(gain_move == kMoveDC && four_space_id == 645){
     int a = 1;
   }
-  
+
   AddOpenRestListFourSpace<P>(gain_move, four_space_id, added_four_space_list);
 
   // todo delete --
-  std::vector<RestKeyFourSpace> debug;
-  AddOpenRestListFourSpaceOld<P>(gain_move, four_space_id, &debug);
-  const auto debug2 = *added_four_space_list;
-  
-  std::cerr << "move: " << MoveString(gain_move) << ", four space: " << four_space.CalcHashValue() << std::endl;
-
-  assert(debug.size() == debug2.size());
+  IsFourSpaceConsistent<P>();
   // -- todo delete
-}
-
-template<PlayerTurn P>
-void FourSpaceManager::AddOpenRestListFourSpaceOld(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list)
-{
-  // todo comment delete
-  /*
-  const bool is_regiestered = RegisterOpenRestKeyFourSpace(open_rest_list_key, four_space_id);
-  
-  if(!is_regiestered){
-    // すでに登録済のため抜ける
-    return;
-  }
-  
-  */
-
-  for(const auto data : *added_four_space_list){
-    if(data.first == open_rest_list_key && data.second == four_space_id){
-      return;
-    }
-  }
-
-  added_four_space_list->emplace_back(std::make_pair(open_rest_list_key, four_space_id));
-
-  // todo delete
-  std::cerr << "Old: key: " << open_rest_list_key << " = " << GetOpenRestKeyString(open_rest_list_key) << ", id: " << four_space_id << std::endl;
-
-  // open_rest_list_keyに依存する開残路キーのFourSpaceリストを更新する
-  const auto& child_rest_key_set = open_rest_dependency_.GetChildSet(open_rest_list_key);
-  
-  if(child_rest_key_set.empty()){
-    return;
-  }
-
-  std::vector<FourSpaceID> four_space_id_list{four_space_id};
-  
-  MoveBitSet rest_move_bit;
-  GetOpenRestBit(open_rest_list_key, &rest_move_bit);
-  
-  for(const auto child_rest_key : child_rest_key_set){
-    MoveBitSet child_rest_move_bit;
-    GetOpenRestBit(child_rest_key, &child_rest_move_bit);
-
-    if(child_rest_key == 5867157){
-      int a = 1;
-    }
-    
-    MovePosition additional_move = GetAdditionalMove(child_rest_move_bit, rest_move_bit);
-  
-    std::vector<FourSpaceID> next_four_space_id_list;
-    const auto& registered_four_space_id_list = GetFourSpaceIDList(additional_move);
-    GeneratePuttableFourSpace<P>(four_space_id_list, registered_four_space_id_list, &next_four_space_id_list);
-
-    for(const auto next_four_space : next_four_space_id_list){
-      AddOpenRestListFourSpaceOld<P>(child_rest_key, next_four_space, added_four_space_list);
-    }
-  }
 }
 
 template<PlayerTurn P>
 void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, const FourSpaceID four_space_id, std::vector<RestKeyFourSpace> * const added_four_space_list)
 {
-  const bool is_regiestered = RegisterOpenRestKeyFourSpace(gain_move, four_space_id);
+  const bool is_regiestered = RegisterOpenRestKeyFourSpace<P>(gain_move, four_space_id);
 
   if(!is_regiestered){
     // すでに登録済のため抜ける
@@ -132,7 +69,7 @@ void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, co
     GeneratePuttableFourSpace<P>(four_space_id_list, child_four_space_id_list, &puttable_four_space_id_list);
 
     for(const auto puttable_four_space_id : puttable_four_space_id_list){
-      RegisterOpenRestKeyFourSpace(child_rest_key, puttable_four_space_id);
+      RegisterOpenRestKeyFourSpace<P>(child_rest_key, puttable_four_space_id);
       added_four_space_list->emplace_back(std::make_pair(child_rest_key, puttable_four_space_id));
       std::cerr << "New: key: " << child_rest_key << " = " << GetOpenRestKeyString(child_rest_key) << ", id: " << puttable_four_space_id << std::endl;
     }
@@ -216,21 +153,43 @@ void FourSpaceManager::EnumeratePuttableFourSpace(const OpenRestList &open_rest_
   }
 
   // 新たに生成が必要になるのは獲得/損失空間の組合せを考慮する場合のみ
-  assert(rest_size >= 2);   
-  std::vector<MovePosition> sub_rest_move_list(rest_move_list);
-  
-  const auto move = sub_rest_move_list.back();
-  sub_rest_move_list.pop_back();
-
-  std::vector<FourSpaceID> sub_four_space_list;
-  OpenRestList sub_open_rest(sub_rest_move_list);
-
-  EnumeratePuttableFourSpace<P>(sub_open_rest, &sub_four_space_list);
-
-  const auto& move_four_space_list = GetFourSpaceIDList(move);
-
+  assert(rest_size >= 2 && rest_size <= 3);
   std::vector<FourSpaceID> generated_four_space_id_list;
-  GeneratePuttableFourSpace<P>(move_four_space_list, sub_four_space_list, &generated_four_space_id_list);
+
+  if(rest_size == 2){
+    const auto& four_space_id_list_1 = GetFourSpaceIDList(rest_move_list[0]);
+    const auto& four_space_id_list_2 = GetFourSpaceIDList(rest_move_list[1]);
+
+    GeneratePuttableFourSpace<P>(four_space_id_list_1, four_space_id_list_2, &generated_four_space_id_list);
+  }else if(rest_size == 3){
+    std::set<FourSpaceID> generate_four_id_set;
+    
+    for(const auto rest_move : rest_move_list){
+      std::vector<MovePosition> sub_rest_move_list(rest_move_list);
+      const auto rest_it = find(sub_rest_move_list.begin(), sub_rest_move_list.end(), rest_move);
+      sub_rest_move_list.erase(rest_it);
+
+      std::vector<FourSpaceID> sub_four_space_list;
+      OpenRestList sub_open_rest(sub_rest_move_list);
+
+      EnumeratePuttableFourSpace<P>(sub_open_rest, &sub_four_space_list);
+    
+      const auto& move_four_space_list = GetFourSpaceIDList(rest_move);
+
+      std::vector<FourSpaceID> four_space_id_list;
+      GeneratePuttableFourSpace<P>(move_four_space_list, sub_four_space_list, &four_space_id_list);
+      
+      for(const auto four_space_id : four_space_id_list){
+        generate_four_id_set.insert(four_space_id);
+      }
+    }
+
+    generated_four_space_id_list.reserve(generate_four_id_set.size());
+
+    for(const auto four_space_id : generate_four_id_set){
+      generated_four_space_id_list.emplace_back(four_space_id);
+    }
+  }
 
   open_rest_key_four_space_id_.insert(
     make_pair(rest_list_key, generated_four_space_id_list)
@@ -238,11 +197,50 @@ void FourSpaceManager::EnumeratePuttableFourSpace(const OpenRestList &open_rest_
 
   open_rest_dependency_.Add(rest_list_key);
 
-  //todo delete --
-  IsFourSpaceConsistent<P>();
-  // -- todo delete
-
   *puttable_four_space_id_list = generated_four_space_id_list;
+}
+
+template<PlayerTurn P>
+const bool FourSpaceManager::RegisterOpenRestKeyFourSpace(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id)
+{
+  const auto find_it = open_rest_key_four_space_id_.find(open_rest_list_key);
+
+  if(find_it == open_rest_key_four_space_id_.end()){
+    // 開残路キーが未登録の場合は全組み合わせを生成する
+    std::vector<MovePosition> rest_move_list;
+    GetOpenRestMoveList(open_rest_list_key, &rest_move_list);
+    const auto rest_size = rest_move_list.size();
+
+    open_rest_dependency_.Add(open_rest_list_key);
+
+    if(rest_size >= 2){
+      std::vector<FourSpaceID> generated_four_space_id_list;
+      OpenRestList open_rest_list(rest_move_list);
+      EnumeratePuttableFourSpace<P>(open_rest_list, &generated_four_space_id_list);
+    }else{
+      const auto insert_result = open_rest_key_four_space_id_.insert(
+        make_pair(open_rest_list_key, std::vector<FourSpaceID>())
+      );
+      assert(insert_result.second);
+
+      auto& four_space_id_list = insert_result.first->second;
+      four_space_id_list.emplace_back(four_space_id);
+    }
+
+    return true;
+  }
+
+  auto& four_space_id_list = find_it->second;
+  const auto four_id_it = find(four_space_id_list.begin(), four_space_id_list.end(), four_space_id);
+
+  if(four_id_it != four_space_id_list.end()){
+    // 登録済
+    return false;
+  }
+
+  four_space_id_list.emplace_back(four_space_id);
+  
+  return true;
 }
 
 template<PlayerTurn P>
@@ -271,29 +269,40 @@ void FourSpaceManager::IsFourSpaceConsistent()
       const auto &four_space_id_1 = GetFourSpaceIDList(open_rest_move[0]);
       const auto &four_space_id_2 = GetFourSpaceIDList(open_rest_move[1]);
 
-      std::vector<FourSpaceID> four_space_id;
-      GeneratePuttableFourSpace<P>(four_space_id_1, four_space_id_2, &four_space_id);
+      std::vector<FourSpaceID> four_space_id_list;
+      GeneratePuttableFourSpace<P>(four_space_id_1, four_space_id_2, &four_space_id_list);
 
-      assert(four_space_id.size() == element_four_space_id_set.size());
+      assert(four_space_id_list.size() == element_four_space_id_set.size());
 
-      for(const auto four_space_id : four_space_id){
+      for(const auto four_space_id : four_space_id_list){
         assert(element_four_space_id_set.find(four_space_id) != element_four_space_id_set.end());
       }
     }else if(rest_size == 3){
-      const auto &four_space_id_1 = GetFourSpaceIDList(open_rest_move[0]);
-      const auto &four_space_id_2 = GetFourSpaceIDList(open_rest_move[1]);
-
-      std::vector<FourSpaceID> four_space_id_12;
-      GeneratePuttableFourSpace<P>(four_space_id_1, four_space_id_2, &four_space_id_12);
+      std::set<FourSpaceID> generate_four_id_set;
       
-      const auto &four_space_id_3 = GetFourSpaceIDList(open_rest_move[2]);
+      for(const auto rest_move : open_rest_move){
+        std::vector<MovePosition> sub_rest_move_list(open_rest_move);
+        const auto rest_it = find(sub_rest_move_list.begin(), sub_rest_move_list.end(), rest_move);
+        sub_rest_move_list.erase(rest_it);
+
+        std::vector<FourSpaceID> sub_four_space_list;
+        OpenRestList sub_open_rest(sub_rest_move_list);
+
+        EnumeratePuttableFourSpace<P>(sub_open_rest, &sub_four_space_list);
       
-      std::vector<FourSpaceID> four_space_id;
-      GeneratePuttableFourSpace<P>(four_space_id_12, four_space_id_3, &four_space_id);
+        const auto& move_four_space_list = GetFourSpaceIDList(rest_move);
 
-      assert(four_space_id.size() == element_four_space_id_set.size());
+        std::vector<FourSpaceID> four_space_id_list;
+        GeneratePuttableFourSpace<P>(move_four_space_list, sub_four_space_list, &four_space_id_list);
+        
+        for(const auto four_space_id : four_space_id_list){
+          generate_four_id_set.insert(four_space_id);
+        }
+      }
 
-      for(const auto four_space_id : four_space_id){
+      assert(generate_four_id_set.size() == element_four_space_id_set.size());
+
+      for(const auto four_space_id : generate_four_id_set){
         assert(element_four_space_id_set.find(four_space_id) != element_four_space_id_set.end());
       }
     }

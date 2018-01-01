@@ -19,7 +19,7 @@ const FourSpaceID FourSpaceManager::GetFourSpaceID(const FourSpace &four_space) 
     const auto four_space_id = it->second;
     const auto& registered_four_space = GetFourSpace(four_space_id);
     
-    if(registered_four_space == four_space){
+    if(registered_four_space.IsSameGainCostBit(four_space)){
       return four_space_id;
     }
   }
@@ -38,46 +38,6 @@ const FourSpaceID FourSpaceManager::RegisterFourSpace(const FourSpace &four_spac
   four_space_hash_table_.emplace(four_space_hash, four_space_id);
 
   return four_space_id;
-}
-
-const bool FourSpaceManager::RegisterOpenRestKeyFourSpace(const OpenRestListKey open_rest_list_key, const FourSpaceID four_space_id)
-{
-  const auto find_it = open_rest_key_four_space_id_.find(open_rest_list_key);
-
-  if(find_it == open_rest_key_four_space_id_.end()){
-    const auto insert_result = open_rest_key_four_space_id_.insert(
-      make_pair(open_rest_list_key, vector<FourSpaceID>())
-    );
-
-    open_rest_dependency_.Add(open_rest_list_key);
-
-    assert(insert_result.second);
-    
-    auto& four_space_id_list = insert_result.first->second;
-    four_space_id_list.emplace_back(four_space_id);
-
-    //todo delete --
-    IsFourSpaceConsistent<kBlackTurn>();
-    // -- todo delete
-
-    return true;
-  }
-
-  auto& four_space_id_list = find_it->second;
-
-  const auto four_id_it = find(four_space_id_list.begin(), four_space_id_list.end(), four_space_id);
-
-  if(four_id_it != four_space_id_list.end()){
-    // 登録済
-    return false;
-  }
-
-  four_space_id_list.emplace_back(four_space_id);
-    //todo delete --
-    IsFourSpaceConsistent<kBlackTurn>();
-    // -- todo delete
-  
-  return true;
 }
 
 const size_t FourSpaceManager::GetMaxRelaxedFourLength() const

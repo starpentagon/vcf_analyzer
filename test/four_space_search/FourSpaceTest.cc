@@ -217,6 +217,17 @@ TEST_F(FourSpaceTest, CompOperTest)
   ASSERT_TRUE(space_1 != space_3);
 }
 
+TEST_F(FourSpaceTest, IsSameGainCostBitTest)
+{
+  FourSpace space_1(kMoveAA, kMoveAB), space_2(kMoveAA, kMoveAB);
+  MovePair opponent_four(kMoveAC, kMoveAD);
+
+  space_1.SetOpponentFour(opponent_four);
+
+  ASSERT_TRUE(space_1.IsSameGainCostBit(space_2));
+  ASSERT_FALSE(space_1 == space_2);
+}
+
 TEST_F(FourSpaceTest, AssignOperTest)
 {
   FourSpace space_1, space_2;
