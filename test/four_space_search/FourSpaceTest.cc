@@ -15,7 +15,6 @@ public:
 
     ASSERT_TRUE(four_space.gain_bit_.none());
     ASSERT_TRUE(four_space.cost_bit_.none());
-    ASSERT_FALSE(four_space.GetOpponentFourInfo().IsOpponentFour());
   }
 
   void ConstructorMoveInitTest(){
@@ -26,8 +25,6 @@ public:
     
     ASSERT_EQ(1, four_space.cost_bit_.count());
     ASSERT_TRUE(four_space.cost_bit_[kMoveHI]);
-
-    ASSERT_FALSE(four_space.GetOpponentFourInfo().IsOpponentFour());
   }
 
   void ConstructorLocalInitTest(){
@@ -41,7 +38,6 @@ public:
     ASSERT_TRUE(four_space.gain_bit_[kMoveHH]);
     
     ASSERT_TRUE(four_space.cost_bit_.none());
-    ASSERT_FALSE(four_space.GetOpponentFourInfo().IsOpponentFour());
   }
 
   void AddMoveTest()
@@ -87,29 +83,6 @@ public:
     ASSERT_TRUE(four_space_added.cost_bit_[kMoveHM]);
   }
 
-  void SetOpponentFourTest(){
-    {
-      FourSpace four_space;
-      MovePair four_move(kMoveHH, kMoveHI);
-      four_space.SetOpponentFour(four_move);
-
-      OpponentFourInfo expected;
-      expected.SetOpponentFour(four_move);
-
-      ASSERT_TRUE(four_space.GetOpponentFourInfo() == expected);
-    }
-    {
-      FourSpace four_space;
-      MovePair four_move(kMoveHH, kMoveHI);
-      four_space.SetOpponentFour(four_move, kMoveHJ, kMoveHK);
-
-      OpponentFourInfo expected;
-      expected.SetOpponentFour(four_move, kMoveHJ, kMoveHK);
-
-      ASSERT_TRUE(four_space.GetOpponentFourInfo() == expected);
-    }
-  }
-
   void ConflictMoveTest()
   {
     FourSpace four_space;
@@ -138,7 +111,7 @@ public:
       ASSERT_TRUE(four_space.IsPuttable(test_space));
     }
 
-    // 実現可能: 四ノビを一部共有
+    // 設置可能: 四ノビを一部共有
     {
       FourSpace test_space;
       test_space.Add(kMoveAA, kMoveAB);
@@ -146,7 +119,7 @@ public:
       ASSERT_TRUE(four_space.IsPuttable(test_space));
     }
 
-    // 実現可能: 四ノビをすべて共有
+    // 設置可能: 四ノビをすべて共有
     {
       FourSpace test_space;
       test_space.Add(kMoveHH, kMoveHI);
@@ -154,13 +127,42 @@ public:
       ASSERT_TRUE(four_space.IsPuttable(test_space));
     }
 
-    // 実現可能: 四ノビを包含
+    // 設置可能: 四ノビを包含
     {
       FourSpace test_space;
       test_space.Add(kMoveHH, kMoveHI);
       test_space.Add(kMoveHJ, kMoveHK);
       test_space.Add(kMoveAA, kMoveAB);
       ASSERT_TRUE(four_space.IsPuttable(test_space));
+    }
+
+    // 均等ではないが設置可能
+    {
+      FourSpace test_space;
+      test_space.Add(kMoveHH, kMoveAA);
+      ASSERT_TRUE(four_space.IsPuttable(test_space));
+    }
+  }
+
+  void IsBalancedTest()
+  {
+    FourSpace four_space;
+    four_space.Add(kMoveHH, kMoveHI);
+    four_space.Add(kMoveHJ, kMoveHK);
+    
+    // 均等
+    {
+      FourSpace test_space(kMoveHJ, kMoveHK);
+      test_space.Add(kMoveAA, kMoveAB);
+      test_space.Add(four_space);
+      ASSERT_TRUE(test_space.IsBalanced());
+    }
+
+    // 均等ではない
+    {
+      FourSpace test_space(kMoveHH, kMoveAA);
+      test_space.Add(four_space);
+      ASSERT_FALSE(test_space.IsBalanced());
     }
   }
 };
@@ -182,10 +184,6 @@ TEST_F(FourSpaceTest, AddSpaceTest)
   AddSpaceTest();
 }
 
-TEST_F(FourSpaceTest, SetOpponentFourTest){
-  SetOpponentFourTest();
-}
-
 TEST_F(FourSpaceTest, ConflictMoveTest)
 {
   ConflictMoveTest();
@@ -194,6 +192,11 @@ TEST_F(FourSpaceTest, ConflictMoveTest)
 TEST_F(FourSpaceTest, PuttableTest)
 {
   PuttableTest();
+}
+
+TEST_F(FourSpaceTest, IsBalancedTest)
+{
+  IsBalancedTest();
 }
 
 TEST_F(FourSpaceTest, CompOperTest)
@@ -215,17 +218,6 @@ TEST_F(FourSpaceTest, CompOperTest)
   space_3.Add(kMoveAB, kMoveAA);
   ASSERT_FALSE(space_1 == space_3);
   ASSERT_TRUE(space_1 != space_3);
-}
-
-TEST_F(FourSpaceTest, IsSameGainCostBitTest)
-{
-  FourSpace space_1(kMoveAA, kMoveAB), space_2(kMoveAA, kMoveAB);
-  MovePair opponent_four(kMoveAC, kMoveAD);
-
-  space_1.SetOpponentFour(opponent_four);
-
-  ASSERT_TRUE(space_1.IsSameGainCostBit(space_2));
-  ASSERT_FALSE(space_1 == space_2);
 }
 
 TEST_F(FourSpaceTest, AssignOperTest)

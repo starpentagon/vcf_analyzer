@@ -97,9 +97,10 @@ public:
       set<OpenRestListKey> dependent_keys;
       open_rest_dependency.GetAllDependentKeys(kMoveAA, &dependent_keys);
 
-      ASSERT_EQ(2, dependent_keys.size());
+      ASSERT_EQ(3, dependent_keys.size());
       ASSERT_TRUE(dependent_keys.find(kSubKeyAA_AB) != dependent_keys.end());
       ASSERT_TRUE(dependent_keys.find(kSubKeyAA_AC) != dependent_keys.end());
+      ASSERT_TRUE(dependent_keys.find(key) != dependent_keys.end());
     }
     {
       const auto &child_set = open_rest_dependency.GetChildSet(kMoveAB);
@@ -111,9 +112,10 @@ public:
       set<OpenRestListKey> dependent_keys;
       open_rest_dependency.GetAllDependentKeys(kMoveAB, &dependent_keys);
 
-      ASSERT_EQ(2, dependent_keys.size());
+      ASSERT_EQ(3, dependent_keys.size());
       ASSERT_TRUE(dependent_keys.find(kSubKeyAA_AB) != dependent_keys.end());
       ASSERT_TRUE(dependent_keys.find(kSubKeyAB_AC) != dependent_keys.end());
+      ASSERT_TRUE(dependent_keys.find(key) != dependent_keys.end());
     }
     {
       const auto &child_set = open_rest_dependency.GetChildSet(kMoveAC);
@@ -125,9 +127,10 @@ public:
       set<OpenRestListKey> dependent_keys;
       open_rest_dependency.GetAllDependentKeys(kMoveAC, &dependent_keys);
 
-      ASSERT_EQ(2, dependent_keys.size());
+      ASSERT_EQ(3, dependent_keys.size());
       ASSERT_TRUE(dependent_keys.find(kSubKeyAA_AC) != dependent_keys.end());
       ASSERT_TRUE(dependent_keys.find(kSubKeyAB_AC) != dependent_keys.end());
+      ASSERT_TRUE(dependent_keys.find(key) != dependent_keys.end());
     }
     {
       const auto &child_set = open_rest_dependency.GetChildSet(kSubKeyAA_AB);

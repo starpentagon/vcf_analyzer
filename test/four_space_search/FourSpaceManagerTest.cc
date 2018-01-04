@@ -10,11 +10,15 @@ class FourSpaceManagerTest
 {
 public:
   void ConstructorTest(){
-    BitBoard bit_board;
+    MoveList move_list("hh");
+    BitBoard bit_board(move_list);
     FourSpaceManager four_space_manager(bit_board);
 
     ASSERT_EQ(1, four_space_manager.four_space_list_.size());   // kInvalidFourSpaceIDに対応する要素を追加するためサイズは1
-    ASSERT_TRUE(four_space_manager.open_rest_key_four_space_id_.empty());
+    ASSERT_TRUE(four_space_manager.four_space_hash_table_.empty());
+    ASSERT_TRUE(four_space_manager.open_rest_key_puttable_four_space_id_.empty());
+    ASSERT_TRUE(four_space_manager.open_rest_key_feasible_four_space_id_.empty());
+    ASSERT_TRUE(four_space_manager.bit_board_ == bit_board);
   }
 
   void GetRegisterFourSpaceIDTest()
@@ -28,7 +32,7 @@ public:
     FourSpace four_space_1(kMoveAA, kMoveAB);
     four_space_manager.RegisterFourSpace(four_space_1);
 
-    ASSERT_EQ(1, four_space_manager.GetFourSpaceID(four_space_1));
+    ASSERT_NE(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(four_space_1));
     
     FourSpace four_space_2(kMoveAB, kMoveAA);
     ASSERT_EQ(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(four_space_2));
@@ -37,24 +41,72 @@ public:
   void GetRegisterOpenRestKeyFourSpaceTest()
   {
     BitBoard bit_board;
-    FourSpaceManager four_space_manager(bit_board);
+    {
+      // 設置可能
+      static constexpr OpenRestListKey key = kMoveAA;
+      FourSpaceManager four_space_manager(bit_board);
 
-    constexpr OpenRestListKey key = 123456;
+      FourSpace four_space(kMoveAA, kMoveAB);
+      const auto four_space_id = four_space_manager.RegisterFourSpace(four_space);
+      bool is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
+      ASSERT_TRUE(is_registered);
 
-    ASSERT_TRUE(four_space_manager.GetFourSpaceIDList(key).empty());
+      auto& puttable_id_list = four_space_manager.GetPuttableFourSpace(key);
 
-    FourSpace four_space(kMoveAA, kMoveAB);
-    const auto four_space_id = four_space_manager.RegisterFourSpace(four_space);
-    bool is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
+      ASSERT_EQ(1, puttable_id_list.size());
+      ASSERT_EQ(four_space_id, puttable_id_list[0]);
 
-    ASSERT_TRUE(is_registered);
-    auto& four_space_id_list = four_space_manager.GetFourSpaceIDList(key);
+      const auto& feasible_id_list = four_space_manager.GetFeasibleFourSpace<kBlackTurn>(key);
+      ASSERT_EQ(1, feasible_id_list.size());
+      ASSERT_EQ(four_space_id, feasible_id_list[0]);
 
-    ASSERT_EQ(1, four_space_id_list.size());
-    ASSERT_EQ(four_space_id, four_space_id_list[0]);
+      is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
+      ASSERT_FALSE(is_registered);
+    }
+    {
+      // 設置可能だが均等ではないケース
+      static constexpr OpenRestListKey key = kMoveAA;
+      FourSpaceManager four_space_manager(bit_board);
 
-    is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
-    ASSERT_FALSE(is_registered);
+      FourSpace four_space(kMoveAA, kMoveAB);
+      FourSpace unbalance(kMoveAA, kMoveAC);
+      four_space.Add(unbalance);
+
+      const auto four_space_id = four_space_manager.RegisterFourSpace(four_space);
+      bool is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
+      ASSERT_FALSE(is_registered);
+
+      auto& puttable_id_list = four_space_manager.GetPuttableFourSpace(key);
+
+      ASSERT_EQ(1, puttable_id_list.size());
+      ASSERT_EQ(four_space_id, puttable_id_list[0]);
+
+      const auto& feasible_id_list = four_space_manager.GetFeasibleFourSpace<kBlackTurn>(key);
+      ASSERT_EQ(0, feasible_id_list.size());
+    }
+    {
+      // 設置可能だが五連以上が生じるケース
+      static constexpr OpenRestListKey key = kMoveAA;
+      FourSpaceManager four_space_manager(bit_board);
+
+      FourSpace four_space(kMoveAA, kMoveAB);
+      four_space.Add(kMoveBA, kMoveAC);
+      four_space.Add(kMoveHH, kMoveAD);
+      four_space.Add(kMoveHI, kMoveAE);
+      four_space.Add(kMoveHJ, kMoveAF);
+
+      const auto four_space_id = four_space_manager.RegisterFourSpace(four_space);
+      bool is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
+      ASSERT_FALSE(is_registered);
+
+      auto& puttable_id_list = four_space_manager.GetPuttableFourSpace(key);
+
+      ASSERT_EQ(1, puttable_id_list.size());
+      ASSERT_EQ(four_space_id, puttable_id_list[0]);
+
+      const auto& feasible_id_list = four_space_manager.GetFeasibleFourSpace<kBlackTurn>(key);
+      ASSERT_EQ(0, feasible_id_list.size());
+    }
   }
 
   void GeneratePuttableFourSpaceTest()
@@ -99,10 +151,10 @@ public:
     vector<FourSpaceID> id_list_1{1, 2}, id_list_2{3, 4, 5};
     vector<FourSpaceID> generated_list;
 
-    four_space_manager.GeneratePuttableFourSpace<kBlackTurn>(id_list_1, id_list_2, &generated_list);
+    four_space_manager.GeneratePuttableFourSpace(id_list_1, id_list_2, &generated_list);
 
-    // 2 * 3 = 6通り中、(1-1)-(2-3), (1-2)-(2-3)は五連ができるた除外、(1-2)-(2-1)は同時設置不可のため除外
-    ASSERT_EQ(3, generated_list.size());
+    // 2 * 3 = 6通り中、(1-2)-(2-1)は同時設置不可のため除外
+    ASSERT_EQ(5, generated_list.size());
 
     {
       // (1-1)-(2-1)
@@ -125,11 +177,39 @@ public:
       ASSERT_TRUE(expect == four_space);
     }
     {
+      // (1-1)-(2-3)
+      FourSpace expect(kMoveAA, kMoveAB);
+      FourSpace expect_sub;
+      expect_sub.Add(kMoveBA, kMoveAB);
+      expect_sub.Add(kMoveCA, kMoveAC);
+      expect_sub.Add(kMoveDA, kMoveAD);
+      expect_sub.Add(kMoveEA, kMoveAE);
+      expect.Add(expect_sub);
+
+      const auto four_space_id = generated_list[2];
+      const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
+
+      ASSERT_TRUE(expect == four_space);
+    }
+    {
       // (1-2)-(2-2)
       FourSpace expect(kMoveOO, kMoveAA);
       expect.Add(kMoveHH, kMoveHI);
 
-      const auto four_space_id = generated_list[2];
+      const auto four_space_id = generated_list[3];
+      const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
+
+      ASSERT_TRUE(expect == four_space);
+    }
+    {
+      // (1-2)-(2-3)
+      FourSpace expect(kMoveOO, kMoveAA);
+      expect.Add(kMoveBA, kMoveAB);
+      expect.Add(kMoveCA, kMoveAC);
+      expect.Add(kMoveDA, kMoveAD);
+      expect.Add(kMoveEA, kMoveAE);
+
+      const auto four_space_id = generated_list[4];
       const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
 
       ASSERT_TRUE(expect == four_space);
@@ -177,134 +257,48 @@ public:
     
     {
       // rest = kMoveAA
-      const auto& four_space_id_list = four_space_manager.GetFourSpaceIDList(kMoveAA);
+      const auto& four_space_id_list = four_space_manager.GetFeasibleFourSpace<kBlackTurn>(kMoveAA);
       ASSERT_EQ(2, four_space_id_list.size());
 
       {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[0]);
+        const auto four_space_id = four_space_id_list[0];
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
         FourSpace expect(kMoveAA, kMoveBA);
         ASSERT_TRUE(expect == four_space);
       }
       {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[1]);
+        const auto four_space_id = four_space_id_list[1];
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
         FourSpace expect(kMoveAA, kMoveAB);
         ASSERT_TRUE(expect == four_space);
       }
     }
     {
       // rest = kMoveAB
-      const auto& four_space_id_list = four_space_manager.GetFourSpaceIDList(kMoveAB);
+      const auto& four_space_id_list = four_space_manager.GetFeasibleFourSpace<kBlackTurn>(kMoveAB);
       ASSERT_EQ(2, four_space_id_list.size());
 
       {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[0]);
+        const auto four_space_id = four_space_id_list[0];
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
         FourSpace expect(kMoveAB, kMoveBB);
         ASSERT_TRUE(expect == four_space);
       }
       {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[1]);
+        const auto four_space_id = four_space_id_list[1];
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
         FourSpace expect(kMoveAB, kMoveAA);
         ASSERT_TRUE(expect == four_space);
       }
     }
     {
       // rest = kMoveAA & kMoveAB
-      const auto& four_space_id_list = four_space_manager.GetFourSpaceIDList(rest_key);
+      const auto& four_space_id_list = four_space_manager.GetFeasibleFourSpace<kBlackTurn>(rest_key);
       ASSERT_EQ(1, four_space_id_list.size());
 
       {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[0]);
-        FourSpace expect(kMoveAA, kMoveBA);
-        expect.Add(kMoveAB, kMoveBB);
-        ASSERT_TRUE(expect == four_space);
-      }
-    }
-  }
-
-  void EnumeratePuttableFourSpaceTest()
-  {
-    BitBoard bit_board;
-    FourSpaceManager four_space_manager(bit_board);
-
-    {
-      // kMoveAA-1
-      FourSpace four_space(kMoveAA, kMoveBA);
-      vector<RestKeyFourSpace> added_list;
-
-      four_space_manager.AddFourSpace<kBlackTurn>(kMoveAA, kMoveBA, four_space, &added_list);
-    }
-    {
-      // kMoveAA-2
-      FourSpace four_space(kMoveAA, kMoveAB);
-      vector<RestKeyFourSpace> added_list;
-
-      four_space_manager.AddFourSpace<kBlackTurn>(kMoveAA, kMoveAB, four_space, &added_list);
-    }
-    {
-      // kMoveAB-1
-      FourSpace four_space(kMoveAB, kMoveBB);
-      vector<RestKeyFourSpace> added_list;
-
-      four_space_manager.AddFourSpace<kBlackTurn>(kMoveAB, kMoveBB, four_space, &added_list);
-    }
-    {
-      // kMoveAB-2
-      FourSpace four_space(kMoveAB, kMoveAA);
-      vector<RestKeyFourSpace> added_list;
-
-      four_space_manager.AddFourSpace<kBlackTurn>(kMoveAB, kMoveAA, four_space, &added_list);
-    }
-    {
-      // rest = kMoveAA
-      vector<MovePosition> rest_move_list{kMoveAA};
-      OpenRestList open_rest_list(rest_move_list);
-
-      vector<FourSpaceID> four_space_id_list;
-      four_space_manager.EnumeratePuttableFourSpace<kBlackTurn>(open_rest_list, &four_space_id_list);
-      ASSERT_EQ(2, four_space_id_list.size());
-
-      {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[0]);
-        FourSpace expect(kMoveAA, kMoveBA);
-        ASSERT_TRUE(expect == four_space);
-      }
-      {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[1]);
-        FourSpace expect(kMoveAA, kMoveAB);
-        ASSERT_TRUE(expect == four_space);
-      }
-    }
-    {
-      // rest = kMoveAB
-      vector<MovePosition> rest_move_list{kMoveAB};
-      OpenRestList open_rest_list(rest_move_list);
-
-      vector<FourSpaceID> four_space_id_list;
-      four_space_manager.EnumeratePuttableFourSpace<kBlackTurn>(open_rest_list, &four_space_id_list);
-      ASSERT_EQ(2, four_space_id_list.size());
-
-      {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[0]);
-        FourSpace expect(kMoveAB, kMoveBB);
-        ASSERT_TRUE(expect == four_space);
-      }
-      {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[1]);
-        FourSpace expect(kMoveAB, kMoveAA);
-        ASSERT_TRUE(expect == four_space);
-      }
-    }
-    {
-      // rest = kMoveAA & kMoveAB
-      vector<MovePosition> rest_move_list{kMoveAA, kMoveAB};
-      OpenRestList open_rest_list(rest_move_list);
-
-      vector<FourSpaceID> four_space_id_list;
-      four_space_manager.EnumeratePuttableFourSpace<kBlackTurn>(open_rest_list, &four_space_id_list);
-      ASSERT_EQ(1, four_space_id_list.size());
-
-      {
-        const auto& four_space = four_space_manager.GetFourSpace(four_space_id_list[0]);
+        const auto four_space_id = four_space_id_list[0];
+        const auto& four_space = four_space_manager.GetFourSpace(four_space_id);
         FourSpace expect(kMoveAA, kMoveBA);
         expect.Add(kMoveAB, kMoveBB);
         ASSERT_TRUE(expect == four_space);
@@ -361,11 +355,6 @@ TEST_F(FourSpaceManagerTest, GetRegisterOpenRestKeyFourSpaceTest)
 TEST_F(FourSpaceManagerTest, GeneratePuttableFourSpaceTest)
 {
   GeneratePuttableFourSpaceTest();
-}
-
-TEST_F(FourSpaceManagerTest, EnumeratePuttableFourSpaceTest)
-{
-  EnumeratePuttableFourSpaceTest();
 }
 
 TEST_F(FourSpaceManagerTest, GetMaxRelaxedFourLengthTest)

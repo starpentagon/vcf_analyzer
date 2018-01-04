@@ -108,16 +108,6 @@ const RelaxedFourStatus RelaxedFour::GetRelaxedFourStatus(const FourSpace &four_
 
   // 黒番の場合、長連筋になることがあるためR-四ノビが成立するかチェックする
   MovePosition guard_move;
-
-  // todo delete --
-  if(P == kWhiteTurn && status == kRelaxedFourUnknown){
-    if(!local_bit_board.IsFourMove<P>(gain_, &guard_move)){
-      assert(false);
-    }else if(cost_ != guard_move){
-      assert(false);
-    }
-  }
-  // -- todo delete
   
   if(P == kBlackTurn && status == kRelaxedFourUnknown){
     if(!local_bit_board.IsFourMove<P>(gain_, &guard_move)){

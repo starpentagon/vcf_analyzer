@@ -21,7 +21,6 @@ FourSpace::FourSpace(const FourSpace &four_space, const MoveBitSet &neighborhood
 {
   gain_bit_ = four_space.GetGainBit() & neighborhood_bit;
   cost_bit_ = four_space.GetCostBit() & neighborhood_bit;
-  opponent_four_ = four_space.GetOpponentFourInfo();
 }
 
 void FourSpace::Add(const MovePosition gain_position, const MovePosition cost_position)
@@ -40,16 +39,6 @@ void FourSpace::Add(const FourSpace &four_space)
   cost_bit_ |= four_space.GetCostBit();
 }
 
-void FourSpace::SetOpponentFour(const MovePair &opponent_four)
-{
-  opponent_four_.SetOpponentFour(opponent_four);
-}
-
-void FourSpace::SetOpponentFour(const MovePair &opponent_four, const MovePosition disabling_move_1, const MovePosition disabling_move_2)
-{
-  opponent_four_.SetOpponentFour(opponent_four, disabling_move_1, disabling_move_2);
-}
-
 const bool FourSpace::IsConflict(const MovePosition gain_position, const MovePosition cost_position) const
 {
   if(gain_bit_[gain_position] || gain_bit_[cost_position] || cost_bit_[gain_position] || cost_bit_[cost_position]){
@@ -61,7 +50,7 @@ const bool FourSpace::IsConflict(const MovePosition gain_position, const MovePos
 
 const bool FourSpace::IsPuttable() const
 {
-  return (gain_bit_ & cost_bit_).none() && (gain_bit_.count() == cost_bit_.count());
+  return (gain_bit_ & cost_bit_).none();
 }
 
 const bool FourSpace::IsPuttable(const FourSpace &four_space) const
@@ -80,11 +69,15 @@ const bool FourSpace::IsPuttable(const FourSpace &four_space) const
     return false;
   }
 
-  if((check_gain_bit | gain_bit_).count() != (check_cost_bit | cost_bit_).count()){
-    return false;
-  }
-
   return true;
+}
+
+const bool FourSpace::IsBalanced() const
+{
+  const size_t gain_count = gain_bit_.count();
+  const size_t cost_count = cost_bit_.count();
+
+  return gain_count == cost_count;
 }
 
 const MoveBitSet& FourSpace::GetGainBit() const
@@ -107,42 +100,23 @@ const MoveBitSet FourSpace::GetNeighborhoodCostBit(const MoveBitSet &neighborhoo
   return cost_bit_ & neighborhood_bit;
 }
 
-const OpponentFourInfo& FourSpace::GetOpponentFourInfo() const
-{
-  return opponent_four_;
-}
-
 const FourSpace& FourSpace::operator=(const FourSpace &four_space)
 {
   if(this != &four_space){
     gain_bit_ = four_space.GetGainBit();
     cost_bit_ = four_space.GetCostBit();
-    opponent_four_ = four_space.GetOpponentFourInfo();
   }
 
   return *this;
 }
 
-const bool FourSpace::IsSameGainCostBit(const FourSpace &four_space) const
+const bool FourSpace::operator==(const FourSpace &four_space) const
 {
   if(gain_bit_ != four_space.GetGainBit()){
     return false;
   }
 
   if(cost_bit_ != four_space.GetCostBit()){
-    return false;
-  }
-
-  return true;
-}
-
-const bool FourSpace::operator==(const FourSpace &four_space) const
-{
-  if(!IsSameGainCostBit(four_space)){
-    return false;
-  }
-
-  if(opponent_four_ != four_space.GetOpponentFourInfo()){
     return false;
   }
 

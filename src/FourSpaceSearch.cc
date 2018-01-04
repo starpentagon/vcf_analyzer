@@ -128,40 +128,6 @@ size_t FourSpaceSearch::GetRestableRelaxedFourIDList(const MovePosition gain_pos
   return open_rest_count;
 }
 
-void FourSpaceSearch::GeneratePuttableFourSpace(const vector<FourSpace> &four_space_list_1, const vector<FourSpace> &four_space_list_2, vector<FourSpace> * const puttable_four_space_list) const
-{
-  assert(puttable_four_space_list != nullptr);
-  assert(puttable_four_space_list->empty());
-  
-  puttable_four_space_list->reserve(four_space_list_1.size() * four_space_list_2.size());
-
-  for(const auto &four_space_1 : four_space_list_1){
-    for(const auto &four_space_2 : four_space_list_2){
-      if(!four_space_1.IsPuttable(four_space_2)){
-        continue;
-      }
-
-      FourSpace four_space(four_space_1);
-      four_space.Add(four_space_2);
-
-      bool is_generated = false;
-
-      for(const auto& generated_four_space : *puttable_four_space_list){
-        if(generated_four_space == four_space){
-          is_generated = true;
-          break;
-        }
-      }
-
-      if(is_generated){
-        continue;
-      }
-
-      puttable_four_space_list->emplace_back(four_space);
-    }
-  }
-}
-
 const bool FourSpaceSearch::IsRegisteredLocalBitBoard(const MovePosition move, const LocalBitBoard &local_bitboard) const
 {
   const auto& local_bitboard_list = move_local_bitboard_list_[move];

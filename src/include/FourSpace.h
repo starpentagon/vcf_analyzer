@@ -29,10 +29,6 @@ public:
   void Add(const MovePosition gain_position, const MovePosition cost_position);
   void Add(const FourSpace &four_space);
 
-  //! @brief 四ノリを設定する
-  void SetOpponentFour(const MovePair &opponent_four);
-  void SetOpponentFour(const MovePair &opponent_four, const MovePosition disabling_move_1, const MovePosition disabling_move_2);
-
   //! @brief 指し手が競合していないかチェックする
   const bool IsConflict(const MovePosition gain_position, const MovePosition cost_position) const;
 
@@ -42,16 +38,15 @@ public:
   //! @brief 他の獲得/損失空間と同時設置可能かチェックする
   const bool IsPuttable(const FourSpace &four_space) const;
 
+  //! @brief 均等(Gain, Cost数が一致する)かチェックする
+  const bool IsBalanced() const;
+
   //! @brief 代入演算子
   const FourSpace& operator=(const FourSpace &four_space);
   
   //! @brief 比較演算子
   const bool operator==(const FourSpace &four_space) const;
   const bool operator!=(const FourSpace &four_space) const;
-
-  //! @brief 獲得路/損失路の比較を行う
-  //! @note 四ノリ情報の比較は行わない
-  const bool IsSameGainCostBit(const FourSpace &four_space) const;
 
   //! @brief 獲得路を取得する
   const MoveBitSet& GetGainBit() const;
@@ -76,7 +71,6 @@ public:
 private:
   MoveBitSet gain_bit_;   //! 獲得路のbit
   MoveBitSet cost_bit_;   //! 損失路のbit
-  OpponentFourInfo opponent_four_;  //! 四ノリ情報
 };
 
 } // namespace realcore

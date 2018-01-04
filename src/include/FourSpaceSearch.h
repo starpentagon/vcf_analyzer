@@ -82,12 +82,6 @@ private:
   const RelaxedFour& GetRelaxedFour(const RelaxedFourID relaxed_four_id) const;
   RelaxedFour& GetRelaxedFour(const RelaxedFourID relaxed_four_id);
 
-  //! @brief 2つの獲得/損失空間のリストから同時設置可能な獲得/損失空間のリストを生成する
-  //! @param four_space_list_1 獲得/損失空間のリスト
-  //! @param four_space_list_2 獲得/損失空間のリスト
-  //! @param puttable_four_space 同時設置可能な獲得/損失空間のリストの格納先
-  void GeneratePuttableFourSpace(const std::vector<FourSpace> &four_space_list_1, const std::vector<FourSpace> &four_space_list_2, std::vector<FourSpace> * const puttable_four_space_list) const;
-
   //! @brief 位置moveへの獲得/損失空間追加による緩和四ノビを生成する
   //! @param gain_position 獲得/損失空間が追加された位置
   //! @param four_space 追加した獲得/損失空間

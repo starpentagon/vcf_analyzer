@@ -63,12 +63,10 @@ void FourSpaceSearch::AddFourSpace(const MovePosition gain_move, const MovePosit
   static size_t count = 0;
   count++;
 
-  /*
-  if(count >= 1 * 10000){
+  if(count >= 5 * 10000){
     return;
   }
-  */
-  
+
   // todo delete
   static size_t path_through_matrix[256] = {0};
 
@@ -133,8 +131,7 @@ void FourSpaceSearch::AddFourSpace(const MovePosition gain_move, const MovePosit
     const auto& rest_move_list = relaxed_four.GetOpenRestList();
 
     OpenRestList open_rest_list(rest_move_list);
-    std::vector<FourSpaceID> rest_four_space_list;
-    four_space_manager_.EnumeratePuttableFourSpace<P>(open_rest_list, &rest_four_space_list);
+    const auto& rest_four_space_list = four_space_manager_.GetFeasibleFourSpace<P>(open_rest_list);
 
     ExpandRelaxedFour<P>(relaxed_four_id, rest_four_space_list);
   }
@@ -199,7 +196,7 @@ void FourSpaceSearch::ExpandRelaxedFour(const RelaxedFourID relaxed_four_id, con
     AddFeasibleRelaxedFourID(relaxed_four_id);
 
     if(relaxed_four_status == kRelaxedFourOpponentFour){
-      child_four_space.SetOpponentFour(opponent_four);
+//      child_four_space.SetOpponentFour(opponent_four);
     }
 
     AddFourSpace<P>(gain_position, cost_position, child_four_space);
