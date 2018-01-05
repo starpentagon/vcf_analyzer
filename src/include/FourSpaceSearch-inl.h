@@ -63,7 +63,7 @@ void FourSpaceSearch::AddFourSpace(const MovePosition gain_move, const MovePosit
   static size_t count = 0;
   count++;
 
-  if(count >= 5 * 10000){
+  if(count >= 20 * 10000){
     return;
   }
 

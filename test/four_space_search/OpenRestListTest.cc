@@ -161,5 +161,30 @@ TEST_F(OpenRestListTest, GetOpenRestBitTest)
   ASSERT_TRUE(move_bit[kMoveAB]);
   ASSERT_TRUE(move_bit[kMoveAC]);
 }
+
+TEST_F(OpenRestListTest, GetParentOpenRestListKeyTest)
+{
+  vector<MovePosition> rest_move_list{kMoveAA, kMoveAB, kMoveAC};
+  OpenRestList open_rest_list(rest_move_list);
+
+  const auto key = open_rest_list.GetOpenRestKey();
+  
+  {
+  const auto parent_key = GetParentOpenRestListKey(kMoveAA, key);
+  const OpenRestListKey expect = (kMoveAB << 8) | kMoveAC;
+  ASSERT_EQ(expect, parent_key);
+  }
+  {
+  const auto parent_key = GetParentOpenRestListKey(kMoveAB, key);
+  const OpenRestListKey expect = (kMoveAA << 8) | kMoveAC;
+  ASSERT_EQ(expect, parent_key);
+  }
+  {
+  const auto parent_key = GetParentOpenRestListKey(kMoveAC, key);
+  const OpenRestListKey expect = (kMoveAA << 8) | kMoveAB;
+  ASSERT_EQ(expect, parent_key);
+  }
+}
+
 }   // namespace realcore
 

@@ -55,8 +55,9 @@ public:
     }
 
     EXPECT_EQ(2, four_space_search.GetRelaxedFourCount());
-    // todo turn off comment
-//    EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
   void UpdateSingleFourWhite()
@@ -104,9 +105,9 @@ public:
     }
   
     EXPECT_EQ(2, four_space_search.GetRelaxedFourCount());
-
-    // todo turn off comment
-//    EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kWhiteTurn>();
   }
 
   void UpdateExpandableFourBlack()
@@ -158,8 +159,9 @@ public:
     }
 
     EXPECT_EQ(4, four_space_search.GetRelaxedFourCount());
-    // todo turn off comment
-//    EXPECT_EQ(2, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(2, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
   void UpdateExpandableFourWhite()
@@ -207,8 +209,9 @@ public:
     }
 
     EXPECT_EQ(4, four_space_search.GetRelaxedFourCount());
-    // todo turn off comment
-//    EXPECT_EQ(2, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(2, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kWhiteTurn>();
   }
 
   void UpdateMultiExpandableFourBlack()
@@ -262,8 +265,9 @@ public:
     }
 
     EXPECT_EQ(12, four_space_search.GetRelaxedFourCount());
-    // todo turn off comment
-//    EXPECT_EQ(5, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(5, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
   void UpdateMultiExpandableFourWhite()
@@ -313,8 +317,9 @@ public:
     }
 
     EXPECT_EQ(12, four_space_search.GetRelaxedFourCount());
-    // todo turn off comment
-//    EXPECT_EQ(5, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(5, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kWhiteTurn>();
   }
 
   void UpdateMultiExpandableFourBlack2()
@@ -368,8 +373,9 @@ public:
     }
 
     EXPECT_EQ(12, four_space_search.GetRelaxedFourCount());
-    // todo turn off comment
-//    EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
   void UpdateMultiExpandableFourWhite2()
@@ -425,8 +431,9 @@ public:
     }
 
     EXPECT_EQ(16, four_space_search.GetRelaxedFourCount());
-    // todo turn off comment
-//    EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kWhiteTurn>();
   }
 
   void UpdateMultiExpandableFourBlack3()
@@ -487,8 +494,9 @@ public:
     }
 
     EXPECT_EQ(25 + 1, four_space_search.GetRelaxedFourCount());  // 達四はダブルカウントされる
-    // todo turn off comment
-//    EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
   void UpdateMultiReachPathBlack()
@@ -543,9 +551,9 @@ public:
     }
 
     EXPECT_EQ(18, four_space_search.GetRelaxedFourCount());
-
-    // todo turn off comment
-    //EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
+    EXPECT_EQ(5, four_space_search.GetMaxRelaxedFourLength());
+    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
 
     // kMoveIHの実現手順が２つあることをチェック
     for(const auto relaxed_four_id : move_gain_list[kMoveIH]){
@@ -616,6 +624,11 @@ public:
         //EXPECT_TRUE(!four_space_search.move_gain_list_[move].empty());
       }
     }
+
+    //four_space_search.four_space_manager_.IsPuttableConsistent();
+    //four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
+    four_space_search.four_space_manager_.OutputPuttableSummary();
+    four_space_search.four_space_manager_.OutputFeasibleSummary();
   }
 };
 

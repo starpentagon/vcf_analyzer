@@ -24,10 +24,12 @@ static constexpr FourSpaceID kInvalidFourSpaceID = 0;   //! 無効を表すFourS
 typedef std::pair<OpenRestListKey, FourSpaceID> RestKeyFourSpace;   //! (開残路キー, FourSpaceID)
 
 class FourSpaceManagerTest;
+class FourSpaceSearchTest;
 
 class FourSpaceManager
 {
   friend class FourSpaceManagerTest;
+  friend class FourSpaceSearchTest;
 
 public:
   FourSpaceManager(const BitBoard &bit_board);
@@ -115,14 +117,28 @@ private:
   template<PlayerTurn P>
   void RegisterOpenRestKeyFourSpace(const OpenRestListKey open_rest_list_key, const std::vector<FourSpaceID> &four_space_id_list);
 
-  //! @brief 開残路キーのFourSpaceを依存している子のFourSpaceから作れているか確認する
+  //! @brief 設置可能なFourSpaceの依存関係（子が親から生成できているか）をチェックする
+  //! @note デバッグ用機能
+  void IsPuttableConsistent();
+
+  //! @brief 設置可能なFourSpaceから実現可能なFourSpaceが生成できるかチェックする
   //! @note デバッグ用機能
   template<PlayerTurn P>
-  void IsFourSpaceConsistent();
+  void IsFeasibleConsistent();
 
   //! @brief List中に要素がない場合に挿入する
   //! @retval true: 要素を挿入, false: すでに要素があり挿入せず
   const bool InsertList(std::vector<FourSpaceID> &list, const FourSpaceID four_space_id) const;
+
+  //! @brief 親の開残路キーを取得する
+  //! @retval (親から指し手, 親の開残路キー, 親の開残路キーが登録済かのフラグ)
+  const std::tuple<MovePosition, OpenRestListKey, bool> GetParentOpenRestListKey(const OpenRestListKey open_rest_list_key) const;
+
+  //! @brief 設置可能なFourSpaceのサマリ情報を出力する
+  void OutputPuttableSummary() const;
+
+  //! @brief 実現可能なFourSpaceのサマリ情報を出力する
+  void OutputFeasibleSummary() const;
 
   //! FourSpaceID -> FourSpacePtrを保持するリスト
   //! @note unique_ptr<FourSpace>をvector型で保持した場合より2%程度高速
@@ -141,6 +157,10 @@ private:
   std::map<FourSpaceID, bool> feasibility_result_;
 
   BitBoard bit_board_;
+
+  //! @brief 設置可能性のチェック結果
+  size_t puttable_check_count_;
+  size_t puttable_count_;
 };  // class FourSpaceManager
 
 

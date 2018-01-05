@@ -153,4 +153,19 @@ std::string GetOpenRestKeyString(const OpenRestListKey open_rest_key)
   return open_rest_str;
 }
 
+const OpenRestListKey GetParentOpenRestListKey(const MovePosition parent_move, const OpenRestListKey open_rest_list_key)
+{
+  vector<MovePosition> rest_move_list;
+  GetOpenRestMoveList(open_rest_list_key, &rest_move_list);
+
+  const auto erase_it = find(rest_move_list.begin(), rest_move_list.end(), parent_move);
+  assert(erase_it != rest_move_list.end());
+
+  rest_move_list.erase(erase_it);
+  OpenRestList parent_open_rest(rest_move_list);
+
+  return parent_open_rest.GetOpenRestKey();
+}
+
+
 }   // namespace realcore

@@ -19,6 +19,9 @@ typedef std::uint64_t OpenRestListKey;
 void GetOpenRestBit(OpenRestListKey open_rest_key, MoveBitSet * const move_bit);
 void GetOpenRestMoveList(OpenRestListKey open_rest_key, std::vector<MovePosition> * const rest_move_list);
 
+//! @brief 親の開残路キーを取得する
+const OpenRestListKey GetParentOpenRestListKey(const MovePosition parent_move, const OpenRestListKey open_rest_list_key);
+
 //! @brief MoveBitSetの差分位置を取得する
 //! @pre super_bitはsub_bitを包含していること
 //! @pre super_bitとsub_bitの差分は１つであること

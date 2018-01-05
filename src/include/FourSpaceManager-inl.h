@@ -19,10 +19,6 @@ void FourSpaceManager::AddFourSpace(const MovePosition gain_move, const MovePosi
   }
 
   AddOpenRestListFourSpace<P>(gain_move, four_space_id, added_four_space_list);
-
-  // todo delete --
-  IsFourSpaceConsistent<P>();
-  // -- todo delete
 }
 
 template<PlayerTurn P>
@@ -36,7 +32,6 @@ void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, co
   }
 
   added_four_space_list->emplace_back(std::make_pair(gain_move, four_space_id));
-  //std::cerr << "New: key: " << gain_move << " = " << GetOpenRestKeyString(gain_move) << ", id: " << four_space_id << std::endl;
 
   // open_rest_list_keyに依存する開残路キーのFourSpaceリストを更新する
   std::set<OpenRestListKey> child_rest_key_set;
@@ -46,9 +41,22 @@ void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, co
     return;
   }
 
+  // 更新が必要な開残路キーを求める
+  std::vector<OpenRestListKey> update_child_key_list;
+  update_child_key_list.reserve(child_rest_key_set.size());
+
+  for(const auto rest_key : child_rest_key_set){
+    const auto find_it = open_rest_key_puttable_four_space_id_.find(rest_key);
+    
+    if(find_it != open_rest_key_puttable_four_space_id_.end()){
+      // すでに登録済の開残路キー
+      update_child_key_list.emplace_back(rest_key);
+    }
+  }
+
   std::vector<FourSpaceID> four_space_id_list{four_space_id};
   
-  for(const auto child_rest_key : child_rest_key_set){
+  for(const auto child_rest_key : update_child_key_list){
     std::vector<MovePosition> child_rest_move_list;
     GetOpenRestMoveList(child_rest_key, &child_rest_move_list);
 
@@ -86,7 +94,6 @@ void FourSpaceManager::AddOpenRestListFourSpace(const MovePosition gain_move, co
 template<PlayerTurn P>
 void FourSpaceManager::CreateOpenRestKey(const OpenRestListKey open_rest_list_key)
 {
-  // 開残路キーが未登録の場合は全組合せを生成する
   assert(open_rest_key_puttable_four_space_id_.find(open_rest_list_key) == open_rest_key_puttable_four_space_id_.end());
 
   std::vector<FourSpaceID> puttable_four_space_id_list;
@@ -107,6 +114,15 @@ void FourSpaceManager::CreateOpenRestKey(const OpenRestListKey open_rest_list_ke
   );
 
   open_rest_dependency_.Add(open_rest_list_key);
+
+  // 親が存在しているかチェックし、存在しない場合は生成する
+  const auto parent_info = GetParentOpenRestListKey(open_rest_list_key);
+  const auto is_registered = std::get<2>(parent_info);
+  
+  if(!is_registered){
+    const auto parent_key = std::get<1>(parent_info);
+    CreateOpenRestKey<P>(parent_key);
+  }
 }
 
 template<PlayerTurn P>
@@ -145,12 +161,6 @@ void FourSpaceManager::RegisterOpenRestKeyFourSpace(const OpenRestListKey open_r
   for(const auto four_space_id : four_space_id_list){
     RegisterOpenRestKeyFourSpace<P>(four_space_id);
   }
-}
-
-template<PlayerTurn P>
-void FourSpaceManager::IsFourSpaceConsistent()
-{
-  // todo implement
 }
 
 inline const std::vector<FourSpaceID>& FourSpaceManager::GetPuttableFourSpace(const OpenRestListKey open_rest_list_key) const
@@ -235,6 +245,41 @@ const bool FourSpaceManager::IsFeasibleFourSpace(const FourSpaceID four_space_id
   }
   
   return true;
+}
+
+template<PlayerTurn P>
+void FourSpaceManager::IsFeasibleConsistent()
+{
+  for(const auto& element : open_rest_key_puttable_four_space_id_){
+    const auto open_rest_key = element.first;
+    const auto& puttable_four_space_id_list = element.second;
+
+    std::vector<FourSpaceID> check_feasible_four_space_id_list;
+    GenerateFeasibleFourSpace<P>(puttable_four_space_id_list, &check_feasible_four_space_id_list);
+
+    const auto find_it = open_rest_key_feasible_four_space_id_.find(open_rest_key);
+
+    if(find_it == open_rest_key_feasible_four_space_id_.end()){
+      std::cerr << "[error]Feasible inconsistent: key not found" << std::endl;
+      continue;
+    }
+
+    const auto& feasible_four_space_id_list = find_it->second;
+
+    if(feasible_four_space_id_list.size() != check_feasible_four_space_id_list.size()){
+      std::cerr << "[error]Feasible inconsistent: size is not same at key = " << open_rest_key << std::endl;
+      continue;
+    }
+
+    for(const auto four_space_id : check_feasible_four_space_id_list){
+      const auto check_it = find(feasible_four_space_id_list.begin(), feasible_four_space_id_list.end(), four_space_id);
+
+      if(check_it == feasible_four_space_id_list.end()){
+        std::cerr << "[error]Feasible inconsistent: four space id(" << four_space_id << ") is not contained" << std::endl;
+        break;
+      }
+    }
+  }
 }
 
 inline const FourSpace& FourSpaceManager::GetFourSpace(const FourSpaceID four_space_id) const

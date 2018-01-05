@@ -305,6 +305,44 @@ public:
       }
     }
   }
+
+  void GetParentOpenRestListKeyTest()
+  {
+    {
+      BitBoard bit_board;
+      FourSpaceManager four_space_manager(bit_board);
+
+      four_space_manager.open_rest_key_puttable_four_space_id_.insert(make_pair(kMoveAA, vector<FourSpaceID>(1)));
+      four_space_manager.open_rest_key_puttable_four_space_id_.insert(make_pair(kMoveAC, vector<FourSpaceID>(2)));
+
+      const OpenRestListKey parent_key = (kMoveAA << 8) | kMoveAC;
+      four_space_manager.open_rest_key_puttable_four_space_id_.insert(make_pair(parent_key, vector<FourSpaceID>(3)));
+
+      const OpenRestListKey key = (kMoveAA << 16) | (kMoveAB << 8) | kMoveAC;
+      four_space_manager.open_rest_key_puttable_four_space_id_.insert(make_pair(key, vector<FourSpaceID>(4)));
+
+      {
+      const auto parent_info = four_space_manager.GetParentOpenRestListKey(key);
+      ASSERT_EQ(kMoveAB, get<0>(parent_info));
+      ASSERT_EQ(parent_key, get<1>(parent_info));
+      ASSERT_EQ(true, get<2>(parent_info));
+      }
+      {
+      const auto parent_info = four_space_manager.GetParentOpenRestListKey(kMoveAA);
+      ASSERT_EQ(kNullMove, get<0>(parent_info));
+      ASSERT_EQ(kMoveAA, get<1>(parent_info));
+      ASSERT_EQ(true, get<2>(parent_info));
+      }
+      {
+      const OpenRestListKey nonregistered_key = (kMoveHA << 16) | (kMoveHB << 8) | kMoveHC;
+      const OpenRestListKey expect_parent_key = (kMoveHB << 8) | kMoveHC;
+      const auto parent_info = four_space_manager.GetParentOpenRestListKey(nonregistered_key);
+      ASSERT_EQ(kMoveHA, get<0>(parent_info));
+      ASSERT_EQ(expect_parent_key, get<1>(parent_info));
+      ASSERT_EQ(false, get<2>(parent_info));
+      }
+    }
+  }
 };
 
 TEST_F(FourSpaceManagerTest, ConstructorTest)
@@ -425,4 +463,8 @@ TEST_F(FourSpaceManagerTest, GetFourSpaceCountTest)
   }
 }
 
+TEST_F(FourSpaceManagerTest, GetParentOpenRestListKeyTest)
+{
+  GetParentOpenRestListKeyTest();
+}
 }   // namespace realcore
