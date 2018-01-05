@@ -167,5 +167,10 @@ const OpenRestListKey GetParentOpenRestListKey(const MovePosition parent_move, c
   return parent_open_rest.GetOpenRestKey();
 }
 
+const bool IsSingleRestMove(const OpenRestListKey key)
+{
+  return (key <= kMoveNum);
+}
+
 
 }   // namespace realcore

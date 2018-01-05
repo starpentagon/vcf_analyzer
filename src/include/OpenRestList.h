@@ -27,6 +27,9 @@ const OpenRestListKey GetParentOpenRestListKey(const MovePosition parent_move, c
 //! @pre super_bitとsub_bitの差分は１つであること
 const MovePosition GetAdditionalMove(const MoveBitSet &super_bit, const MoveBitSet &sub_bit);
 
+//! @brief 開残路キーの開残路数が1つ以下かを判定する
+const bool IsSingleRestMove(const OpenRestListKey key);
+
 //! @brief 開残路キーの文字列を取得する
 std::string GetOpenRestKeyString(const OpenRestListKey open_rest_key);
 

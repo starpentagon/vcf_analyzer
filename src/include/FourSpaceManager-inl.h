@@ -99,7 +99,7 @@ void FourSpaceManager::CreateOpenRestKey(const OpenRestListKey open_rest_list_ke
   std::vector<FourSpaceID> puttable_four_space_id_list;
   std::vector<FourSpaceID> feasible_four_space_id_list;
 
-  if(open_rest_list_key > kMoveNum){
+  if(!IsSingleRestMove(open_rest_list_key)){
     // 開残路が2つ以上の場合は組合せを生成する
     GeneratePuttableFourSpace(open_rest_list_key, &puttable_four_space_id_list);
     GenerateFeasibleFourSpace<P>(puttable_four_space_id_list, &feasible_four_space_id_list);

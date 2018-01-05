@@ -186,5 +186,25 @@ TEST_F(OpenRestListTest, GetParentOpenRestListKeyTest)
   }
 }
 
+TEST_F(OpenRestListTest, IsSingleRestMoveTest)
+{
+  {
+  const OpenRestListKey key = 0;
+  ASSERT_TRUE(IsSingleRestMove(key));
+  }
+  {
+  const OpenRestListKey key = kMoveOO;
+  ASSERT_TRUE(IsSingleRestMove(key));
+  }
+  {
+  const OpenRestListKey key = (kMoveAA << 8) | kMoveOO;
+  ASSERT_FALSE(IsSingleRestMove(key));
+  }
+  {
+  const OpenRestListKey key = (kMoveAA << 16) | (kMoveHH << 8) | kMoveOO;
+  ASSERT_FALSE(IsSingleRestMove(key));
+  }
+}
+
 }   // namespace realcore
 

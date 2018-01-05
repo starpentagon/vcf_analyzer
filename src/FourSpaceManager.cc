@@ -120,7 +120,7 @@ const size_t FourSpaceManager::GetMaxRelaxedFourLength() const
 
 const tuple<MovePosition, OpenRestListKey, bool> FourSpaceManager::GetParentOpenRestListKey(const OpenRestListKey open_rest_list_key) const
 {
-  if(open_rest_list_key <= kMoveNum){
+  if(IsSingleRestMove(open_rest_list_key)){
     const auto find_it = open_rest_key_puttable_four_space_id_.find(open_rest_list_key);
     const bool is_member = find_it != open_rest_key_puttable_four_space_id_.end();
     return make_tuple(kNullMove, open_rest_list_key, is_member);
