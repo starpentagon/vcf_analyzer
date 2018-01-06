@@ -56,7 +56,7 @@ public:
 
     EXPECT_EQ(2, four_space_search.GetRelaxedFourCount());
     EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kBlackTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
@@ -106,7 +106,7 @@ public:
   
     EXPECT_EQ(2, four_space_search.GetRelaxedFourCount());
     EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kWhiteTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kWhiteTurn>();
   }
 
@@ -160,7 +160,7 @@ public:
 
     EXPECT_EQ(4, four_space_search.GetRelaxedFourCount());
     EXPECT_EQ(2, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kBlackTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
@@ -210,7 +210,7 @@ public:
 
     EXPECT_EQ(4, four_space_search.GetRelaxedFourCount());
     EXPECT_EQ(2, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kWhiteTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kWhiteTurn>();
   }
 
@@ -266,7 +266,7 @@ public:
 
     EXPECT_EQ(12, four_space_search.GetRelaxedFourCount());
     EXPECT_EQ(5, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kBlackTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
@@ -318,7 +318,7 @@ public:
 
     EXPECT_EQ(12, four_space_search.GetRelaxedFourCount());
     EXPECT_EQ(5, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kWhiteTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kWhiteTurn>();
   }
 
@@ -374,7 +374,7 @@ public:
 
     EXPECT_EQ(12, four_space_search.GetRelaxedFourCount());
     EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kBlackTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
@@ -432,7 +432,7 @@ public:
 
     EXPECT_EQ(16, four_space_search.GetRelaxedFourCount());
     EXPECT_EQ(1, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kWhiteTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kWhiteTurn>();
   }
 
@@ -495,7 +495,7 @@ public:
 
     EXPECT_EQ(25 + 1, four_space_search.GetRelaxedFourCount());  // 達四はダブルカウントされる
     EXPECT_EQ(4, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kBlackTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
   }
 
@@ -552,7 +552,7 @@ public:
 
     EXPECT_EQ(18, four_space_search.GetRelaxedFourCount());
     EXPECT_EQ(5, four_space_search.GetMaxRelaxedFourLength());
-    four_space_search.four_space_manager_.IsPuttableConsistent();
+    four_space_search.four_space_manager_.IsPuttableConsistent<kBlackTurn>();
     four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
 
     // kMoveIHの実現手順が２つあることをチェック
@@ -625,7 +625,7 @@ public:
       }
     }
 
-    //four_space_search.four_space_manager_.IsPuttableConsistent();
+    //four_space_search.four_space_manager_.IsPuttableConsistent<kBlackTurn>();
     //four_space_search.four_space_manager_.IsFeasibleConsistent<kBlackTurn>();
     four_space_search.four_space_manager_.OutputPuttableSummary();
     four_space_search.four_space_manager_.OutputFeasibleSummary();

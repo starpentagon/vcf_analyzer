@@ -30,7 +30,7 @@ public:
     ASSERT_EQ(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(empty_four_space));
 
     FourSpace four_space_1(kMoveAA, kMoveAB);
-    four_space_manager.RegisterFourSpace(four_space_1);
+    four_space_manager.RegisterFourSpace<kBlackTurn>(four_space_1);
 
     ASSERT_NE(kInvalidFourSpaceID, four_space_manager.GetFourSpaceID(four_space_1));
     
@@ -47,7 +47,7 @@ public:
       FourSpaceManager four_space_manager(bit_board);
 
       FourSpace four_space(kMoveAA, kMoveAB);
-      const auto four_space_id = four_space_manager.RegisterFourSpace(four_space);
+      const auto four_space_id = four_space_manager.RegisterFourSpace<kBlackTurn>(four_space);
       bool is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
       ASSERT_TRUE(is_registered);
 
@@ -72,7 +72,7 @@ public:
       FourSpace unbalance(kMoveAA, kMoveAC);
       four_space.Add(unbalance);
 
-      const auto four_space_id = four_space_manager.RegisterFourSpace(four_space);
+      const auto four_space_id = four_space_manager.RegisterFourSpace<kBlackTurn>(four_space);
       bool is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
       ASSERT_FALSE(is_registered);
 
@@ -95,7 +95,7 @@ public:
       four_space.Add(kMoveHI, kMoveAE);
       four_space.Add(kMoveHJ, kMoveAF);
 
-      const auto four_space_id = four_space_manager.RegisterFourSpace(four_space);
+      const auto four_space_id = four_space_manager.RegisterFourSpace<kBlackTurn>(four_space);
       bool is_registered = four_space_manager.RegisterOpenRestKeyFourSpace<kBlackTurn>(key, four_space_id);
       ASSERT_FALSE(is_registered);
 
@@ -117,26 +117,26 @@ public:
     // ID:1-1
     {
       FourSpace four_space_1_1(kMoveAA, kMoveAB);
-      four_space_manager.RegisterFourSpace(four_space_1_1);
+      four_space_manager.RegisterFourSpace<kBlackTurn>(four_space_1_1);
     }
 
     // ID:1-2
     {
       FourSpace four_space_1_2(kMoveOO, kMoveAA);
-      four_space_manager.RegisterFourSpace(four_space_1_2);
+      four_space_manager.RegisterFourSpace<kBlackTurn>(four_space_1_2);
     }
 
     // ID:2-1
     {
       FourSpace four_space_2_1(kMoveAA, kMoveAB);
       four_space_2_1.Add(kMoveAC, kMoveAD);
-      four_space_manager.RegisterFourSpace(four_space_2_1);
+      four_space_manager.RegisterFourSpace<kBlackTurn>(four_space_2_1);
     }
 
     // ID:2-2
     {
       FourSpace four_space_2_2(kMoveHH, kMoveHI);
-      four_space_manager.RegisterFourSpace(four_space_2_2);
+      four_space_manager.RegisterFourSpace<kBlackTurn>(four_space_2_2);
     }
 
     // ID:2-3
@@ -145,13 +145,13 @@ public:
       four_space_2_3.Add(kMoveCA, kMoveAC);
       four_space_2_3.Add(kMoveDA, kMoveAD);
       four_space_2_3.Add(kMoveEA, kMoveAE);
-      four_space_manager.RegisterFourSpace(four_space_2_3);
+      four_space_manager.RegisterFourSpace<kBlackTurn>(four_space_2_3);
     }
 
     vector<FourSpaceID> id_list_1{1, 2}, id_list_2{3, 4, 5};
     vector<FourSpaceID> generated_list;
 
-    four_space_manager.GeneratePuttableFourSpace(id_list_1, id_list_2, &generated_list);
+    four_space_manager.GeneratePuttableFourSpace<kBlackTurn>(id_list_1, id_list_2, &generated_list);
 
     // 2 * 3 = 6通り中、(1-2)-(2-1)は同時設置不可のため除外
     ASSERT_EQ(5, generated_list.size());

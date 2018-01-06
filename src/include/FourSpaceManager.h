@@ -79,20 +79,26 @@ private:
   //! @param four_space_id_set_2 獲得/損失空間のIDリスト
   //! @param puttable_four_space 同時設置可能な獲得/損失空間のリストの格納先
   //! @note 均等(gain, costの石数)チェック, 五連以上チェックは行わない
+  template<PlayerTurn P>
   void GeneratePuttableFourSpace(const std::vector<FourSpaceID> &four_space_id_list_1, const std::vector<FourSpaceID> &four_space_id_list_2, std::vector<FourSpaceID> * const puttable_four_space_id_list);
   
   //! @brief 開残路キーに対応する同時設置可能な獲得/損失空間のリストを生成する
+  template<PlayerTurn P>
   void GeneratePuttableFourSpace(const OpenRestListKey open_rest_list_key, std::vector<FourSpaceID> * const puttable_four_space_id_list);
 
   //! @brief 設置可能な獲得/損失空間から実現可能な獲得/損失空間を生成する
-  //! @note 均等(gain, costの石数)チェック, 五連以上チェックを行う
+  //! @note 均等(gain, costの石数)チェックを行う
   template<PlayerTurn P>
   void GenerateFeasibleFourSpace(const std::vector<FourSpaceID> &puttable_four_space_list, std::vector<FourSpaceID> * const feasible_four_space_list);
 
-  //! @brief FourSpaceが実現可能(均等(gain, costの同数), 五連以上がないこと)か判定する
+  //! @brief FourSpaceが実現可能(均等(gain, costの同数))か判定する
   //! @pre FourSpaceは設置可能であること
   template<PlayerTurn P>
   const bool IsFeasibleFourSpace(const FourSpaceID four_space_id);
+
+  //! @brief FourSpaceに五連以上が生じているかチェックする
+  template<PlayerTurn P>
+  const bool IsFiveFourSpace(const FourSpaceID four_space_id);
 
   //! @brief 同一のFourSpaceを検索する
   //! @retval kInvalidFourSpaceID: 同一のFourSpaceが存在せず
@@ -100,7 +106,12 @@ private:
 
   //! @brief FourSpaceを登録する
   //! @pre four_spaceは未登録であること
+  //! @note 五連以上が生じているかのチェックを行う
+  template<PlayerTurn P>
   const FourSpaceID RegisterFourSpace(const FourSpace &four_space);
+
+  //! @brief FourSpaceが実現不可能（五連以上が生じている）かを返す
+  const bool IsInfeasibleFourSpace(const FourSpaceID four_space_id) const;
 
   //! @brief 開残路にFourSpaceを登録する
   //! @param open_rest_list_key 開残路キー
@@ -119,6 +130,7 @@ private:
 
   //! @brief 設置可能なFourSpaceの依存関係（子が親から生成できているか）をチェックする
   //! @note デバッグ用機能
+  template<PlayerTurn P>
   void IsPuttableConsistent();
 
   //! @brief 設置可能なFourSpaceから実現可能なFourSpaceが生成できるかチェックする
@@ -153,8 +165,8 @@ private:
   //! @brief 開残路キー -> 実現可能(設置可能、均等、五連以上なし)なFourSpaceIDのリスト
   std::map<OpenRestListKey, std::vector<FourSpaceID>> open_rest_key_feasible_four_space_id_;
 
-  //! @brief FourSpaceID -> 実現可能性チェック結果
-  std::map<FourSpaceID, bool> feasibility_result_;
+  //! @brief FourSpaceID -> 五連チェック結果
+  std::map<FourSpaceID, bool> five_check_result_;
 
   BitBoard bit_board_;
 
