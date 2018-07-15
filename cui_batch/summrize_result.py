@@ -9,12 +9,12 @@ if __name__ == "__main__":
   argc = len(argvs)
 
   if(argc != 2):
-    print 'Usage %s (result csv file)' % argvs[0]
+    print('Usage %s (result csv file)' % argvs[0])
     quit()
   
   # data load
   result_filename = argvs[1]
-  result_file = open(result_filename, 'rb')
+  result_file = open(result_filename, 'r')
   csv.field_size_limit(1000000)
   csv_file = csv.reader(result_file)
 
@@ -52,8 +52,8 @@ if __name__ == "__main__":
   table.add_row(['Disproved', "{:,.0f}".format(disproved_count), "{:,.1f}".format(100.0 * disproved_count / problem_count)])
   table.add_row(['Total', "{:,.0f}".format(problem_count), 100.0])
 
-  print table.draw()
-  print
+  print(table.draw())
+  print()
 
   # 解図時間, ノード数, NPS
   col_list = ['Time(sec)', 'Nodes', 'NPS']
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     while "INF" in csv_dict[col]:
       csv_dict[col].remove("INF")
 
-    result_data = map(float, csv_dict[col])
+    result_data = list(map(float, csv_dict[col]))
     result_mean[col] = sum(result_data) / len(result_data)
     result_max[col] = max(result_data)
     result_min[col] = min(result_data)
@@ -82,4 +82,4 @@ if __name__ == "__main__":
     else:
       table.add_row([col, "{:,.0f}".format(result_mean[col]), "{:,.0f}".format(result_max[col]), "{:,.0f}".format(result_min[col])])
 
-  print table.draw()
+  print(table.draw())
